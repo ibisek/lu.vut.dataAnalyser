@@ -13,8 +13,8 @@ import numpy as np
 import matplotlib.dates as mdates
 
 from fileUtils import composeFilename, loadSteadyStates
-from configuration import IN_PATH, OUT_PATH, NG_THRESHOLD, KEYS_FOR_STEADY_STATE_DETECTION, STEADY_STATE_WINDOW_LEN, STEADY_STATE_DVAL
-
+from configuration import IN_PATH, OUT_PATH, NG_THRESHOLD, SP_THRESHOLD, \
+    KEYS_FOR_STEADY_STATE_DETECTION, STEADY_STATE_WINDOW_LEN, STEADY_STATE_DVAL
 
 from dataPreprocessing.channelSelection import channelSelection
 from dataPreprocessing.dataFiltering import filterData
@@ -26,7 +26,7 @@ from dataAnalysis.correlations import analyseCorrelations
 from dataAnalysis.regression import doRegression, doRegressionOnSteadySections, doRegressionOnSteadyAllSectionsCombined, doRegressionOnSteadySectionsAvgXY
 
 
-def omitRowsBelowNgThreshold(dataFrame:DataFrame, originalFileName:str, ngThreshold=NG_THRESHOLD):
+def omitRowsBelowThresholds(dataFrame:DataFrame, originalFileName:str, ngThreshold=NG_THRESHOLD, spThreshold=SP_THRESHOLD):
 
     # drop rows where NG < 90 %
     if 'NG' not in dataFrame.keys():
@@ -34,6 +34,10 @@ def omitRowsBelowNgThreshold(dataFrame:DataFrame, originalFileName:str, ngThresh
         return dataFrame
 
     indexNames = dataFrame[(dataFrame['NG'] < ngThreshold)].index
+    if len(indexNames) > 0:
+        dataFrame = dataFrame.drop(indexNames)
+
+    indexNames = dataFrame[(dataFrame['SP'] < spThreshold)].index
     if len(indexNames) > 0:
         dataFrame = dataFrame.drop(indexNames)
 
@@ -132,26 +136,27 @@ if __name__ == '__main__':
 
                 standardisedDataFrame = standardiseData(filteredDataFrame, fileName)
 
-                standardisedDataFrame = omitRowsBelowNgThreshold(standardisedDataFrame, fileName)
-
                 try:
                     # plotChannelsOfInterest(rawDataFrame, fileName, suffix='raw')
                     # plotChannelsOfInterest(filteredDataFrame, fileName, suffix='filtered')
                     # plotChannelsOfInterest(standardisedDataFrame, fileName, suffix='std')
-                    plotChannelsOfInterestMultiY(standardisedDataFrame, fileName, suffix='flightOverview')
+                    plotChannelsOfInterestMultiY(filteredDataFrame, fileName, suffix='flightOverview-filtered')
+                    plotChannelsOfInterestMultiY(standardisedDataFrame, fileName, suffix='flightOverview-reduced', reducedChannels=True)
 
                 except Exception as e:
                     print("[ERROR]", e)
 
+                standardisedDataFrame = omitRowsBelowThresholds(standardisedDataFrame, fileName)
+
                 # analyseCorrelations(filteredDataFrame, fileName)
 
-                # SteadyStatesDetector(windowDt=STEADY_STATE_WINDOW_LEN, dVal=STEADY_STATE_DVAL).detectSteadyStates(standardisedDataFrame, fileName)
+                SteadyStatesDetector(windowDt=STEADY_STATE_WINDOW_LEN, dVal=STEADY_STATE_DVAL).detectSteadyStates(standardisedDataFrame, fileName)
 
                 # _displaySteadyStateDetection(standardisedDataFrame, fileName)
 
                 # doRegression(standardisedDataFrame, fileName)
                 # doRegressionOnSteadySections(standardisedDataFrame, fileName)
                 # doRegressionOnSteadyAllSectionsCombined(standardisedDataFrame, fileName)
-                doRegressionOnSteadySectionsAvgXY(standardisedDataFrame, fileName)
+                # doRegressionOnSteadySectionsAvgXY(standardisedDataFrame, fileName)
 
     print('Finished for now.')
