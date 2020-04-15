@@ -1,3 +1,4 @@
+import math
 import sys
 import pandas as pd
 import numpy as np
@@ -119,16 +120,19 @@ def _processFD2(df):
     ndf = ndf.astype(float)
 
     ndf['TQ'] = ndf['TQ'] * 1.3558  # [Nm]
-    ndf['FC'] = ndf['FC'] * 2.80    # [gph] -> [kg/h]   # z googlu
+    ndf['FC'] = ndf['FC'] * 3.7854  # [US gph] -> [kg/h] pyca, to jsou ale jednotky!!
+
+    # Calculated Shaft Power - SP [W]:
+    ndf['SP'] = ndf['TQ'] * 2 * math.pi * ndf['NP'] / 60
 
     ftAmsl = df['AltB'].astype(float)
-    mAmsl = ftAmsl * 0.3048  # ft -> m
+    mAmsl = ftAmsl * 0.3048  # [ft] -> [m]
     ambientPress = 101325 * np.power(1 - mAmsl.values / 44330, 5.255)
     ndf['P0'] = ambientPress  # [Pa]
 
     # extra channels:
     ndf['ALT'] = mAmsl  # alt AMSL [m]
-    ndf['TAS'] = ndf['TAS'] * 1.852     # [km/h]
+    ndf['TAS'] = ndf['TAS'] * 1.852     # [kt] -> [km/h]
 
     return ndf
 
