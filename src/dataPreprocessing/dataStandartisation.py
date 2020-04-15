@@ -2,7 +2,7 @@ import math
 import numpy as np
 
 from fileUtils import composeFilename
-from configuration import OUT_PATH, FUEL_DENSITY
+from configuration import OUT_PATH, FUEL_DENSITY, CONST_R
 
 
 def standardiseData(dataFrame, originalFileName):
@@ -19,27 +19,33 @@ def standardiseData(dataFrame, originalFileName):
     # data2: ['nG (%)', 'Mk (Nm)', 'Qp (l/hod)', 't4 (<A1>C)', 'P0 (kPa)', 'Pt (kPa)', 't1 (°C)', 'Povv (kPa)']
     # flight data: ['NG', 'TQ', 'FF', 'ITT', 'P0', 'PT', 'T0', 'NP']
 
-    # dataFrame['tISA'] = (15 - 0.0065 * dataFrame['ALT'])
+    # temperature compensated to speed:
+    dataFrame['T0C'] = ((dataFrame['T0'] + 273.15) + np.power(dataFrame['TAS'] / 3.6, 2) / (2 * 10004.675)) - 273.15
+
+    # ambient pressure compensated to speed:
+    dataFrame['P0C'] = dataFrame['P0'] * (1 + np.power(dataFrame['TAS'] / 3.6, 2) / (2 * CONST_R * (dataFrame['T0C'] + 273.15)))
+
+    # import matplotlib.pyplot as plt
+    # dataFrame[['P0', 'P0C']].plot()
+    # plt.savefig('/tmp/00/p0c.png', dpi=200)
 
     # ITT:
-    dataFrame['ITT'] = (dataFrame['ITT'] + 273.15) * ((273.15 + 15) / (273.15 + dataFrame['T0'])) - 273.15
+    dataFrame['ITTR'] = (dataFrame['ITT'] + 273.15) * ((273.15 + 15) / (273.15 + dataFrame['T0C'])) - 273.15
 
     # NG:
-    # dataFrame['NG'] = dataFrame['NG'] * np.sqrt((273.15 + 15) / (273.15 + dataFrame['T0']))
+    # dataFrame['NGR'] = dataFrame['NG'] * np.sqrt((273.15 + 15) / (273.15 + dataFrame['T0C']))
 
     # NP:
-    dataFrame['NP'] = dataFrame['NP'] * np.sqrt((273.15 + 15) / (273.15 + dataFrame['T0']))
+    dataFrame['NPR'] = dataFrame['NP'] * np.sqrt((273.15 + 15) / (273.15 + dataFrame['T0C']))
 
     # Mk / TQ:
-    dataFrame['TQ'] = dataFrame['TQ'] * (101325 / (dataFrame['P0']))
+    # dataFrame['TQR'] = dataFrame['TQ'] * (101325 / (dataFrame['P0C']))
 
-    # Calculated power [W]:
-    dataFrame['P'] = dataFrame['TQ'] * 2 * math.pi * dataFrame['NP']/60
-    # Reduced power [W]:
-    dataFrame['P'] = dataFrame['P'] * (101325 / dataFrame['P0']) * ((15+273.15) / (dataFrame['T0'] + 273.15))
+    # Reduced Shaft Power [W]:
+    dataFrame['SPR'] = dataFrame['SP'] * (101325 / dataFrame['P0C']) * ((15 + 273.15) / (dataFrame['T0C'] + 273.15))
 
     # FC / FF / QQ / Qp:
-    dataFrame['FC'] = dataFrame['FC'] * FUEL_DENSITY * (101325 / (dataFrame['P0'])) * ((15 + 273.15) / (dataFrame['T0'] + 273.15))
+    dataFrame['FCR'] = dataFrame['FC'] * FUEL_DENSITY * (101325 / (dataFrame['P0C'])) * np.sqrt((15 + 273.15) / (273.15 + dataFrame['T0C']))
 
     dataFrame = dataFrame.dropna()  # drop rows with missing values
     # dataFrame = dataFrame.interpolate()  # fill missing values
