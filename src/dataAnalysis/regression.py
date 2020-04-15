@@ -229,10 +229,16 @@ def doRegressionOnSteadySectionsAvgXY(dataFrame: DataFrame, originalFileName: st
     numIntervals = len(intervals)
 
     l = list()  # Y = fn(X)
-    l.append(('FC', 'P'))
-    l.append(('NG', 'P'))
-    l.append(('ITT', 'P'))
+
+    l.append(('FC', 'SP'))
+    l.append(('NG', 'SP'))
+    l.append(('ITT', 'SP'))
     l.append(('ITT', 'NG'))
+
+    l.append(('FCR', 'SPR'))
+    l.append(('NGR', 'SPR'))
+    l.append(('ITTR', 'SPR'))
+    l.append(('ITTR', 'NGR'))
 
     for yKey, xKey in l:
         arr = np.zeros([numIntervals, 2])   # (x, y)
