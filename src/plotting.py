@@ -30,7 +30,7 @@ def plotChannelsOfInterest(dataFrame, originalFileName, suffix=''):
     #     return
 
     # keys = dataFrame.keys()     # plot all
-    keys = ['ALT', 'IAS', 'NG', 'P']
+    keys = ['ALT', 'TAS', 'NG', 'P']
 
     # ax = dataFrame.plot(x=dataFrame.index, y=keys[0], figsize=(20, 15))
     ax = dataFrame[keys].plot(figsize=(20, 15))
@@ -58,7 +58,7 @@ def plotChannelsOfInterestMultiY(dataFrame, originalFileName, suffix='', reduced
     red = '' if not reducedChannels else 'R'
 
     keys = ['ALT', 'TAS', 'NG', 'TQ', 'NP'+red, 'ITT'+red, 'FC'+red, 'SP'+red]
-    yLabels = ['ALT [m] AMSL', 'IAS [kt]', 'NG [%]', 'TQ [Nm]', 'NP [1/min]', 'ITT [deg.C]', 'FC [kg/hod]', 'SP [kW]']
+    yLabels = ['ALT [m] AMSL', 'TAS [km/h]', 'NG [%]', 'TQ [Nm]', 'NP [1/min]', 'ITT [deg.C]', 'FC [kg/hod]', 'SP [kW]']
     yRanges = [[0, 5000], [0, 500], [60, 110], [0, 3500], [0, 2200], [0, 800], [0, 300], [0, 600]]
     multipliers = [1, 1, 1, 1, 1, 1, 1, 1000]
     legendLabels = keys
