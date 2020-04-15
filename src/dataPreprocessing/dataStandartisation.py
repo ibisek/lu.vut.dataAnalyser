@@ -33,7 +33,7 @@ def standardiseData(dataFrame, originalFileName):
     dataFrame['ITTR'] = (dataFrame['ITT'] + 273.15) * ((273.15 + 15) / (273.15 + dataFrame['T0C'])) - 273.15
 
     # NG:
-    # dataFrame['NGR'] = dataFrame['NG'] * np.sqrt((273.15 + 15) / (273.15 + dataFrame['T0C']))
+    dataFrame['NGR'] = dataFrame['NG'] * np.sqrt((273.15 + 15) / (273.15 + dataFrame['T0C']))
 
     # NP:
     dataFrame['NPR'] = dataFrame['NP'] * np.sqrt((273.15 + 15) / (273.15 + dataFrame['T0C']))
