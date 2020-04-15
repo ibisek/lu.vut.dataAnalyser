@@ -1,0 +1,6 @@
+https://ourcodingclub.github.io/2019/01/07/pandas-time-series.html
+https://www.datacamp.com/community/tutorials/time-series-analysis-tutorial
+https://towardsdatascience.com/four-ways-to-quantify-synchrony-between-time-series-data-b99136c4a9c9
+
+https://pandas.pydata.org/pandas-docs/stable/user_guide/missing_data.html
+https://pandas.pydata.org/pandas-docs/stable/user_guide/visualization.html
