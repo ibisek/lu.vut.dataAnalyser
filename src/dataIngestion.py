@@ -157,6 +157,6 @@ if __name__ == '__main__':
                 # doRegression(standardisedDataFrame, fileName)
                 # doRegressionOnSteadySections(standardisedDataFrame, fileName)
                 # doRegressionOnSteadyAllSectionsCombined(standardisedDataFrame, fileName)
-                # doRegressionOnSteadySectionsAvgXY(standardisedDataFrame, fileName)
+                doRegressionOnSteadySectionsAvgXY(standardisedDataFrame, fileName)
 
     print('Finished for now.')
