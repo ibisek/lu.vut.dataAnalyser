@@ -59,7 +59,7 @@ def plotChannelsOfInterestMultiY(dataFrame, originalFileName, suffix='', reduced
 
     keys = ['ALT', 'TAS', 'NG', 'TQ', 'NP'+red, 'ITT'+red, 'FC'+red, 'SP'+red]
     yLabels = ['ALT [m] AMSL', 'IAS [kt]', 'NG [%]', 'TQ [Nm]', 'NP [1/min]', 'ITT [deg.C]', 'FC [kg/hod]', 'SP [kW]']
-    yRanges = [[0, 5000], [0, 500], [60, 110], [0, 3500], [0, 2200], [0, 800], [0, 300], [150, 600]]
+    yRanges = [[0, 5000], [0, 500], [60, 110], [0, 3500], [0, 2200], [0, 800], [0, 300], [0, 600]]
     multipliers = [1, 1, 1, 1, 1, 1, 1, 1000]
     legendLabels = keys
 
