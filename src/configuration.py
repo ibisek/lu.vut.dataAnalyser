@@ -7,7 +7,8 @@ OUT_PATH = '/home/ibisek/wqz/prog/python/lu.vut.dataAnalyser/data/out/'
 
 OUT_PATH_TEMPLATE = "/home/ibisek/wqz/prog/python/lu.vut.dataAnalyser/data/out/{}/{}"
 
-NG_THRESHOLD = 80
+NG_THRESHOLD = 80           # [%] N Generator (RPM)
+SP_THRESHOLD = 150*1000     # [W] Shaft Power
 
 STEADY_STATE_WINDOW_LEN = 99  # [s]
 STEADY_STATE_DVAL = 0.01      # [%/100]
@@ -15,7 +16,9 @@ STEADY_STATE_DVAL = 0.01      # [%/100]
 CSV_DELIMITER = ';'
 # CSV_DELIMITER = ','
 
-FUEL_DENSITY = 0.798    # hodnota pouzivana v excelovskych datech
+FUEL_DENSITY = 0.797    # hodnota pouzivana v excelovskych datech
+
+CONST_R = 287.03    # universal gas constant [J/kg/K]
 
 NOMINAL_DATA = {
     't0': 15,           # [deg.C]
@@ -38,9 +41,14 @@ UNITS = {
     'ITT': 'deg.C',
     'TQ': 'Nm',
     'PT': 'Pa',
-    'P': 'W',
+    'SP': 'W',
     'IAS': 'km/h',
     'TAS': 'km/h',
+
+    'ITTR': 'deg.C',
+    'NPR': '1/min',
+    'FCR': 'kg/h',
+    'SPR': 'W',
 }
 
 # ['NG', 'TQ', 'FC', 'ITT', 'P0', 'PT', 'T1', 'NP']
