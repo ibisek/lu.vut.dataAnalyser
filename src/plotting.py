@@ -51,19 +51,22 @@ def plotChannelsOfInterest(dataFrame, originalFileName, suffix=''):
     plt.close()
 
 
-def plotChannelsOfInterestMultiY(dataFrame, originalFileName, suffix=''):
+def plotChannelsOfInterestMultiY(dataFrame, originalFileName, suffix='', reducedChannels=False):
 
     # keys = ['ALT', 'IAS', 'NG', 'P']
 
-    keys = ['ALT', 'TAS', 'NG', 'NP', 'TQ']
-    yLabels = ['ALT [m] AMSL', 'IAS [kt]', 'NG [%]', 'NP [1/min]', 'TQ [Nm]']
-    yRanges = [[0, 5000], [0, 500], [0, 110], [0, 2200], [0, 3500]]
+    red = '' if not reducedChannels else 'R'
+
+    keys = ['ALT', 'TAS', 'NG', 'TQ', 'NP'+red, 'ITT'+red, 'FC'+red, 'SP'+red]
+    yLabels = ['ALT [m] AMSL', 'IAS [kt]', 'NG [%]', 'TQ [Nm]', 'NP [1/min]', 'ITT [deg.C]', 'FC [kg/hod]', 'SP [kW]']
+    yRanges = [[0, 5000], [0, 500], [60, 110], [0, 3500], [0, 2200], [0, 800], [0, 300], [150, 600]]
+    multipliers = [1, 1, 1, 1, 1, 1, 1, 1000]
     legendLabels = keys
 
     plt.figure(figsize=[18, 10])
 
     host = host_subplot(111,  axes_class=AA.Axes)
-    plt.subplots_adjust(left=0.05, right=0.84)     # 0.04-0.84 for 5 keys
+    plt.subplots_adjust(left=0.05, right=0.74)     # 0.04-0.84 for 5 keys; 0.05-0.80 for 6 keys; 0.05-0.76 for 7 keys
     plt.legend(fontsize=20)
 
     host.set_xlabel("dateTime")
@@ -85,7 +88,7 @@ def plotChannelsOfInterestMultiY(dataFrame, originalFileName, suffix=''):
             par1.set_ylabel(yLabels[i])
             par1.set_ylim(yRanges[i])
 
-            p1, = par1.plot(dataFrame.index, dataFrame[keys[i]], label=legendLabels[i])
+            p1, = par1.plot(dataFrame.index, dataFrame[keys[i]]/multipliers[i], label=legendLabels[i])
 
     host.legend(loc='lower center')
     plt.title(f"{originalFileName}")
