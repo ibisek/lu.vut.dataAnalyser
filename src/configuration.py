@@ -29,8 +29,11 @@ NOMINAL_DATA = {
     'ITT': 674,         # [deg.C]
     'TQ': 2740,         # [Nm]
     'PT': 1079*1000,    # [Pa]
-    'P': 425000,        # [W]   597000W | 425000w
+    'SP': 425000,       # [W]   597000W | 425000w
 }
+NOMINAL_DATA['ITTR'] = NOMINAL_DATA['ITT']
+NOMINAL_DATA['SPR'] = NOMINAL_DATA['SP']
+NOMINAL_DATA['NGR'] = NOMINAL_DATA['NG']
 
 UNITS = {
     't0': 'deg.C',
