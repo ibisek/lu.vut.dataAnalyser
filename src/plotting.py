@@ -2,10 +2,12 @@
 Plots selected channels of interest
 """
 
+import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from configuration import OUT_PATH
-from fileUtils import composeFilename
+from fileUtils import composeFilename, loadSteadyStates
+from dataAnalysis.steadyStatesUtils import indexWithinSteadyState
 
 from mpl_toolkits.axes_grid1 import host_subplot
 import mpl_toolkits.axisartist as AA
@@ -52,16 +54,21 @@ def plotChannelsOfInterest(dataFrame, originalFileName, suffix=''):
 
 
 def plotChannelsOfInterestMultiY(dataFrame, originalFileName, suffix='', reducedChannels=False):
-
-    # keys = ['ALT', 'IAS', 'NG', 'P']
-
     red = '' if not reducedChannels else 'R'
 
-    keys = ['ALT', 'TAS', 'NG'+red, 'TQ'+red, 'NP'+red, 'ITT'+red, 'FC'+red, 'SP'+red]
-    yLabels = ['ALT [m] AMSL', 'TAS [km/h]', 'NG [%]', 'TQ [Nm]', 'NP [1/min]', 'ITT [deg.C]', 'FC [kg/hod]', 'SP [kW]']
-    yRanges = [[0, 5000], [0, 500], [60, 110], [0, 3500], [0, 2200], [0, 800], [0, 300], [0, 600]]
-    multipliers = [1, 1, 1, 1, 1, 1, 1, 1000]
+    keys = ['ALT', 'TAS', 'NG'+red, 'TQ'+red, 'NP'+red, 'ITT'+red, 'FC'+red, 'SP'+red, 'SS']
+    yLabels = ['ALT [m] AMSL', 'TAS [km/h]', 'NG [%]', 'TQ [Nm]', 'NP [1/min]', 'ITT [deg.C]', 'FC [kg/hod]', 'SP [kW]', 'SS - steady states']
+    yRanges = [[0, 5000], [0, 500], [60, 110], [0, 3500], [0, 2200], [0, 800], [0, 300], [0, 600], [-0.05, 1.05]]
+    multipliers = [1, 1, 1, 1, 1, 1, 1, 1000, 1]
     legendLabels = keys
+
+    # steady state indication:
+    intervals = loadSteadyStates(originalFileName)
+    numRows = len(dataFrame)
+    arr = np.zeros([numRows])
+    for i in range(numRows):
+        arr[i] = 1 if indexWithinSteadyState(intervals, i) else 0
+    dataFrame = dataFrame.assign(SS=arr)
 
     plt.figure(figsize=[18, 10])
 

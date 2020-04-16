@@ -13,6 +13,7 @@ import numpy as np
 import matplotlib.dates as mdates
 
 from fileUtils import composeFilename, loadSteadyStates
+from dataAnalysis.steadyStatesUtils import indexWithinSteadyState
 from configuration import IN_PATH, OUT_PATH, NG_THRESHOLD, SP_THRESHOLD, \
     KEYS_FOR_STEADY_STATE_DETECTION, STEADY_STATE_WINDOW_LEN, STEADY_STATE_DVAL
 
@@ -44,30 +45,13 @@ def omitRowsBelowThresholds(dataFrame:DataFrame, originalFileName:str, ngThresho
     return dataFrame
 
 
-def _indexWithinSteadyState(intervals:list, index:int):
-    """
-    :param intervals:
-    :param index:
-    :return: True if index falls within a steady state
-    """
-
-    for interval in intervals:
-        a = interval['startIndex']
-        b = interval['endIndex']
-
-        if index >= a and index <=b:
-            return True
-
-    return False
-
-
 def _displaySteadyStateDetection(dataFrame:DataFrame, originalFileName:str):
     intervals = loadSteadyStates(originalFileName)
 
     numRows = len(dataFrame)
     arr = np.zeros([numRows])
     for i in range(numRows):
-        arr[i] = 1 if _indexWithinSteadyState(intervals, i) else 0
+        arr[i] = 1 if indexWithinSteadyState(intervals, i) else 0
     dataFrame = dataFrame.assign(SS=arr)
 
     if len(dataFrame) == 0:
@@ -154,7 +138,7 @@ if __name__ == '__main__':
 
                 SteadyStatesDetector(windowDt=STEADY_STATE_WINDOW_LEN, dVal=STEADY_STATE_DVAL).detectSteadyStates(standardisedDataFrame, fileName)
 
-                # _displaySteadyStateDetection(standardisedDataFrame, fileName)
+                _displaySteadyStateDetection(standardisedDataFrame, fileName)
 
                 # doRegression(standardisedDataFrame, fileName)
                 # doRegressionOnSteadySections(standardisedDataFrame, fileName)
