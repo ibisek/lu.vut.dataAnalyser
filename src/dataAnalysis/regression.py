@@ -264,6 +264,9 @@ def doRegressionOnSteadySectionsAvgXY(dataFrame: DataFrame, originalFileName: st
 
         min = df[xKey].min()
         max = df[xKey].max()
+
+        print(f"[INFO] REGRESSION in; {originalFileName}; of; {yKey} = fn ({xKey}); {xVal}; into range; {min:.02f}; {max:.02f}")
+
         if xVal < min or xVal > max:
             print(f"[WARN] Omitting; {yKey} = fn ({xKey}); {xVal} not in range <{min:.02f}, {max:.02f}>")
             continue
