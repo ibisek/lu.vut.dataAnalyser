@@ -39,7 +39,7 @@ def standardiseData(dataFrame, originalFileName):
     dataFrame['NPR'] = dataFrame['NP'] * np.sqrt((273.15 + 15) / (273.15 + dataFrame['T0C']))
 
     # Mk / TQ:
-    # dataFrame['TQR'] = dataFrame['TQ'] * (101325 / (dataFrame['P0C']))
+    dataFrame['TQR'] = dataFrame['TQ'] * (101325 / (dataFrame['P0C']))
 
     # Reduced Shaft Power [W]:
     dataFrame['SPR'] = dataFrame['SP'] * (101325 / dataFrame['P0C']) * np.sqrt((15 + 273.15) / (dataFrame['T0C'] + 273.15))
