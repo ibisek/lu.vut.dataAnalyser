@@ -170,6 +170,10 @@ class SteadyStatesDetector(object):
                     startIndex += 2
                     endIndex -= 2
 
+                avgVals = dict()
+                for k, v in dataFrame[KEYS_FOR_STEADY_STATE_DETECTION][startIndex:endIndex].mean().items():
+                    avgVals[k] = v
+
                 numPoints = endIndex - startIndex
                 if numPoints >= 4:  # ignore data-sparse intervals:
                     d = dict()
@@ -178,6 +182,7 @@ class SteadyStatesDetector(object):
                     d["startTime"] = str(dataFrame.index[startIndex])
                     d["endTime"] = str(dataFrame.index[endIndex])
                     d["duration"] = dt.seconds
+                    d["avgVals"] = avgVals
                     results.append(d)
 
                 startIndex = endIndex + 1
