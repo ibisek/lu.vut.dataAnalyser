@@ -57,7 +57,7 @@ def plotChannelsOfInterestMultiY(dataFrame, originalFileName, suffix='', reduced
 
     red = '' if not reducedChannels else 'R'
 
-    keys = ['ALT', 'TAS', 'NG', 'TQ', 'NP'+red, 'ITT'+red, 'FC'+red, 'SP'+red]
+    keys = ['ALT', 'TAS', 'NG'+red, 'TQ'+red, 'NP'+red, 'ITT'+red, 'FC'+red, 'SP'+red]
     yLabels = ['ALT [m] AMSL', 'TAS [km/h]', 'NG [%]', 'TQ [Nm]', 'NP [1/min]', 'ITT [deg.C]', 'FC [kg/hod]', 'SP [kW]']
     yRanges = [[0, 5000], [0, 500], [60, 110], [0, 3500], [0, 2200], [0, 800], [0, 300], [0, 600]]
     multipliers = [1, 1, 1, 1, 1, 1, 1, 1000]

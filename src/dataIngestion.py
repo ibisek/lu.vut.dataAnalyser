@@ -140,6 +140,8 @@ if __name__ == '__main__':
                     # plotChannelsOfInterest(rawDataFrame, fileName, suffix='raw')
                     # plotChannelsOfInterest(filteredDataFrame, fileName, suffix='filtered')
                     # plotChannelsOfInterest(standardisedDataFrame, fileName, suffix='std')
+
+                    plotChannelsOfInterestMultiY(rawDataFrame, fileName, suffix='flightOverview-raw')
                     plotChannelsOfInterestMultiY(filteredDataFrame, fileName, suffix='flightOverview-filtered')
                     plotChannelsOfInterestMultiY(standardisedDataFrame, fileName, suffix='flightOverview-reduced', reducedChannels=True)
 
@@ -157,6 +159,6 @@ if __name__ == '__main__':
                 # doRegression(standardisedDataFrame, fileName)
                 # doRegressionOnSteadySections(standardisedDataFrame, fileName)
                 # doRegressionOnSteadyAllSectionsCombined(standardisedDataFrame, fileName)
-                doRegressionOnSteadySectionsAvgXY(standardisedDataFrame, fileName)
+                # doRegressionOnSteadySectionsAvgXY(standardisedDataFrame, fileName)
 
     print('Finished for now.')
