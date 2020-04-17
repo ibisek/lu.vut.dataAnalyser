@@ -120,6 +120,13 @@ if __name__ == '__main__':
 
                 standardisedDataFrame = standardiseData(filteredDataFrame, fileName)
 
+                standardisedDataFrame = omitRowsBelowThresholds(standardisedDataFrame, fileName)
+
+                # analyseCorrelations(filteredDataFrame, fileName)
+
+                SteadyStatesDetector(windowDt=STEADY_STATE_WINDOW_LEN, dVal=STEADY_STATE_DVAL).detectSteadyStates(standardisedDataFrame, fileName)
+                # _displaySteadyStateDetection(standardisedDataFrame, fileName)
+
                 try:
                     # plotChannelsOfInterest(rawDataFrame, fileName, suffix='raw')
                     # plotChannelsOfInterest(filteredDataFrame, fileName, suffix='filtered')
@@ -131,14 +138,6 @@ if __name__ == '__main__':
 
                 except Exception as e:
                     print("[ERROR]", e)
-
-                standardisedDataFrame = omitRowsBelowThresholds(standardisedDataFrame, fileName)
-
-                # analyseCorrelations(filteredDataFrame, fileName)
-
-                SteadyStatesDetector(windowDt=STEADY_STATE_WINDOW_LEN, dVal=STEADY_STATE_DVAL).detectSteadyStates(standardisedDataFrame, fileName)
-
-                _displaySteadyStateDetection(standardisedDataFrame, fileName)
 
                 # doRegression(standardisedDataFrame, fileName)
                 # doRegressionOnSteadySections(standardisedDataFrame, fileName)
