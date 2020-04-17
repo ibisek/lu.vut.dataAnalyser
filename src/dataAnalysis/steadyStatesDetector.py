@@ -177,12 +177,14 @@ class SteadyStatesDetector(object):
                 numPoints = endIndex - startIndex
                 if numPoints >= 4:  # ignore data-sparse intervals:
                     d = dict()
-                    d["startIndex"] = startIndex
-                    d["endIndex"] = endIndex
-                    d["startTime"] = str(dataFrame.index[startIndex])
-                    d["endTime"] = str(dataFrame.index[endIndex])
-                    d["duration"] = dt.seconds
-                    d["avgVals"] = avgVals
+                    d['startIndex'] = startIndex
+                    d['endIndex'] = endIndex
+                    d['startTime'] = str(dataFrame.index[startIndex])
+                    d['endTime'] = str(dataFrame.index[endIndex])
+                    d['duration'] = dt.seconds
+                    d['avgVals'] = avgVals
+                    d['startTime'] = str(dataFrame.index[startIndex])
+                    d['endTime'] = str(dataFrame.index[endIndex])
                     results.append(d)
 
                 startIndex = endIndex + 1

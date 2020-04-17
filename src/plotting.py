@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from configuration import OUT_PATH
 from fileUtils import composeFilename, loadSteadyStates
-from dataAnalysis.steadyStatesUtils import indexWithinSteadyState
+from dataAnalysis.steadyStatesUtils import rowWithinSteadyState
 
 from mpl_toolkits.axes_grid1 import host_subplot
 import mpl_toolkits.axisartist as AA
@@ -67,7 +67,7 @@ def plotChannelsOfInterestMultiY(dataFrame, originalFileName, suffix='', reduced
     numRows = len(dataFrame)
     arr = np.zeros([numRows])
     for i in range(numRows):
-        arr[i] = 1 if indexWithinSteadyState(intervals, i) else 0
+        arr[i] = 1 if rowWithinSteadyState(intervals, dataFrame.iloc[i]) else 0
     dataFrame = dataFrame.assign(SS=arr)
 
     plt.figure(figsize=[18, 10])

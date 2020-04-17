@@ -1,6 +1,7 @@
 
 import os
 import json
+import pandas as pd
 
 from configuration import OUT_PATH
 
@@ -22,6 +23,11 @@ def loadSteadyStates(originalFileName: str):
     except Exception as ex:
         print(f"[ERROR] when loading steady states from '{fn}':\n" + str(ex))
         return []
+
+    # convert time-fields from str to Timestamp:
+    for interval in intervals:
+        interval['startTime'] = pd.to_datetime(interval['startTime'], format="%Y-%m-%d %H:%M:%S")
+        interval['endTime'] = pd.to_datetime(interval['endTime'], format="%Y-%m-%d %H:%M:%S")
 
     return intervals
 

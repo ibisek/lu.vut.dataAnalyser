@@ -1,5 +1,8 @@
 
-def indexWithinSteadyState(intervals:list, index:int):
+from pandas.core.series import Series
+
+
+def rowWithinSteadyState(intervals:list, row : Series):
     """
     :param intervals:
     :param index:
@@ -10,7 +13,10 @@ def indexWithinSteadyState(intervals:list, index:int):
         a = interval['startIndex']
         b = interval['endIndex']
 
-        if a <= index <= b:
+        # if a <= index <= b:
+        #     return True
+
+        if interval['startTime'] < row.name < interval['endTime']:
             return True
 
     return False

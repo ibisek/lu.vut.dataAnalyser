@@ -13,7 +13,7 @@ import numpy as np
 import matplotlib.dates as mdates
 
 from fileUtils import composeFilename, loadSteadyStates
-from dataAnalysis.steadyStatesUtils import indexWithinSteadyState
+from dataAnalysis.steadyStatesUtils import rowWithinSteadyState
 from configuration import IN_PATH, OUT_PATH, NG_THRESHOLD, SP_THRESHOLD, \
     KEYS_FOR_STEADY_STATE_DETECTION, STEADY_STATE_WINDOW_LEN, STEADY_STATE_DVAL
 
