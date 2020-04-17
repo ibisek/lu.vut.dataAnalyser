@@ -23,13 +23,13 @@ CONST_R = 287.03    # universal gas constant [J/kg/K]
 NOMINAL_DATA = {
     't0': 15,           # [deg.C]
     'P0': 101325,       # [Pa]
-    'NG': 95,           # [%]   97.8% | 95%
+    'NG': 91,           # [%]   97.8% | 95%
     'NP': 2086,         # [1/min]
     'FC': 215.52,       # [kg/h]
     'ITT': 674,         # [deg.C]
     'TQ': 2740,         # [Nm]
     'PT': 1079*1000,    # [Pa]
-    'SP': 425000,       # [W]   597000W | 425000w
+    'SP': 300000,       # [W]   597000W | 425000w
 }
 NOMINAL_DATA['ITTR'] = NOMINAL_DATA['ITT']
 NOMINAL_DATA['SPR'] = NOMINAL_DATA['SP']
