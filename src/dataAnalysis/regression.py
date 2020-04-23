@@ -93,7 +93,7 @@ def doRegressionForKeys(dataFrame: DataFrame, originalFileName: str, yKey, xKeys
         model = LinearRegression()
         model.fit(x, y)
         yPred = model.predict(x)
-        coefsStr = ";".join(f"{x:0.6f}" for x in model.coef_)
+        coefsStr = ";".join(f"{x:0.6f}" for x in model.coef_) if len(xKeys) == 1 else "cannot.. multidim"
 
     else:
         poly = PolynomialFeatures(degree=2)    # 10 looks awright! :)
@@ -102,14 +102,14 @@ def doRegressionForKeys(dataFrame: DataFrame, originalFileName: str, yKey, xKeys
         model = make_pipeline(poly, regressor)
         model.fit(x, y)
         yPred = model.predict(x)
-        coefsStr = ";".join(f"{x:0.6f}" for x in regressor.coef_)
+        coefsStr = ";".join(f"{x:0.6f}" for x in regressor.coef_) if len(xKeys) == 1 else "cannot.. multidim"
 
     # dataFrame['yPred'] = yPred
-    dataFrame = dataFrame.assign(yPred = yPred)
+    # dataFrame = dataFrame.assign(yPred = yPred)
 
     print("COEFs;", coefsStr)
 
-    if plot:
+    if plot and len(xKeys) == 1:    # dunno how to display multidim array :P
         plt.close('all')
 
         try:
@@ -221,6 +221,7 @@ def doRegressionOnSteadyAllSectionsCombined(dataFrame: DataFrame, originalFileNa
 
 def doRegressionOnSteadySectionsAvgXY(dataFrame: DataFrame, originalFileName: str):
     """
+    Single dimensional regression Y = fn(X)
     :param dataFrame:
     :param originalFileName:
     :return:
@@ -282,3 +283,60 @@ def doRegressionOnSteadySectionsAvgXY(dataFrame: DataFrame, originalFileName: st
         # unitId = unitRunId[:unitRunId.index('_')]
         # unitLogFilename = f"{unitId}-analyses.csv"
 
+
+def doRegressionOnSteadySectionsAvgXXXY(dataFrame: DataFrame, originalFileName: str):
+    """
+    Multi dimensional regression Y = fn(X1, X2, ..)
+    :param dataFrame:
+    :param originalFileName:
+    :return:
+    """
+    intervals = loadSteadyStates(originalFileName)
+    numIntervals = len(intervals)
+
+    l = list()  # Y = fn(X1, X2, ..)
+
+    l.append(('ITT', ['NG', 'TQR', 'SPR', 'NGR']))
+    # l.append(('ITTR', ['NG', 'TQR', 'SPR', 'NGR']))
+
+    for yKey, xKeys in l:
+
+        df = pd.DataFrame()
+        allKeys = xKeys.copy()
+        allKeys.append(yKey)
+
+        arr = np.zeros([numIntervals, len(xKeys) + 1])   # (x1, x2, .. , y)
+        for row, interval in enumerate(intervals, start=0):
+            startIndex = interval['startIndex']
+            endIndex = interval['endIndex']
+
+            sectionDf = dataFrame.iloc[startIndex:endIndex, :]
+
+            df = df.append(sectionDf[allKeys])
+
+        # and now do the regression:
+        model = doRegressionForKeys(df, originalFileName, yKey, xKeys, fileNameSuffix='')
+        if not model:
+            return False
+
+        xVals = [NOMINAL_DATA[key] for key in xKeys]
+
+        mins = df[xKeys].min()
+        maxs = df[xKeys].max()
+
+        # print(f"[INFO] REGRESSION in; {originalFileName}; of; {yKey} = fn ({xKeys}); {xVals}; into range; {mins:.02f}; {maxs:.02f}")
+        #
+        # if xVal < min or xVal > max:
+        #     print(f"[WARN] Omitting; {yKey} = fn ({xKey}); {xVal} not in range <{min:.02f}, {max:.02f}>")
+        #     continue
+
+        # [v for k, v in NOMINAL_DATA.items() if k in xKeys]
+        yVal = model.predict([xVals])[0]
+        delta = yVal - NOMINAL_DATA[yKey]
+        deltaPct = (yVal-NOMINAL_DATA[yKey])/NOMINAL_DATA[yKey] * 100
+
+        unitRunId = originalFileName[:originalFileName.index('.')]
+        print(f"PRED; {unitRunId}; {yKey} = fn ({','.join(xKeys)}); {yVal:.2f}; shall be; {NOMINAL_DATA[yKey]:.2f}; delta; {delta:.2f}; deltaPct; {deltaPct:.2f}")
+
+        # unitId = unitRunId[:unitRunId.index('_')]
+        # unitLogFilename = f"{unitId}-analyses.csv"

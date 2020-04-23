@@ -24,7 +24,7 @@ from dataPreprocessing.dataStandartisation import standardiseData
 from dataAnalysis.limitingStateDetector import detectLimitingStates
 from dataAnalysis.steadyStatesDetector import SteadyStatesDetector
 from dataAnalysis.correlations import analyseCorrelations
-from dataAnalysis.regression import doRegression, doRegressionOnSteadySections, doRegressionOnSteadyAllSectionsCombined, doRegressionOnSteadySectionsAvgXY
+from dataAnalysis.regression import doRegression, doRegressionOnSteadySections, doRegressionOnSteadyAllSectionsCombined, doRegressionOnSteadySectionsAvgXY, doRegressionOnSteadySectionsAvgXXXY
 
 
 def omitRowsBelowThresholds(dataFrame:DataFrame, originalFileName:str, ngThreshold=NG_THRESHOLD, spThreshold=SP_THRESHOLD):
@@ -127,21 +127,22 @@ if __name__ == '__main__':
                 SteadyStatesDetector(windowDt=STEADY_STATE_WINDOW_LEN, dVal=STEADY_STATE_DVAL).detectSteadyStates(standardisedDataFrame, fileName)
                 # _displaySteadyStateDetection(standardisedDataFrame, fileName)
 
-                try:
-                    # plotChannelsOfInterest(rawDataFrame, fileName, suffix='raw')
-                    # plotChannelsOfInterest(filteredDataFrame, fileName, suffix='filtered')
-                    # plotChannelsOfInterest(standardisedDataFrame, fileName, suffix='std')
-
-                    plotChannelsOfInterestMultiY(rawDataFrame, fileName, suffix='flightOverview-raw')
-                    plotChannelsOfInterestMultiY(filteredDataFrame, fileName, suffix='flightOverview-filtered')
-                    plotChannelsOfInterestMultiY(standardisedDataFrame, fileName, suffix='flightOverview-reduced', reducedChannels=True)
-
-                except Exception as e:
-                    print("[ERROR]", e)
+                # try:
+                #     # plotChannelsOfInterest(rawDataFrame, fileName, suffix='raw')
+                #     # plotChannelsOfInterest(filteredDataFrame, fileName, suffix='filtered')
+                #     # plotChannelsOfInterest(standardisedDataFrame, fileName, suffix='std')
+                #
+                #     plotChannelsOfInterestMultiY(rawDataFrame, fileName, suffix='flightOverview-raw')
+                #     plotChannelsOfInterestMultiY(filteredDataFrame, fileName, suffix='flightOverview-filtered')
+                #     plotChannelsOfInterestMultiY(standardisedDataFrame, fileName, suffix='flightOverview-reduced', reducedChannels=True)
+                #
+                # except Exception as e:
+                #     print("[ERROR]", e)
 
                 # doRegression(standardisedDataFrame, fileName)
                 # doRegressionOnSteadySections(standardisedDataFrame, fileName)
                 # doRegressionOnSteadyAllSectionsCombined(standardisedDataFrame, fileName)
                 # doRegressionOnSteadySectionsAvgXY(standardisedDataFrame, fileName)
+                doRegressionOnSteadySectionsAvgXXXY(standardisedDataFrame, fileName)
 
     print('Finished for now.')
