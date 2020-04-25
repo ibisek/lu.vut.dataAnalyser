@@ -88,12 +88,12 @@ def doRegressionForKeys(dataFrame: DataFrame, originalFileName: str, yKey, xKeys
     coefsStr = "coefs unknown"
     yPred = None
     model = None
-    goLinear = False
+    goLinear = True
     if goLinear:
         model = LinearRegression()
         model.fit(x, y)
         yPred = model.predict(x)
-        coefsStr = ";".join(f"{x:0.6f}" for x in model.coef_) if len(xKeys) == 1 else "cannot.. multidim"
+        coefsStr = ";".join(f"{x:0.6f}" for x in model.coef_) if len(xKeys) == 1 else None
 
     else:
         poly = PolynomialFeatures(degree=2)    # 10 looks awright! :)
@@ -102,12 +102,13 @@ def doRegressionForKeys(dataFrame: DataFrame, originalFileName: str, yKey, xKeys
         model = make_pipeline(poly, regressor)
         model.fit(x, y)
         yPred = model.predict(x)
-        coefsStr = ";".join(f"{x:0.6f}" for x in regressor.coef_) if len(xKeys) == 1 else "cannot.. multidim"
+        coefsStr = ";".join(f"{x:0.6f}" for x in regressor.coef_) if len(xKeys) == 1 else None
 
     # dataFrame['yPred'] = yPred
     # dataFrame = dataFrame.assign(yPred = yPred)
 
-    print("COEFs;", coefsStr)
+    if coefsStr:    # if none -> multidimensional - can be shown but is useless
+        print("COEFs;", coefsStr)
 
     if plot and len(xKeys) == 1:    # dunno how to display multidim array :P
         plt.close('all')
@@ -296,8 +297,23 @@ def doRegressionOnSteadySectionsAvgXXXY(dataFrame: DataFrame, originalFileName: 
 
     l = list()  # Y = fn(X1, X2, ..)
 
-    l.append(('ITT', ['NG', 'TQR', 'SPR', 'NGR']))
+    # l.append(('ITT', ['NG', 'TQR', 'SPR', 'NGR']))
     # l.append(('ITTR', ['NG', 'TQR', 'SPR', 'NGR']))
+
+    # l.append(('ITTR', ['NGR', 'P0', 'T0']))   # lepsi 1+2
+    # l.append(('ITT', ['NG', 'P0', 'T0']))
+
+    # l.append(('ITTR', ['SPR', 'P0', 'T0']))   # lepsi 1; 21% vs 34
+    # l.append(('ITT', ['SP', 'P0', 'T0']))     # lepsi 2; 0.1% vs 0.6%
+
+    # l.append(('FCR', ['NGR', 'P0', 'T0']))
+    # l.append(('FC', ['NG', 'P0', 'T0']))    # lepsi 1+2
+
+    # l.append(('FCR', ['SPR', 'P0', 'T0']))
+    # l.append(('FC', ['SP', 'P0', 'T0']))      # lepsi 1+2;
+
+    l.append(('SPR', ['NGR', 'P0', 'T0']))  # lepsi 2; o chlup
+    l.append(('SP', ['NG', 'P0', 'T0']))    # lepsi 1
 
     for yKey, xKeys in l:
 
