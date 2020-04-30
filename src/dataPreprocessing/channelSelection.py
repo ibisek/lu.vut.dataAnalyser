@@ -9,7 +9,8 @@ from fileUtils import composeFilename
 
 FILE_SET_1 = ['SN131014_AT.csv', 'SN132014_AT.csv', 'SN132018_AT.csv', 'SN133005_AT.csv', 'SN141015_AT.csv', 'SN141016_AT.csv', 'SN131014_OH.csv', 'SN132014_OH.csv', 'SN132018_OH.csv', 'SN133005_OH.csv', 'SN141015_OH.csv',
               'SN141016_OH.csv', 'SN-H025P.csv', '300615x124010H85-200_BC04.csv']
-FILE_SET_2 = ['log_191023_091554.csv', 'log_191024_090031.csv', 'log_191115_082634.csv', '191023_091554.csv', '191024_090031.csv', '191115_082634.csv']
+
+FILE_SET_2 = ['log_191023_091554.csv', 'log_191024_090031.csv', 'log_191115_082634.csv']
 
 
 def _getKey(keys, k: str):
@@ -85,6 +86,7 @@ def _processFD1(df):
     ndf = ndf.astype(float)
 
     ndf['TQ'] = ndf['TQ'] * 1.3558  # [Nm]
+    ndf['FC'] = ndf['FC'] * 3.7854  # [US gph] -> [kg/h] pyca, to jsou ale jednotky!!
 
     ftAmsl = df[df.keys()[4]].astype(float)
     baroPressPreset = df[df.keys()[3]].astype(float)
