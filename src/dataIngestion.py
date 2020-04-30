@@ -125,24 +125,24 @@ if __name__ == '__main__':
                 # analyseCorrelations(filteredDataFrame, fileName)
 
                 SteadyStatesDetector(windowDt=STEADY_STATE_WINDOW_LEN, dVal=STEADY_STATE_DVAL).detectSteadyStates(standardisedDataFrame, fileName)
-                # _displaySteadyStateDetection(standardisedDataFrame, fileName)
+                _displaySteadyStateDetection(standardisedDataFrame, fileName)
 
-                # try:
+                try:
                 #     # plotChannelsOfInterest(rawDataFrame, fileName, suffix='raw')
                 #     # plotChannelsOfInterest(filteredDataFrame, fileName, suffix='filtered')
                 #     # plotChannelsOfInterest(standardisedDataFrame, fileName, suffix='std')
                 #
-                #     plotChannelsOfInterestMultiY(rawDataFrame, fileName, suffix='flightOverview-raw')
-                #     plotChannelsOfInterestMultiY(filteredDataFrame, fileName, suffix='flightOverview-filtered')
-                #     plotChannelsOfInterestMultiY(standardisedDataFrame, fileName, suffix='flightOverview-reduced', reducedChannels=True)
-                #
-                # except Exception as e:
-                #     print("[ERROR]", e)
+                    plotChannelsOfInterestMultiY(rawDataFrame, fileName, suffix='flightOverview-raw')
+                    plotChannelsOfInterestMultiY(filteredDataFrame, fileName, suffix='flightOverview-filtered')
+                    plotChannelsOfInterestMultiY(standardisedDataFrame, fileName, suffix='flightOverview-reduced', reducedChannels=True)
+
+                except Exception as e:
+                    print("[ERROR]", e)
 
                 # doRegression(standardisedDataFrame, fileName)
                 # doRegressionOnSteadySections(standardisedDataFrame, fileName)
                 # doRegressionOnSteadyAllSectionsCombined(standardisedDataFrame, fileName)
                 # doRegressionOnSteadySectionsAvgXY(standardisedDataFrame, fileName)
-                doRegressionOnSteadySectionsAvgXXXY(standardisedDataFrame, fileName)
+                # doRegressionOnSteadySectionsAvgXXXY(standardisedDataFrame, fileName)
 
     print('Finished for now.')
