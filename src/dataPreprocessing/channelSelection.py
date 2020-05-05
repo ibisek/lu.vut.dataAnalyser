@@ -50,7 +50,9 @@ def _processFS1(df):
     ndf = ndf.assign(P0=df.get('P0 (kPa)', NOMINAL_DATA['P0']/1000))  # tlak okolniho vzduchu [kPa]
     ndf = ndf.assign(PT=df['Pt (kPa)'])  # tlak v torkmetru, tj. v meraku krouticiho momentu [kPa]
     ndf = ndf.assign(T0=df.get(_getKey(df.keys(), 't1'), NOMINAL_DATA['T0']))  # teplota okolniho vzduchu
-    ndf = ndf.assign(NP=df['nV (1/min)'])  # tocky vrtule
+    ndf = ndf.assign(NP=df['nV (1/min)'])   # tocky vrtule
+    ndf = ndf.assign(T2=df['t2c (°C)'])     # teplota na vystupu z kompresoru
+    ndf = ndf.assign(P2=df['P2 (kPa)'])     # staticky tlak za kompresorem
     # ndf = ndf.assign(povv=df['Povv (kPa)'])  # tlak odpousteciho ventilu [kPa]
 
     ndf = ndf.astype(float)
