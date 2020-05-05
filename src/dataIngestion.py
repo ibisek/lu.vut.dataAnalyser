@@ -126,7 +126,7 @@ if __name__ == '__main__':
                 # analyseCorrelations(filteredDataFrame, fileName)
 
                 SteadyStatesDetector(windowDt=STEADY_STATE_WINDOW_LEN, dVal=STEADY_STATE_DVAL).detectSteadyStates(filteredDataFrame, fileName)
-                _displaySteadyStateDetection(standardisedDataFrame, fileName)
+                # _displaySteadyStateDetection(standardisedDataFrame, fileName)
 
                 # try:
                 #     # plotChannelsOfInterest(rawDataFrame, fileName, suffix='raw')
