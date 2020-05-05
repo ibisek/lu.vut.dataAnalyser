@@ -62,21 +62,26 @@ def doRegression1(dataFrame: DataFrame, originalFileName: str):
         print('ON SCREEN')
 
 
-def doRegressionForKeys(dataFrame: DataFrame, originalFileName: str, yKey, xKeys, fileNameSuffix='', plot=True):
+def doRegressionForKeys(dataFrame: DataFrame, originalFileName: str, yKey: str, xKeys: list,
+                        fileNameSuffix='', plot=True, saveDataToFile=True):
     """
     * Multidimensional regression through the entire flight.
     * Multidimensional regression where NG >= 90%
     :param dataFrame:
     :param originalFileName:
+    :param yKey
+    :param xKeys
     :param fileNameSuffix
+    :param plot
+    :param saveDataToFile
     :return:
     """
-    keys = ['NG', 'TQ', 'FF', 'ITT', 'p0', 'pt', 't1', 'NP', 'P']
+    # keys = ['NG', 'TQ', 'FF', 'ITT', 'p0', 'pt', 't1', 'NP', 'P']
     #         0     1     2     3     4      5     6     7    8
 
     # dataFrame = dataFrame.fillna(0)
     # dataFrame = dataFrame.interpolate()
-    dataFrame = dataFrame.dropna()
+    dataFrame.dropna(inplace=True)
 
     if len(dataFrame) == 0:
         print('[WARN] no data left to regress!')
@@ -88,7 +93,7 @@ def doRegressionForKeys(dataFrame: DataFrame, originalFileName: str, yKey, xKeys
     coefsStr = "coefs unknown"
     yPred = None
     model = None
-    goLinear = True
+    goLinear = False
     if goLinear:
         model = LinearRegression()
         model.fit(x, y)
@@ -104,8 +109,17 @@ def doRegressionForKeys(dataFrame: DataFrame, originalFileName: str, yKey, xKeys
         yPred = model.predict(x)
         coefsStr = ";".join(f"{x:0.6f}" for x in regressor.coef_) if len(xKeys) == 1 else None
 
-    # dataFrame['yPred'] = yPred
-    # dataFrame = dataFrame.assign(yPred = yPred)
+    dataFrame['yPred'] = yPred
+    # dataFrame = dataFrame.assign(yPred=yPred)
+
+    xKeysStr = ",".join(xKeys)
+
+    if saveDataToFile:
+        suffix = f"{yKey}=fn({xKeysStr})"
+        suffix += "-lin" if goLinear else "-poly"
+        fn = composeFilename(originalFileName, suffix, 'csv')
+        print(f"[INFO] Saving regressed dataFrame to '{fn}'")
+        dataFrame[xKeys + [yKey, 'yPred']].to_csv(fn, sep=';')
 
     if coefsStr:    # if none -> multidimensional - can be shown but is useless
         print("COEFs;", coefsStr)
@@ -123,11 +137,13 @@ def doRegressionForKeys(dataFrame: DataFrame, originalFileName: str, yKey, xKeys
 
                 # nicer plotting:
                 cols = [yKey, 'yPred']
-                markers = ['x', '+']
+                markers = ['+', '.']
+                markerSizes = [4, 4]
                 lineStyles = ['', ':']
                 fig, ax = plt.subplots()
-                for col, marker, lineStyle, in zip(cols, markers, lineStyles):
-                    dataFrame.plot(xKeys[0], y=[col], marker=marker, markersize=8, ls=lineStyle, lw=1, ax=ax)
+                for col, marker, markerSize, lineStyle, in zip(cols, markers, markerSizes, lineStyles):
+                    dataFrame.plot(xKeys[0], y=[col], marker=marker, markersize=markerSize, ls=lineStyle, lw=1, ax=ax)
+                    ax.legend()  # to redraw the legend and to show also the plain markers in the legend
 
                 xKey = xKeys[0]
                 plt.xlabel(f"{xKey} [{UNITS[xKey]}]")
@@ -138,9 +154,7 @@ def doRegressionForKeys(dataFrame: DataFrame, originalFileName: str, yKey, xKeys
                 dataFrame[[yKey, 'yPred']].plot(marker='.', markersize=1, linestyle='')
                 plt.xlabel('date-time')
 
-            xKeysStr = ",".join(xKeys)
-
-            plt.title(f"{yKey}  = fn({xKeysStr})")     # \nk={coefsStr}
+            plt.title(f"{yKey} = fn({xKeysStr})")     # \nk={coefsStr}
             plt.ylabel(yKey)
             # plt.show()
 
@@ -149,8 +163,8 @@ def doRegressionForKeys(dataFrame: DataFrame, originalFileName: str, yKey, xKeys
             fn = composeFilename(originalFileName, suffix, 'png')
             plt.savefig(fn, dpi=300)
 
-        except KeyError:
-            pass  # raised upon plotting X=X
+        except KeyError as e:   # often raised upon plotting X=X
+            print('[ERROR] in regression plot', e)
 
     return model
 
@@ -232,57 +246,85 @@ def doRegressionOnSteadySectionsAvgXY(dataFrame: DataFrame, originalFileName: st
 
     l = list()  # Y = fn(X)
 
-    l.append(('FC', 'SP'))
-    l.append(('NG', 'SP'))
-    l.append(('ITT', 'SP'))
-    l.append(('ITT', 'NG'))
+    # l.append(('FC', 'SP'))
+    # l.append(('NG', 'SP'))
+    # l.append(('ITT', 'SP'))
+    # l.append(('ITT', 'NG'))
 
-    l.append(('FCR', 'SPR'))
-    l.append(('NGR', 'SPR'))
-    l.append(('ITTR', 'SPR'))
-    l.append(('ITTR', 'NGR'))
+    # l.append(('FCR', 'SPR'))
+    # l.append(('NGR', 'SPR'))
+    # l.append(('ITTR', 'SPR'))
+    # l.append(('ITTR', 'NGR'))
+
+    l.append(('SPR', 'PK0C'))   # 1
+    l.append(('SPR', 'NGR'))    # 2
+    l.append(('ITT', 'NG'))     # 3
+    l.append(('FCR', 'SPR'))    # 4
+    l.append(('FCR', 'ITTR'))   # 5
+    l.append(('FCR', 'PK0C'))   # 6
+    l.append(('FCR', 'NGR'))    # 8
+    l.append(('PK0C', 'NGR'))   # 10
+    if 'T2' in dataFrame.keys():
+        l.append(('FCR', 'T2'))  # 7
+        l.append(('PK0C', 'T2'))  # 9
+        l.append(('T2', 'NGR'))     # 11
 
     for yKey, xKey in l:
-        arr = np.zeros([numIntervals, 2])   # (x, y)
+        df = pd.DataFrame()
+        allKeys = [xKey, yKey]
+
+        # use all data from the steady state for the regression:
         for row, interval in enumerate(intervals, start=0):
             startIndex = interval['startIndex']
             endIndex = interval['endIndex']
 
             sectionDf = dataFrame.iloc[startIndex:endIndex, :]
 
-            arr[row, 0] = np.average(sectionDf[xKey].values)
-            arr[row, 1] = np.average(sectionDf[yKey].values)
+            df = df.append(sectionDf[allKeys])
 
-        df = pd.DataFrame(data=arr)     # numpy array to df
-        df.rename(columns={0: xKey, 1: yKey}, inplace=True)     # set correct col names/keys
-        df.sort_values(by=[xKey], inplace=True)   # sort order by X value (so they don't make loops on the chart)
+        # use just average values from the steady state for the regression:
+        # arr = np.zeros([numIntervals, 2])   # (x, y)
+        # for row, interval in enumerate(intervals, start=0):
+        #     startIndex = interval['startIndex']
+        #     endIndex = interval['endIndex']
+        #
+        #     sectionDf = dataFrame.iloc[startIndex:endIndex, :]
+        #
+        #     arr[row, 0] = np.average(sectionDf[xKey].values)
+        #     arr[row, 1] = np.average(sectionDf[yKey].values)
+        #
+        # df = pd.DataFrame(data=arr)     # numpy array to df
+        # df.rename(columns={0: xKey, 1: yKey}, inplace=True)     # set correct col names/keys
+        # df.sort_values(by=[xKey], inplace=True)   # sort order by X value (so they don't make loops on the chart)
 
         # and now do the regression:
         model = doRegressionForKeys(df, originalFileName, yKey, [xKey], fileNameSuffix='')
         if not model:
             continue
 
-        xVal = NOMINAL_DATA[xKey]
+        if xKey in NOMINAL_DATA:
+            xVal = NOMINAL_DATA[xKey]
 
-        min = df[xKey].min()
-        max = df[xKey].max()
+            min = df[xKey].min()
+            max = df[xKey].max()
 
-        print(f"[INFO] REGRESSION in; {originalFileName}; of; {yKey} = fn ({xKey}); {xVal}; into range; {min:.02f}; {max:.02f}")
+            print(f"[INFO] REGRESSION in; {originalFileName}; of; {yKey} = fn ({xKey}); {xVal}; into range; {min:.02f}; {max:.02f}")
 
-        if xVal < min or xVal > max:
-            print(f"[WARN] Omitting; {yKey} = fn ({xKey}); {xVal} not in range <{min:.02f}, {max:.02f}>")
-            continue
+            if xVal < min or xVal > max:
+                print(f"[WARN] Omitting; {yKey} = fn ({xKey}); {xVal} not in range <{min:.02f}, {max:.02f}>")
+                continue
 
-        # [v for k, v in NOMINAL_DATA.items() if k in xKeys]
-        yVal = model.predict([[xVal]])[0]
-        delta = yVal - NOMINAL_DATA[yKey]
-        deltaPct = (yVal-NOMINAL_DATA[yKey])/NOMINAL_DATA[yKey] * 100
+            # [v for k, v in NOMINAL_DATA.items() if k in xKeys]
+            yVal = model.predict([[xVal]])[0]
+            # delta = yVal - NOMINAL_DATA[yKey]
+            # deltaPct = (yVal-NOMINAL_DATA[yKey])/NOMINAL_DATA[yKey] * 100
 
-        unitRunId = originalFileName[:originalFileName.index('.')]
-        print(f"PRED; {unitRunId}; {yKey} = fn ({xKey}); {yVal:.2f}; shall be; {NOMINAL_DATA[yKey]:.2f}; delta; {delta:.2f}; deltaPct; {deltaPct:.2f}")
+            unitRunId = originalFileName[:originalFileName.index('.')]
+            print(f"PRED; {unitRunId}; {yKey} = fn ({xKey}); {yVal:.2f}")
+            # print(f"PRED; {unitRunId}; {yKey} = fn ({xKey}); {yVal:.2f}; shall be; {NOMINAL_DATA[yKey]:.2f}; delta; {delta:.2f}; deltaPct; {deltaPct:.2f}")
 
-        # unitId = unitRunId[:unitRunId.index('_')]
-        # unitLogFilename = f"{unitId}-analyses.csv"
+            # unitId = unitRunId[:unitRunId.index('_')]
+            # unitLogFilename = f"{unitId}-analyses.csv"
 
 
 def doRegressionOnSteadySectionsAvgXXXY(dataFrame: DataFrame, originalFileName: str):
@@ -321,7 +363,7 @@ def doRegressionOnSteadySectionsAvgXXXY(dataFrame: DataFrame, originalFileName: 
         allKeys = xKeys.copy()
         allKeys.append(yKey)
 
-        arr = np.zeros([numIntervals, len(xKeys) + 1])   # (x1, x2, .. , y)
+        # arr = np.zeros([numIntervals, len(xKeys) + 1])   # (x1, x2, .. , y)
         for row, interval in enumerate(intervals, start=0):
             startIndex = interval['startIndex']
             endIndex = interval['endIndex']
