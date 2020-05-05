@@ -38,8 +38,10 @@ NOMINAL_DATA['FCR'] = NOMINAL_DATA['FC']
 NOMINAL_DATA['TQR'] = NOMINAL_DATA['TQ']
 
 UNITS = {
-    't0': 'deg.C',
+    'T0': 'deg.C',
+    'T2': 'deg.C',
     'P0': 'Pa',
+    'P2': 'Pa',
     'NG': '%',
     'NP': '1/min',
     'FC': 'kg/h',
@@ -54,6 +56,7 @@ UNITS = {
     'NPR': '1/min',
     'FCR': 'kg/h',
     'SPR': 'W',
+    'NGR': '%',
 }
 
 # ['NG', 'TQ', 'FC', 'ITT', 'P0', 'PT', 'T1', 'NP']
