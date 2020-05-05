@@ -2,10 +2,10 @@
 from pandas.core.series import Series
 
 
-def rowWithinSteadyState(intervals:list, row : Series):
+def rowWithinSteadyState(intervals: list, row: Series):
     """
     :param intervals:
-    :param index:
+    :param row:
     :return: True if index falls within a steady state
     """
 
