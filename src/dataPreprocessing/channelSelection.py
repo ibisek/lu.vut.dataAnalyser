@@ -42,6 +42,20 @@ def _processFS1(df):
     # dataFrame = df[keys]
     # print("## NARROW-DOWN HEAD:\n", dataFrame.head())
 
+    # obcas je v tech datech pekny bordel..
+    # v SN132014_OH.csv SN133005_OH.csv SN141015_OH.csv vubec neni t2 a/nebo p2!!
+    key_t2 = None
+    for key in ['t2c (řC)', 't2c (°C)', 't2c(°C)', 't2c (ˇC)', 't2c (ďż˝C)',
+                't3c (řC)', 't3c (°C)', 't3c(°C)', 't3c (ˇC)']:
+        if key in df.keys():
+            key_t2 = key
+            break
+
+    if not key_t2:
+        print("## T2 KEYz:", df.keys()[10:20])
+        print("## P2 KEYz:", df.keys()[20:30])
+        pass
+
     ndf = DataFrame(index=df.index)
     ndf = ndf.assign(NG=df['nG (%)'])
     ndf = ndf.assign(TQ=df['Mk (Nm)'])  # ft lbs -> Nm; * 1.3558
@@ -51,18 +65,17 @@ def _processFS1(df):
     ndf = ndf.assign(PT=df['Pt (kPa)'])  # tlak v torkmetru, tj. v meraku krouticiho momentu [kPa]
     ndf = ndf.assign(T0=df.get(_getKey(df.keys(), 't1'), NOMINAL_DATA['T0']))  # teplota okolniho vzduchu
     ndf = ndf.assign(NP=df['nV (1/min)'])   # tocky vrtule
-    ndf = ndf.assign(T2=df['t2c (°C)'])     # teplota na vystupu z kompresoru
-    ndf = ndf.assign(P2=df['P2 (kPa)'])     # staticky tlak za kompresorem
+    if key_t2:
+        ndf = ndf.assign(T2=df[key_t2])     # teplota na vystupu z kompresoru
+    ndf = ndf.assign(P2=df['P2 (kPa)'])     # staticky tlak za kompresorem [Pa]
     # ndf = ndf.assign(povv=df['Povv (kPa)'])  # tlak odpousteciho ventilu [kPa]
 
     ndf = ndf.astype(float)
 
-    ndf['P0'] = ndf['P0'] * 1000  # [Pa]
-    ndf['PT'] = ndf['PT'] * 1000  # [Pa]
+    ndf['P0'] = ndf['P0'] * 1000  # [kPa] -> [Pa]
+    ndf['PT'] = ndf['PT'] * 1000  # [kPa] -> [Pa]
+    ndf['P2'] = ndf['P2'] * 1000  # [kPa] -> [Pa]
     # ndf['povv'] = ndf['povv'] * 1000  # [Pa]
-
-    ndf['TQ'] = ndf['TQ'] * 1.3558  # [Nm]
-    ndf['FC'] = ndf['FC'] * 3.7854  # [US gph] -> [kg/h] pyca, to jsou ale jednotky!!
 
     # Calculated Shaft Power - SP [W]:
     ndf['SP'] = ndf['TQ'] * 2 * math.pi * ndf['NP'] / 60
