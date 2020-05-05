@@ -256,18 +256,19 @@ def doRegressionOnSteadySectionsAvgXY(dataFrame: DataFrame, originalFileName: st
     # l.append(('ITTR', 'SPR'))
     # l.append(('ITTR', 'NGR'))
 
-    l.append(('SPR', 'PK0C'))   # 1
     l.append(('SPR', 'NGR'))    # 2
     l.append(('ITT', 'NG'))     # 3
     l.append(('FCR', 'SPR'))    # 4
     l.append(('FCR', 'ITTR'))   # 5
-    l.append(('FCR', 'PK0C'))   # 6
     l.append(('FCR', 'NGR'))    # 8
-    l.append(('PK0C', 'NGR'))   # 10
-    if 'T2' in dataFrame.keys():
-        l.append(('FCR', 'T2'))  # 7
-        l.append(('PK0C', 'T2'))  # 9
-        l.append(('T2', 'NGR'))     # 11
+    if 'PK0C' in dataFrame.keys():
+        l.append(('SPR', 'PK0C'))  # 1
+        l.append(('FCR', 'PK0C'))  # 6
+        l.append(('PK0C', 'NGR'))  # 10
+    if 'T2R' in dataFrame.keys():
+        l.append(('FCR', 'T2R'))   # 7
+        l.append(('PK0C', 'T2R'))  # 9
+        l.append(('T2R', 'NGR'))   # 11
 
     for yKey, xKey in l:
         df = pd.DataFrame()

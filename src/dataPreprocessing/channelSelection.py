@@ -67,14 +67,16 @@ def _processFS1(df):
     ndf = ndf.assign(NP=df['nV (1/min)'])   # tocky vrtule
     if key_t2:
         ndf = ndf.assign(T2=df[key_t2])     # teplota na vystupu z kompresoru
-    ndf = ndf.assign(P2=df['P2 (kPa)'])     # staticky tlak za kompresorem [Pa]
+    if 'P2 (kPa)' in df.keys():
+        ndf = ndf.assign(P2=df['P2 (kPa)'])     # staticky tlak za kompresorem [Pa]
     # ndf = ndf.assign(povv=df['Povv (kPa)'])  # tlak odpousteciho ventilu [kPa]
 
     ndf = ndf.astype(float)
 
     ndf['P0'] = ndf['P0'] * 1000  # [kPa] -> [Pa]
     ndf['PT'] = ndf['PT'] * 1000  # [kPa] -> [Pa]
-    ndf['P2'] = ndf['P2'] * 1000  # [kPa] -> [Pa]
+    if 'P2' in ndf.keys():
+        ndf['P2'] = ndf['P2'] * 1000  # [kPa] -> [Pa]
     # ndf['povv'] = ndf['povv'] * 1000  # [Pa]
 
     # Calculated Shaft Power - SP [W]:
@@ -86,7 +88,11 @@ def _processFS1(df):
     # elevation of the test-bench location (LKHK):
     ndf['ALT'] = 241
 
-    ndf['PK0C'] = ndf['P2'] / ndf['P0']
+    if 'P2' in ndf.keys():
+        ndf['PK0C'] = ndf['P2'] / ndf['P0']
+
+    if 'T2' in ndf.keys():
+        ndf['T2R'] = (ndf['T2'] + 273.15) * ((15 + 273.15) / (ndf['T0'] + 273.15)) - 273.15
 
     return ndf
 

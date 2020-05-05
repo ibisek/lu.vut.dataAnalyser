@@ -11,7 +11,7 @@ from fileUtils import composeFilename
 
 
 def readFlightData():
-    inPath = '/home/jaja/btsync/doma/radec/out-2020-05-05'
+    inPath = '/home/ibisek/btsync/doma/radec/out-2020-05-05'
     fileName = '1.csv'
 
     SKIP_ROWS = [0, 1]
@@ -24,7 +24,7 @@ def readFlightData():
     ndf = ndf.assign(ITTR=df['ITTR0'])
     ndf = ndf.assign(FCR=df['FCR0'])
     ndf = ndf.assign(PK0C=df['pK0C'])
-    ndf = ndf.assign(T2=df['T2R0'])
+    ndf = ndf.assign(T2R=df['T2R0'])
     ndf = ndf.assign(NG=df['nG'])
     ndf = ndf.assign(NGR=df['nGR0'])
 
@@ -38,7 +38,9 @@ if __name__ == '__main__':
     # 1.xlsx data:
     df1 = readFlightData()
 
-    engines = ['SN131014', 'SN132018', 'SN141016']
+    engines = ['SN131014', 'SN132018', 'SN141016',
+               'SN132014', 'SN133005', 'SN141015']
+
     functions = [
         ['SPR', 'PK0C'],    # 1
         ['SPR', 'NGR'],     # 2
@@ -46,11 +48,11 @@ if __name__ == '__main__':
         ['FCR', 'SPR'],     # 4
         ['FCR', 'ITTR'],    # 5
         ['FCR', 'PK0C'],    # 6
-        ['FCR', 'T2'],      # 7
+        ['FCR', 'T2R'],      # 7
         ['FCR', 'NGR'],     # 8
-        ['PK0C', 'T2'],     # 9
+        ['PK0C', 'T2R'],     # 9
         ['PK0C', 'NGR'],    # 10
-        ['T2', 'NGR'],      # 11
+        ['T2R', 'NGR'],      # 11
     ]
 
     for engine in engines:
@@ -63,11 +65,15 @@ if __name__ == '__main__':
 
             print(f"[INFO] engine '{engine}': {yKey} = fn({xKey})")
 
-            inPath = f"/home/jaja/wqz/prog/python/lu.vut.dataAnalyser/data/out/{engine}"
-            fileName = f"{engine}_AT-{yKey}=fn({xKey})-poly.csv"
-            dfAT = pd.read_csv(f"{inPath}/{fileName}", delimiter=CSV_DELIMITER, encoding='cp1250')
-            fileName = f"{engine}_OH-{yKey}=fn({xKey})-poly.csv"
-            dfOH = pd.read_csv(f"{inPath}/{fileName}", delimiter=CSV_DELIMITER, encoding='cp1250')
+            try:
+                inPath = f"/home/ibisek/wqz/prog/python/lu.vut.dataAnalyser/data/out/{engine}"
+                fileName = f"{engine}_AT-{yKey}=fn({xKey})-poly.csv"
+                dfAT = pd.read_csv(f"{inPath}/{fileName}", delimiter=CSV_DELIMITER, encoding='cp1250')
+                fileName = f"{engine}_OH-{yKey}=fn({xKey})-poly.csv"
+                dfOH = pd.read_csv(f"{inPath}/{fileName}", delimiter=CSV_DELIMITER, encoding='cp1250')
+            except FileNotFoundError as e:
+                print(f"[WARN] File '{fileName}' not available - skipping.")
+                continue
 
             combinedDf = pd.DataFrame()
             combinedDf[xKey+'-AT'] = dfAT[xKey]

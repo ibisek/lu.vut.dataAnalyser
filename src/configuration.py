@@ -53,6 +53,7 @@ UNITS = {
     'TAS': 'km/h',
     'PK0C': '-',
 
+    'T2R': 'deg.C',
     'ITTR': 'deg.C',
     'NPR': '1/min',
     'FCR': 'kg/h',
