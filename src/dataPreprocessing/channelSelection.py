@@ -7,8 +7,9 @@ from pandas import DataFrame
 
 from fileUtils import composeFilename
 
-FILE_SET_1 = ['SN131014_AT.csv', 'SN132014_AT.csv', 'SN132018_AT.csv', 'SN133005_AT.csv', 'SN141015_AT.csv', 'SN141016_AT.csv', 'SN131014_OH.csv', 'SN132014_OH.csv', 'SN132018_OH.csv', 'SN133005_OH.csv', 'SN141015_OH.csv',
-              'SN141016_OH.csv', 'SN-H025P.csv', '300615x124010H85-200_BC04.csv']
+FILE_SET_1 = ['SN131014_AT.csv', 'SN132014_AT.csv', 'SN132018_AT.csv', 'SN133005_AT.csv', 'SN141015_AT.csv',
+              'SN141016_AT.csv', 'SN131014_OH.csv', 'SN132014_OH.csv', 'SN132018_OH.csv', 'SN133005_OH.csv',
+              'SN141015_OH.csv', 'SN141016_OH.csv', 'SN-H025P.csv', '300615x124010H85-200_BC04.csv']
 
 FILE_SET_2 = ['log_191023_091554.csv', 'log_191024_090031.csv', 'log_191115_082634.csv']
 
@@ -48,7 +49,7 @@ def _processFS1(df):
     ndf = ndf.assign(ITT=df[_getKey(df.keys(), 't4')])  ## t4 (°C) | t4 (ˇC)
     ndf = ndf.assign(P0=df.get('P0 (kPa)', NOMINAL_DATA['P0']/1000))  # tlak okolniho vzduchu [kPa]
     ndf = ndf.assign(PT=df['Pt (kPa)'])  # tlak v torkmetru, tj. v meraku krouticiho momentu [kPa]
-    ndf = ndf.assign(T0=df.get(_getKey(df.keys(), 't1'), NOMINAL_DATA['t0']))  # teplota okolniho vzduchu
+    ndf = ndf.assign(T0=df.get(_getKey(df.keys(), 't1'), NOMINAL_DATA['T0']))  # teplota okolniho vzduchu
     ndf = ndf.assign(NP=df['nV (1/min)'])  # tocky vrtule
     # ndf = ndf.assign(povv=df['Povv (kPa)'])  # tlak odpousteciho ventilu [kPa]
 
@@ -57,6 +58,18 @@ def _processFS1(df):
     ndf['P0'] = ndf['P0'] * 1000  # [Pa]
     ndf['PT'] = ndf['PT'] * 1000  # [Pa]
     # ndf['povv'] = ndf['povv'] * 1000  # [Pa]
+
+    ndf['TQ'] = ndf['TQ'] * 1.3558  # [Nm]
+    ndf['FC'] = ndf['FC'] * 3.7854  # [US gph] -> [kg/h] pyca, to jsou ale jednotky!!
+
+    # Calculated Shaft Power - SP [W]:
+    ndf['SP'] = ndf['TQ'] * 2 * math.pi * ndf['NP'] / 60
+
+    # zero velocity for test-bench data:
+    ndf['TAS'] = 0
+
+    # elevation of the test-bench location (LKHK):
+    ndf['ALT'] = 241
 
     return ndf
 
@@ -155,7 +168,7 @@ def channelSelection(dataFrame, originalFileName):
         dataFrame = _processFD2(dataFrame)
 
     # drop rows where p0 == 0 (causes inf/zero division in dataStandardisation):
-    dataFrame = dataFrame.replace(0, np.nan)
+    # dataFrame = dataFrame.replace(0, np.nan)
 
     # drop empty data
     dataFrame = dataFrame.dropna()
