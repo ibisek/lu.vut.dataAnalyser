@@ -11,7 +11,7 @@ def loadRawData(inPath, fileName):
     filePath = f"{inPath}/{fileName}"
 
     SKIP_ROWS = [0, 1]
-    df = pd.read_csv(f"{inPath}/{fileName}", delimiter=CSV_DELIMITER, encoding='cp1250', skiprows=SKIP_ROWS)     # utf_8
+    df = pd.read_csv(f"{inPath}/{fileName}", delimiter=CSV_DELIMITER, encoding='cp1250', skiprows=SKIP_ROWS)     # utf_8 | cp1250
     # df.drop(row=1)
 
     # colNames = df[0]
