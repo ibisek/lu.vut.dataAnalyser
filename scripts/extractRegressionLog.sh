@@ -1,7 +1,7 @@
 #!/bin/bash
 
 logFile='all-combined.txt'
-path='/home/jaja/data/btsync/doma/radec/out-2020-04-16b'
+path='/home/ibisek/data/btsync/doma/radec/out-2020-04-16b'
 
 pattern1='REGRESSION'
 
