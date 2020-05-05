@@ -73,6 +73,8 @@ def _processFS1(df):
     # elevation of the test-bench location (LKHK):
     ndf['ALT'] = 241
 
+    ndf['PK0C'] = ndf['P2'] / ndf['P0']
+
     return ndf
 
 

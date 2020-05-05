@@ -51,6 +51,7 @@ UNITS = {
     'SP': 'W',
     'IAS': 'km/h',
     'TAS': 'km/h',
+    'PK0C': '-',
 
     'ITTR': 'deg.C',
     'NPR': '1/min',
