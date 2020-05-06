@@ -8,15 +8,18 @@ from configuration import OUT_PATH
 from dataAnalysis.steadyStatesDetector import SteadyStatesDetector
 
 
-def loadSteadyStates(originalFileName: str):
+def loadSteadyStates(originalFileName: str, ssFilePath: str = None):
     """
     :param originalFileName:
+    :param fileName overrides originalFileName
     :return: list of intervals of steady states (from a json file)
     """
     intervals = []
-    fn = SteadyStatesDetector.getFilename(originalFileName)
+    if not ssFilePath:
+        ssFilePath = SteadyStatesDetector.getFilename(originalFileName)
+
     try:
-        with open(fn, 'r') as f:
+        with open(ssFilePath, 'r') as f:
             jsonStr = "".join(f.readlines())
             j = json.loads(jsonStr)
             intervals = j['intervals']
