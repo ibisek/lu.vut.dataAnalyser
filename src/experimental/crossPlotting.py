@@ -11,7 +11,7 @@ from fileUtils import composeFilename
 
 
 def readFlightData():
-    inPath = '/home/ibisek/btsync/doma/radec/out-2020-05-05'
+    inPath = '/home/ibisek/btsync/doma/radec/out-2020-05-06'
     fileName = '1.csv'
 
     SKIP_ROWS = [0, 1]
@@ -28,7 +28,8 @@ def readFlightData():
     ndf = ndf.assign(NG=df['nG'])
     ndf = ndf.assign(NGR=df['nGR0'])
 
-    ndf['SPR'] = ndf['SPR'] * 1000
+    ndf['SPR'] = ndf['SPR'] * 1000      # [kW] -> [W]
+    ndf['T2R'] = ndf['T2R'] - 273.15   # [K] -> [deg.C]
 
     return ndf
 
@@ -96,6 +97,7 @@ if __name__ == '__main__':
             lineStyles = ['None', ':', 'None', ':', 'None', ':']
             fig, ax = plt.subplots()
             for xk, yk, marker, markerSize, lineStyle, in zip(xKeys, yKeys, markers, markerSizes, lineStyles):
+                combinedDf.sort_values(by=xk, inplace=True)
                 combinedDf.plot(xk, y=[yk], marker=marker, markersize=markerSize, ls=lineStyle, lw=1, ax=ax)
                 ax.legend()     # to redraw the legend and to show also the plain markers in the legend
 
