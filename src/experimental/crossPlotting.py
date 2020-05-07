@@ -1,5 +1,5 @@
 """
-Skript to contrast 1.xlsx data to all -AT and -OH available
+Script to contrast 1.xlsx data to all -AT and -OH available
 """
 
 import pandas as pd
