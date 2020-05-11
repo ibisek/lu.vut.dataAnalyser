@@ -4,6 +4,7 @@ Executable application entries:
 * collateResults
 * crossPloting
 * correlationsMultiFile
+* crossPlotting + crossPlotting2
 
 --
 
