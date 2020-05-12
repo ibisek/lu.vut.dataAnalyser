@@ -138,6 +138,8 @@ if __name__ == '__main__':
             combinedDf.sort_values(by=xk, inplace=True)
             combinedDf.plot(xk, y=[yk], marker=marker, markersize=markerSize, ls=lineStyle, lw=1, ax=ax, color=color)
             ax.legend()     # to redraw the legend and to show also the plain markers in the legend
+            # plt.ylim([230, 300])
+            # plt.xlim([90, 105])
 
         plt.title(f"{yKey} = fn({xKey})")
         plt.xlabel(f"{xKey} [{UNITS[xKey]}]")
