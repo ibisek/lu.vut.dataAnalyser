@@ -95,7 +95,7 @@ if __name__ == '__main__':
     inPath = IN_PATH
     outPath = OUT_PATH
 
-    for fileName in os.listdir(inPath):
+    for fileName in sorted(os.listdir(inPath)):
         filePath = f"{inPath}/{fileName}"
 
         if os.path.isfile(filePath):
