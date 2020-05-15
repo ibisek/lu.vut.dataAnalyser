@@ -49,11 +49,11 @@ if __name__ == '__main__':
         ['FCR', 'SPR'],     # 4
         ['FCR', 'ITTR'],    # 5
         ['FCR', 'PK0C'],    # 6
-        ['FCR', 'T2R'],      # 7
+        ['FCR', 'T2R'],     # 7
         ['FCR', 'NGR'],     # 8
-        ['PK0C', 'T2R'],     # 9
+        ['PK0C', 'T2R'],    # 9
         ['PK0C', 'NGR'],    # 10
-        ['T2R', 'NGR'],      # 11
+        ['T2R', 'NGR'],     # 11
     ]
 
     for function in functions:

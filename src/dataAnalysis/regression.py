@@ -256,19 +256,19 @@ def doRegressionOnSteadySectionsAvgXY(dataFrame: DataFrame, originalFileName: st
     # l.append(('ITTR', 'SPR'))
     # l.append(('ITTR', 'NGR'))
 
-    l.append(('SPR', 'NGR'))    # 2
+    # l.append(('SPR', 'NGR'))    # 2
     l.append(('ITT', 'NG'))     # 3
-    l.append(('FCR', 'SPR'))    # 4
-    l.append(('FCR', 'ITTR'))   # 5
-    l.append(('FCR', 'NGR'))    # 8
-    if 'PK0C' in dataFrame.keys():
-        l.append(('SPR', 'PK0C'))  # 1
-        l.append(('FCR', 'PK0C'))  # 6
-        l.append(('PK0C', 'NGR'))  # 10
-    if 'T2R' in dataFrame.keys():
-        l.append(('FCR', 'T2R'))   # 7
-        l.append(('PK0C', 'T2R'))  # 9
-        l.append(('T2R', 'NGR'))   # 11
+    # l.append(('FCR', 'SPR'))    # 4
+    # l.append(('FCR', 'ITTR'))   # 5
+    # l.append(('FCR', 'NGR'))    # 8
+    # if 'PK0C' in dataFrame.keys():
+    #     l.append(('SPR', 'PK0C'))  # 1
+    #     l.append(('FCR', 'PK0C'))  # 6
+    #     l.append(('PK0C', 'NGR'))  # 10
+    # if 'T2R' in dataFrame.keys():
+    #     l.append(('FCR', 'T2R'))   # 7
+    #     l.append(('PK0C', 'T2R'))  # 9
+    #     l.append(('T2R', 'NGR'))   # 11
 
     for yKey, xKey in l:
         df = pd.DataFrame()
@@ -308,8 +308,11 @@ def doRegressionOnSteadySectionsAvgXY(dataFrame: DataFrame, originalFileName: st
 
             min = df[xKey].min()
             max = df[xKey].max()
+            mean = df[xKey].mean()
 
-            print(f"[INFO] REGRESSION in; {originalFileName}; of; {yKey} = fn ({xKey}); {xVal}; into range; {min:.02f}; {max:.02f}")
+            xVal = mean     # TODO temporary experiment
+
+            print(f"[INFO] REGRESSION in; {originalFileName}; of; {yKey} = fn ({xKey}); val; {xVal}; into range; {min:.02f}; {max:.02f}")
 
             if xVal < min or xVal > max:
                 print(f"[WARN] Omitting; {yKey} = fn ({xKey}); {xVal} not in range <{min:.02f}, {max:.02f}>")
