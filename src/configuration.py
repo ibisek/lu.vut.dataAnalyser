@@ -52,6 +52,8 @@ UNITS = {
     'IAS': 'km/h',
     'TAS': 'km/h',
     'PK0C': '-',
+    'OILT': 'deg.C',
+    'OILP': 'Pa',
 
     'T2R': 'deg.C',
     'ITTR': 'deg.C',

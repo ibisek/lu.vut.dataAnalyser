@@ -272,8 +272,8 @@ def doRegressionOnSteadySectionsAvgXY(dataFrame: DataFrame, originalFileName: st
 
     l.append(('OILT', 'SP'))
     l.append(('OILT', 'SPR'))
-    l.append(('OILP', 'NG'))
-    l.append(('OILP', 'NGR'))
+    l.append(('OILT', 'NG'))
+    l.append(('OILT', 'NGR'))
     l.append(('OILP', 'SP'))
     l.append(('OILP', 'SPR'))
     l.append(('OILP', 'NG'))
