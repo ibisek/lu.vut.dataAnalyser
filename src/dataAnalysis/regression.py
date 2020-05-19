@@ -142,6 +142,7 @@ def doRegressionForKeys(dataFrame: DataFrame, originalFileName: str, yKey: str, 
                 lineStyles = ['', ':']
                 fig, ax = plt.subplots()
                 for col, marker, markerSize, lineStyle, in zip(cols, markers, markerSizes, lineStyles):
+                    dataFrame.sort_values(by=xKeys[0], inplace=True)
                     dataFrame.plot(xKeys[0], y=[col], marker=marker, markersize=markerSize, ls=lineStyle, lw=1, ax=ax)
                     ax.legend()  # to redraw the legend and to show also the plain markers in the legend
 
@@ -257,7 +258,7 @@ def doRegressionOnSteadySectionsAvgXY(dataFrame: DataFrame, originalFileName: st
     # l.append(('ITTR', 'NGR'))
 
     # l.append(('SPR', 'NGR'))    # 2
-    l.append(('ITT', 'NG'))     # 3
+    # l.append(('ITT', 'NG'))     # 3
     # l.append(('FCR', 'SPR'))    # 4
     # l.append(('FCR', 'ITTR'))   # 5
     # l.append(('FCR', 'NGR'))    # 8
