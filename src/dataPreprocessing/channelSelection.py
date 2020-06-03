@@ -2,10 +2,10 @@ import math
 import sys
 import pandas as pd
 import numpy as np
-from configuration import NOMINAL_DATA
+from configuration import NOMINAL_DATA, OUT_PATH
 from pandas import DataFrame
 
-from fileUtils import composeFilename
+from fileUtils import composeFilename, composeFilename2
 
 FILE_SET_1 = ['SN131014_AT.csv', 'SN132014_AT.csv', 'SN132018_AT.csv', 'SN133005_AT.csv', 'SN141015_AT.csv',
               'SN141016_AT.csv', 'SN131014_OH.csv', 'SN132014_OH.csv', 'SN132018_OH.csv', 'SN133005_OH.csv',
@@ -179,7 +179,7 @@ def _processFD2(df):
     return ndf
 
 
-def channelSelection(dataFrame, originalFileName):
+def channelSelection(dataFrame, originalFileName, outPath=OUT_PATH):
     # dataFrame = dataFrame.fillna(0)
     # dataFrame.interpolate()  # fill missing values
 
@@ -202,8 +202,9 @@ def channelSelection(dataFrame, originalFileName):
     # fill missing values:
     # dataFrame.interpolate()
 
-    fn = composeFilename(originalFileName, 'selectedChannelsRaw', 'csv')
+    fn = composeFilename2(originalFileName, 'selectedChannelsRaw', 'csv')
+    fp = f"{outPath}/{fn}"
     print(f"[INFO] Writing selected channels to '{fn}'")
-    dataFrame.to_csv(fn, sep=';', encoding='utf_8')
+    dataFrame.to_csv(fp, sep=';', encoding='utf_8')
 
     return dataFrame

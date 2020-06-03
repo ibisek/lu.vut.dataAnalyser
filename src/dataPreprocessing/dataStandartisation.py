@@ -1,14 +1,15 @@
 import math
 import numpy as np
 
-from fileUtils import composeFilename
+from fileUtils import composeFilename, composeFilename2
 from configuration import OUT_PATH, FUEL_DENSITY, CONST_R
 
 
-def standardiseData(dataFrame, originalFileName):
+def standardiseData(dataFrame, originalFileName, outPath=OUT_PATH):
     """
     :param dataFrame: filtered data
     :param originalFileName
+    :param outPath
     :return: data recalculated to 0m  MSA
     """
 
@@ -50,8 +51,9 @@ def standardiseData(dataFrame, originalFileName):
     dataFrame = dataFrame.dropna()  # drop rows with missing values
     # dataFrame = dataFrame.interpolate()  # fill missing values
 
-    fn = composeFilename(originalFileName, 'reduced', 'csv')
+    fn = composeFilename2(originalFileName, 'reduced', 'csv')
+    fp = f"{outPath}/{fn}"
     print(f"[INFO] Writing standardised data to '{fn}'")
-    dataFrame.to_csv(fn, sep=';', encoding='utf_8')
+    dataFrame.to_csv(fp, sep=';', encoding='utf_8')
 
     return dataFrame

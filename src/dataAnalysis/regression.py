@@ -15,7 +15,7 @@ from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import make_pipeline
 
-from fileUtils import composeFilename, loadSteadyStates
+from fileUtils import composeFilename, composeFilename2, loadSteadyStates
 from configuration import OUT_PATH, NOMINAL_DATA, UNITS
 
 
@@ -63,7 +63,7 @@ def doRegression1(dataFrame: DataFrame, originalFileName: str):
 
 
 def doRegressionForKeys(dataFrame: DataFrame, originalFileName: str, yKey: str, xKeys: list,
-                        fileNameSuffix='', plot=True, saveDataToFile=True):
+                        fileNameSuffix='', plot=True, saveDataToFile=True, outPath=OUT_PATH):
     """
     * Multidimensional regression through the entire flight.
     * Multidimensional regression where NG >= 90%
@@ -74,6 +74,7 @@ def doRegressionForKeys(dataFrame: DataFrame, originalFileName: str, yKey: str, 
     :param fileNameSuffix
     :param plot
     :param saveDataToFile
+    :param outPath
     :return:
     """
     # keys = ['NG', 'TQ', 'FF', 'ITT', 'p0', 'pt', 't1', 'NP', 'P']
@@ -117,9 +118,10 @@ def doRegressionForKeys(dataFrame: DataFrame, originalFileName: str, yKey: str, 
     if saveDataToFile:
         suffix = f"{yKey}=fn({xKeysStr})"
         suffix += "-lin" if goLinear else "-poly"
-        fn = composeFilename(originalFileName, suffix, 'csv')
-        print(f"[INFO] Saving regressed dataFrame to '{fn}'")
-        dataFrame[xKeys + [yKey, 'yPred']].to_csv(fn, sep=';')
+        fn = composeFilename2(originalFileName, suffix, 'csv')
+        fp = f"{outPath}/{fn}"
+        print(f"[INFO] Saving regressed dataFrame to '{fp}'")
+        dataFrame[xKeys + [yKey, 'yPred']].to_csv(fp, sep=';')
 
     if coefsStr:    # if none -> multidimensional - can be shown but is useless
         print("COEFs;", coefsStr)
@@ -161,8 +163,9 @@ def doRegressionForKeys(dataFrame: DataFrame, originalFileName: str, yKey: str, 
 
             suffix = f"{yKey}=fn({xKeysStr})"
             suffix += "-lin" if goLinear else "-poly"
-            fn = composeFilename(originalFileName, suffix, 'png')
-            plt.savefig(fn, dpi=300)
+            fn = composeFilename2(originalFileName, suffix, 'png')
+            fp = f"{outPath}/{fn}"
+            plt.savefig(fp, dpi=300)
 
         except KeyError as e:   # often raised upon plotting X=X
             print('[ERROR] in regression plot', e)
@@ -235,14 +238,15 @@ def doRegressionOnSteadyAllSectionsCombined(dataFrame: DataFrame, originalFileNa
     doRegression(combinedDf, originalFileName, '-combined')
 
 
-def doRegressionOnSteadySectionsAvgXY(dataFrame: DataFrame, originalFileName: str):
+def doRegressionOnSteadySectionsAvgXY(dataFrame: DataFrame, originalFileName: str, outPath=OUT_PATH):
     """
     Single dimensional regression Y = fn(X)
     :param dataFrame:
     :param originalFileName:
+    :param outPath:
     :return:
     """
-    intervals = loadSteadyStates(originalFileName)
+    intervals = loadSteadyStates(originalFileName=originalFileName, ssDir=outPath)
     numIntervals = len(intervals)
 
     l = list()  # Y = fn(X)
@@ -309,7 +313,7 @@ def doRegressionOnSteadySectionsAvgXY(dataFrame: DataFrame, originalFileName: st
         # df.sort_values(by=[xKey], inplace=True)   # sort order by X value (so they don't make loops on the chart)
 
         # and now do the regression:
-        model = doRegressionForKeys(df, originalFileName, yKey, [xKey], fileNameSuffix='')
+        model = doRegressionForKeys(df, originalFileName, yKey, [xKey], fileNameSuffix='', outPath=outPath)
         if not model:
             continue
 

@@ -3,10 +3,10 @@ Raw data filtering.
 """
 
 from configuration import OUT_PATH
-from fileUtils import composeFilename
+from fileUtils import composeFilename, composeFilename2
 
 
-def filterData(rawDataFrame, originalFileName, channels=None, windowWidth=10):
+def filterData(rawDataFrame, originalFileName, channels=None, windowWidth=10, outPath=OUT_PATH):
     """
     Removes high firequency noise.
     :param rawDataFrame:
@@ -31,9 +31,10 @@ def filterData(rawDataFrame, originalFileName, channels=None, windowWidth=10):
     filteredDf = filteredDf.dropna()
     # filteredDf.interpolate()  # fill missing values
 
-    fn = composeFilename(originalFileName, 'selectedChannelsFiltered', 'csv')
+    fn = composeFilename2(originalFileName, 'selectedChannelsFiltered', 'csv')
+    fp = f"{outPath}/{fn}"
 
     print(f"[INFO] Writing filtered data to '{fn}'")
-    filteredDf.to_csv(fn, sep=';', encoding='utf_8')
+    filteredDf.to_csv(fp, sep=';', encoding='utf_8')
 
     return filteredDf
