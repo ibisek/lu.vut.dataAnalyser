@@ -1,11 +1,8 @@
 
+import os
+
 IN_PATH = '/home/ibisek/wqz/prog/python/lu.vut.dataAnalyser/data/in/'
 OUT_PATH = '/home/ibisek/wqz/prog/python/lu.vut.dataAnalyser/data/out/'
-
-# flight data 2:
-# IN_PATH = '/home/ibisek/wqz/prog/python/lu.vut.dataAnalyser/data/in/2019'
-
-OUT_PATH_TEMPLATE = "/home/ibisek/wqz/prog/python/lu.vut.dataAnalyser/data/out/{}/{}"
 
 NG_THRESHOLD = 80           # [%] N Generator (RPM)
 SP_THRESHOLD = 150*1000     # [W] Shaft Power
@@ -66,3 +63,17 @@ UNITS = {
 # ['NG', 'TQ', 'FC', 'ITT', 'P0', 'PT', 'T1', 'NP']
 KEYS_FOR_STEADY_STATE_DETECTION = ['NG', 'TQ', 'FC', 'ITT', 'P0', 'PT']
 
+
+DB_HOST = '10.8.0.18'
+DB_PORT = 3306
+DB_NAME = 'radec'
+DB_USER = 'ibisek'
+DB_PASSWORD = 'heslo'
+dbConnectionInfo = (DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD)
+
+if DB_PASSWORD != '**':
+    os.environ.setdefault('DB_HOST', DB_HOST)
+    os.environ.setdefault('DB_PORT', str(DB_PORT))
+    os.environ.setdefault('DB_NAME', DB_NAME)
+    os.environ.setdefault('DB_USER', DB_USER)
+    os.environ.setdefault('DB_PASSWORD', DB_PASSWORD)
