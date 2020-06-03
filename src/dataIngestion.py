@@ -20,30 +20,13 @@ from configuration import IN_PATH, OUT_PATH, NG_THRESHOLD, SP_THRESHOLD, \
 from dataPreprocessing.channelSelection import channelSelection
 from dataPreprocessing.dataFiltering import filterData
 from dataPreprocessing.dataStandartisation import standardiseData
+from dataPreprocessing.omitRows import omitRowsBelowThresholds
 
 from dataAnalysis.limitingStateDetector import detectLimitingStates
 from dataAnalysis.steadyStatesDetector import SteadyStatesDetector
 from dataAnalysis.correlations import analyseCorrelations
 from dataAnalysis.regression import doRegression, doRegressionOnSteadySections, \
     doRegressionOnSteadyAllSectionsCombined, doRegressionOnSteadySectionsAvgXY, doRegressionOnSteadySectionsAvgXXXY
-
-
-def omitRowsBelowThresholds(dataFrame:DataFrame, originalFileName:str, ngThreshold=NG_THRESHOLD, spThreshold=SP_THRESHOLD):
-
-    # drop rows where NG < 90 %
-    if 'NG' not in dataFrame.keys():
-        print(f"[WARN] 'NG' column not present in data file '{originalFileName}'!")
-        return dataFrame
-
-    indexNames = dataFrame[(dataFrame['NG'] < ngThreshold)].index
-    if len(indexNames) > 0:
-        dataFrame = dataFrame.drop(indexNames)
-
-    indexNames = dataFrame[(dataFrame['SP'] < spThreshold)].index
-    if len(indexNames) > 0:
-        dataFrame = dataFrame.drop(indexNames)
-
-    return dataFrame
 
 
 def _displaySteadyStateDetection(dataFrame:DataFrame, originalFileName:str):
