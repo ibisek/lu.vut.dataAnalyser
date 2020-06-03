@@ -142,6 +142,7 @@ def doRegressionForKeys(dataFrame: DataFrame, originalFileName: str, yKey: str, 
                 lineStyles = ['', ':']
                 fig, ax = plt.subplots()
                 for col, marker, markerSize, lineStyle, in zip(cols, markers, markerSizes, lineStyles):
+                    dataFrame.sort_values(by=xKeys[0], inplace=True)
                     dataFrame.plot(xKeys[0], y=[col], marker=marker, markersize=markerSize, ls=lineStyle, lw=1, ax=ax)
                     ax.legend()  # to redraw the legend and to show also the plain markers in the legend
 
@@ -257,7 +258,7 @@ def doRegressionOnSteadySectionsAvgXY(dataFrame: DataFrame, originalFileName: st
     # l.append(('ITTR', 'NGR'))
 
     # l.append(('SPR', 'NGR'))    # 2
-    l.append(('ITT', 'NG'))     # 3
+    # l.append(('ITT', 'NG'))     # 3
     # l.append(('FCR', 'SPR'))    # 4
     # l.append(('FCR', 'ITTR'))   # 5
     # l.append(('FCR', 'NGR'))    # 8
@@ -269,6 +270,15 @@ def doRegressionOnSteadySectionsAvgXY(dataFrame: DataFrame, originalFileName: st
     #     l.append(('FCR', 'T2R'))   # 7
     #     l.append(('PK0C', 'T2R'))  # 9
     #     l.append(('T2R', 'NGR'))   # 11
+
+    l.append(('OILT', 'SP'))
+    l.append(('OILT', 'SPR'))
+    l.append(('OILT', 'NG'))
+    l.append(('OILT', 'NGR'))
+    l.append(('OILP', 'SP'))
+    l.append(('OILP', 'SPR'))
+    l.append(('OILP', 'NG'))
+    l.append(('OILP', 'NGR'))
 
     for yKey, xKey in l:
         df = pd.DataFrame()

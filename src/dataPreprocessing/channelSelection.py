@@ -151,6 +151,8 @@ def _processFD2(df):
     ndf = ndf.assign(PT=1079000)  # tlak v turbine neni v let. datech! -> nominalni tlak 1079 kPa
     ndf = ndf.assign(T0=df['OAT'])  # teplota okolniho vzduchu
     ndf = ndf.assign(NP=df['E1NP'])  # otacky vrtule
+    ndf = ndf.assign(OILT=df['E1OilT'])  # [deg.F]
+    ndf = ndf.assign(OILP=df['E1OilP'])  # [psi]
 
     # extra channels:
     ndf = ndf.assign(TAS=df['TAS'])  # [kt]
@@ -159,6 +161,8 @@ def _processFD2(df):
 
     ndf['TQ'] = ndf['TQ'] * 1.3558  # [Nm]
     ndf['FC'] = ndf['FC'] * 3.7854  # [US gph] -> [kg/h] pyca, to jsou ale jednotky!!
+    ndf['OILT'] = (ndf['OILT'] - 32) * 5 / 9    # [deg.F] -> [deg.C]
+    ndf['OILP'] = ndf['OILP'] * 6894.76         # [psi] -> [Pa]
 
     # Calculated Shaft Power - SP [W]:
     ndf['SP'] = ndf['TQ'] * 2 * math.pi * ndf['NP'] / 60
