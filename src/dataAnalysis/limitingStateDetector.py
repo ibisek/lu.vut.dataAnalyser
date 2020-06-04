@@ -69,7 +69,7 @@ def _limitOverrunsAsFormattedList(name, limitOverrunsList):
     return d
 
 
-def detectLimitingStates(dataFrame, originalFileName):
+def detectLimitingStates(dataFrame, originalFileName, outPath=OUT_PATH):
     print(f"[INFO] Detecting states over limits in '{originalFileName}'..")
 
     # data exceeding nG limit:
@@ -95,5 +95,6 @@ def detectLimitingStates(dataFrame, originalFileName):
         j = json.dumps(l, indent=2)
 
         fn = OUT_PATH + originalFileName[:originalFileName.rindex('.')] + '-limitsOverruns.json'
-        with open(fn, 'w') as f:
+        fp = f"{outPath}/{fn}"
+        with open(fp, 'w') as f:
             f.write(j)
