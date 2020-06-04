@@ -2,8 +2,9 @@
 import shutil
 from pathlib import Path
 
-from configuration import STEADY_STATE_WINDOW_LEN, STEADY_STATE_DVAL
+from configuration import STEADY_STATE_WINDOW_LEN, STEADY_STATE_DVAL, dbConnectionInfo
 
+from db.DbSource import DbSource
 from dataSources.fileLoader import loadRawData
 
 from dataPreprocessing.channelSelection import channelSelection
@@ -12,7 +13,8 @@ from dataPreprocessing.dataStandartisation import standardiseData
 from dataPreprocessing.omitRows import omitRowsBelowThresholds
 
 from dataAnalysis.steadyStatesDetector import SteadyStatesDetector
-from dataAnalysis.regression import doRegressionOnSteadySectionsAvgXY
+from dataAnalysis.regression import doRegressionOnSteadySectionsAvgXY, RegressionResult
+from dataAnalysis.limitingStateDetector import detectLimitingStates
 
 from dao.configurationDao import getConfiguration
 from dao.fileDao import File, FileStatus, getFileForProcessing, setFileStatus
@@ -72,14 +74,26 @@ def process(file: File):
         return True
 
     filteredDataFrame = filterData(rawDataFrame, fileName, outPath=inPath)
-    # detectLimitingStates(rawDataFrame, fileName)    # limiting states detection on filtered data!
+    detectLimitingStates(filteredDataFrame, fileName, outPath=inPath)
 
     standardisedDataFrame = standardiseData(filteredDataFrame, fileName, outPath=inPath)
     standardisedDataFrame = omitRowsBelowThresholds(standardisedDataFrame, fileName)
 
     SteadyStatesDetector(windowDt=STEADY_STATE_WINDOW_LEN, dVal=STEADY_STATE_DVAL).detectSteadyStates(filteredDataFrame, fileName, outPath=inPath)
 
-    doRegressionOnSteadySectionsAvgXY(dataFrame=standardisedDataFrame, originalFileName=fileName, outPath=inPath)
+    results: RegressionResult = doRegressionOnSteadySectionsAvgXY(dataFrame=standardisedDataFrame, originalFileName=fileName, outPath=inPath)
+    print("results:", results)
+
+    dbs = DbSource(dbConnectionInfo=dbConnectionInfo)
+    with dbs.getConnection() as cur:
+        # delete previously calculated results for this file:
+        sql = f"DELETE FROM regression_results WHERE ts={results[0].ts} AND engine_id={file.engineId} AND file_id={file.id};"
+        cur.execute(sql)
+
+        for res in results:
+            sql = f"INSERT INTO regression_results (ts, engine_id, file_id, function, value, a, b, c, x_min, x_max) " \
+                  f"VALUES ({res.ts}, {file.engineId}, {file.id}, '{res.fn}', {res.val}, {res.a}, {res.b}, {res.c}, {res.xMin}, {res.xMax});"
+            cur.execute(sql)
 
 
 if __name__ == '__main__':
@@ -87,9 +101,6 @@ if __name__ == '__main__':
 
     if file and prepare(file):
         process(file)
-
-        # TODO store results somewhere, somehow
-
         # TODO uncomment (!)
         # setFileStatus(file=file, status=FileStatus.ANALYSIS_COMPLETE)
 
