@@ -7,16 +7,20 @@
 #
 
 import json
+import pandas as pd
 from pandas import DataFrame
 import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pd
+from collections import namedtuple
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import make_pipeline
 
 from fileUtils import composeFilename, composeFilename2, loadSteadyStates
 from configuration import OUT_PATH, NOMINAL_DATA, UNITS
+
+
+RegressionResult = namedtuple('RegressionResult', ['fn', 'ts', 'val', 'a', 'b', 'c', 'xMin', 'xMax'])
 
 
 def doRegression1(dataFrame: DataFrame, originalFileName: str):
@@ -94,12 +98,15 @@ def doRegressionForKeys(dataFrame: DataFrame, originalFileName: str, yKey: str, 
     coefsStr = "coefs unknown"
     yPred = None
     model = None
+    regressionCoefficients = []
     goLinear = False
     if goLinear:
         model = LinearRegression()
         model.fit(x, y)
         yPred = model.predict(x)
+
         coefsStr = ";".join(f"{x:0.6f}" for x in model.coef_) if len(xKeys) == 1 else None
+        regressionCoefficients = [x for x in model.coef_]
 
     else:
         poly = PolynomialFeatures(degree=2)    # 10 looks awright! :)
@@ -108,7 +115,10 @@ def doRegressionForKeys(dataFrame: DataFrame, originalFileName: str, yKey: str, 
         model = make_pipeline(poly, regressor)
         model.fit(x, y)
         yPred = model.predict(x)
+
         coefsStr = ";".join(f"{x:0.6f}" for x in regressor.coef_) if len(xKeys) == 1 else None
+        if len(xKeys) == 1:
+            regressionCoefficients = [x for x in regressor.coef_]
 
     dataFrame['yPred'] = yPred
     # dataFrame = dataFrame.assign(yPred=yPred)
@@ -170,7 +180,7 @@ def doRegressionForKeys(dataFrame: DataFrame, originalFileName: str, yKey: str, 
         except KeyError as e:   # often raised upon plotting X=X
             print('[ERROR] in regression plot', e)
 
-    return model
+    return model, regressionCoefficients
 
 
 def doRegression(dataFrame: DataFrame, originalFileName: str, fileNameSuffix=''):
@@ -187,7 +197,7 @@ def doRegression(dataFrame: DataFrame, originalFileName: str, fileNameSuffix='')
         df = dataFrame.copy()   # deep copy.. just for sure
         print(f"{yKey} = fn {xKeys}")
 
-        model = doRegressionForKeys(df, originalFileName, yKey, xKeys, fileNameSuffix)
+        model, regressionCoefficients = doRegressionForKeys(df, originalFileName, yKey, xKeys, fileNameSuffix)
         oneRowOfDf = dataFrame[xKeys].iloc[1, :]  # extract data structure..
         oneRowOfDf[xKeys] = [NOMINAL_DATA[k] for k in xKeys]    # .. and fill it with nominal values
 
@@ -244,7 +254,7 @@ def doRegressionOnSteadySectionsAvgXY(dataFrame: DataFrame, originalFileName: st
     :param dataFrame:
     :param originalFileName:
     :param outPath:
-    :return:
+    :return: list of RegressionResults
     """
     intervals = loadSteadyStates(originalFileName=originalFileName, ssDir=outPath)
     numIntervals = len(intervals)
@@ -275,14 +285,23 @@ def doRegressionOnSteadySectionsAvgXY(dataFrame: DataFrame, originalFileName: st
     #     l.append(('PK0C', 'T2R'))  # 9
     #     l.append(('T2R', 'NGR'))   # 11
 
-    l.append(('OILT', 'SP'))
-    l.append(('OILT', 'SPR'))
-    l.append(('OILT', 'NG'))
-    l.append(('OILT', 'NGR'))
-    l.append(('OILP', 'SP'))
-    l.append(('OILP', 'SPR'))
-    l.append(('OILP', 'NG'))
-    l.append(('OILP', 'NGR'))
+    # l.append(('OILT', 'SP'))
+    # l.append(('OILT', 'SPR'))
+    # l.append(('OILT', 'NG'))
+    # l.append(('OILT', 'NGR'))
+    # l.append(('OILP', 'SP'))
+    # l.append(('OILP', 'SPR'))
+    # l.append(('OILP', 'NG'))
+    # l.append(('OILP', 'NGR'))
+
+    # pro web-aplikaci:
+    l.append(('NGR', 'SPR'))
+    l.append(('ITTR', 'SPR'))
+    l.append(('ITTR', 'NGR'))
+    l.append(('FCR', 'SPR'))
+    l.append(('FCR', 'NGR'))
+
+    results = []
 
     for yKey, xKey in l:
         df = pd.DataFrame()
@@ -313,8 +332,8 @@ def doRegressionOnSteadySectionsAvgXY(dataFrame: DataFrame, originalFileName: st
         # df.sort_values(by=[xKey], inplace=True)   # sort order by X value (so they don't make loops on the chart)
 
         # and now do the regression:
-        model = doRegressionForKeys(df, originalFileName, yKey, [xKey], fileNameSuffix='', outPath=outPath)
-        if not model:
+        model, coeffs = doRegressionForKeys(df, originalFileName, yKey, [xKey], fileNameSuffix='', outPath=outPath)
+        if not model or not coeffs:
             continue
 
         if xKey in NOMINAL_DATA:
@@ -343,6 +362,13 @@ def doRegressionOnSteadySectionsAvgXY(dataFrame: DataFrame, originalFileName: st
 
             # unitId = unitRunId[:unitRunId.index('_')]
             # unitLogFilename = f"{unitId}-analyses.csv"
+
+            ts = int(dataFrame.index[0].to_pydatetime().timestamp())     # [s] unix ts of start of this file
+            (a, b, c) = coeffs if len(coeffs) == 3 else (0, 0, 0)
+            res: RegressionResult = RegressionResult(fn=f"{yKey}-fn-{xKey}", ts=ts, val=yVal, a=a, b=b, c=c, xMin=min, xMax=max)
+            results.append(res)
+
+    return results
 
 
 def doRegressionOnSteadySectionsAvgXXXY(dataFrame: DataFrame, originalFileName: str):
@@ -391,7 +417,7 @@ def doRegressionOnSteadySectionsAvgXXXY(dataFrame: DataFrame, originalFileName: 
             df = df.append(sectionDf[allKeys])
 
         # and now do the regression:
-        model = doRegressionForKeys(df, originalFileName, yKey, xKeys, fileNameSuffix='')
+        model, regressionCoefficients = doRegressionForKeys(df, originalFileName, yKey, xKeys, fileNameSuffix='')
         if not model:
             return False
 
