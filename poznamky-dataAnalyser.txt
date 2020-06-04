@@ -8,6 +8,41 @@ Executable application entries:
 
 --
 
+INFLUX DB:
+    https://docs.influxdata.com/influxdb/v1.8/write_protocols/line_protocol_tutorial
+
+    from influxdb import InfluxDBClient
+    from influxdb.exceptions import InfluxDBClientError
+
+    client = InfluxDBClient(host='10.8.0.6', port=8086, database='radec')
+    # client = InfluxDBClient(host='mydomain.com', port=8086, username='myuser', password='mypass', ssl=True, verify_ssl=True)
+
+    for res in results:
+        sql = f"insert regression_results,file_id={file.id},fn={res.fn} val={res.val},a={res.a},b={res.b},c={res.c} {res.ts}"
+        # data = [{"measurement": "regression_results",
+        #          "tags": {
+        #              "file_id": file.id,
+        #              "engine_id": file.engineId,
+        #              "fn": res.fn
+        #          },
+        #          "fields": {
+        #              "val": res.val,
+        #              "a": res.a,
+        #              "b": res.b,
+        #              "c": res.c,
+        #          },
+        #          "Timestamp": res.ts
+        #          }]
+
+        try:
+            res = client.write(data=sql, params={'db': 'radec'}, expected_response_code=204, protocol='line')
+            # client.write_points(data)
+        except InfluxDBClientError as e:
+            print(e)
+
+     client.close()
+--
+
 https://ourcodingclub.github.io/2019/01/07/pandas-time-series.html
 https://www.datacamp.com/community/tutorials/time-series-analysis-tutorial
 https://towardsdatascience.com/four-ways-to-quantify-synchrony-between-time-series-data-b99136c4a9c9
