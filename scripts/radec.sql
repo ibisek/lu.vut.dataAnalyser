@@ -100,7 +100,7 @@ CREATE TABLE IF NOT EXISTS files (
 --DROP TABLE IF EXISTS regression_results;
 CREATE TABLE IF NOT EXISTS regression_results (
   id INT PRIMARY KEY auto_increment,
-  ts INT NOT NULL, 
+  ts INT DEFAULT 0, 
   engine_id INT REFERENCES engines.id, 
   file_id INT REFERENCES files.id, 
   function VARCHAR(16) NOT NULL, 
@@ -128,6 +128,7 @@ select * from files where status=1;
 
 select * from regression_results;
 
+--delete from regression_results;
 
 
 
