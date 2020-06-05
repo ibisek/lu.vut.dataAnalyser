@@ -18,7 +18,7 @@ from sklearn.pipeline import make_pipeline
 
 from fileUtils import composeFilename, composeFilename2, loadSteadyStates
 from configuration import OUT_PATH, NOMINAL_DATA, UNITS
-
+from dataAnalysis.ibiModel import IbiModel
 
 RegressionResult = namedtuple('RegressionResult', ['fn', 'ts', 'val', 'a', 'b', 'c', 'xMin', 'xMax'])
 
@@ -100,27 +100,39 @@ def doRegressionForKeys(dataFrame: DataFrame, originalFileName: str, yKey: str, 
     model = None
     regressionCoefficients = []
     goLinear = False
+
+    # if goLinear:
+    #     model = LinearRegression()
+    #     model.fit(x, y)
+    #     yPred = model.predict(x)
+    #
+    #     coefsStr = ";".join(f"{x:0.6f}" for x in model.coef_) if len(xKeys) == 1 else None
+    #     regressionCoefficients = [x for x in model.coef_]
+    #
+    # else:
+    #     poly = PolynomialFeatures(degree=2)    # 2 is just enuf! :)
+    #     regressor = Ridge()
+    #     # regressor = LinearRegression()
+    #     model = make_pipeline(poly, regressor)
+    #     model.fit(x, y)
+    #     yPred = model.predict(x)
+    #
+    #     coefsStr = ";".join(f"{x:0.6f}" for x in regressor.coef_) if len(xKeys) == 1 else None
+    #     if len(xKeys) == 1:
+    #         regressionCoefficients = [x for x in regressor.coef_]
+        # poly.get_feature_names()  -> ['1', 'x0', 'x0^2']
+        # DataFrame(poly.transform(x), columns=poly.get_feature_names(x.columns))
+
+    model = IbiModel()
     if goLinear:
-        model = LinearRegression()
-        model.fit(x, y)
-        yPred = model.predict(x)
-
-        coefsStr = ";".join(f"{x:0.6f}" for x in model.coef_) if len(xKeys) == 1 else None
-        regressionCoefficients = [x for x in model.coef_]
-
+        model.fit(x[xKeys[0]], y, 1)     # a*x + b
     else:
-        poly = PolynomialFeatures(degree=2)    # 10 looks awright! :)
-        # regressor = Ridge()
-        regressor = LinearRegression()
-        model = make_pipeline(poly, regressor)
-        model.fit(x, y)
-        yPred = model.predict(x)
+        model.fit(x[xKeys[0]], y, 2)     # a*x^2 + b*x + c
 
-        coefsStr = ";".join(f"{x:0.6f}" for x in regressor.coef_) if len(xKeys) == 1 else None
-        if len(xKeys) == 1:
-            regressionCoefficients = [x for x in regressor.coef_]
+    yPred = model.predict(x[xKeys[0]])
+    coefsStr = ";".join(f"{x:0.10f}" for x in model.coefs) if len(xKeys) == 1 else None
 
-    dataFrame['yPred'] = yPred
+    dataFrame['yPred'] = yPred.values
     # dataFrame = dataFrame.assign(yPred=yPred)
 
     xKeysStr = ",".join(xKeys)
@@ -150,11 +162,11 @@ def doRegressionForKeys(dataFrame: DataFrame, originalFileName: str, yKey: str, 
                 # nicer plotting:
                 cols = [yKey, 'yPred']
                 markers = ['+', '.']
-                markerSizes = [4, 4]
+                markerSizes = [1, 1]
                 lineStyles = ['', ':']
                 fig, ax = plt.subplots()
+                dataFrame.sort_values(by=xKeys[0], inplace=True)
                 for col, marker, markerSize, lineStyle, in zip(cols, markers, markerSizes, lineStyles):
-                    dataFrame.sort_values(by=xKeys[0], inplace=True)
                     dataFrame.plot(xKeys[0], y=[col], marker=marker, markersize=markerSize, ls=lineStyle, lw=1, ax=ax)
                     ax.legend()  # to redraw the legend and to show also the plain markers in the legend
 
@@ -180,7 +192,7 @@ def doRegressionForKeys(dataFrame: DataFrame, originalFileName: str, yKey: str, 
         except KeyError as e:   # often raised upon plotting X=X
             print('[ERROR] in regression plot', e)
 
-    return model, regressionCoefficients
+    return model, model.coefs
 
 
 def doRegression(dataFrame: DataFrame, originalFileName: str, fileNameSuffix=''):
