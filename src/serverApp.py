@@ -1,11 +1,12 @@
 
 import shutil
+import pandas as pd
 from pathlib import Path
 
-from configuration import STEADY_STATE_WINDOW_LEN, STEADY_STATE_DVAL, dbConnectionInfo
+from configuration import STEADY_STATE_WINDOW_LEN, STEADY_STATE_DVAL, CSV_DELIMITER
 
-from db.DbSource import DbSource
 from dataSources.fileLoader import loadRawData
+from fileUtils import loadSteadyStates, composeFilename2
 
 from dataPreprocessing.channelSelection import channelSelection
 from dataPreprocessing.dataFiltering import filterData
@@ -13,11 +14,13 @@ from dataPreprocessing.dataStandartisation import standardiseData
 from dataPreprocessing.omitRows import omitRowsBelowThresholds
 
 from dataAnalysis.steadyStatesDetector import SteadyStatesDetector
-from dataAnalysis.regression import doRegressionOnSteadySectionsAvgXY, RegressionResult
+from dataAnalysis.regression import doRegressionOnSteadySectionsAvgXY, RegressionResult, doRegressionForKeys
 from dataAnalysis.limitingStateDetector import detectLimitingStates
 
 from dao.configurationDao import getConfiguration
-from dao.fileDao import File, FileStatus, getFileForProcessing, setFileStatus
+from dao.fileDao import File, FileStatus, getFileForProcessing, setFileStatus, listFilesForNominalCalculation
+from dao.regressionResultDao import saveRegressionResult
+
 
 c = getConfiguration()
 FILE_INGESTION_ROOT = c['FILE_INGESTION_ROOT']
@@ -84,24 +87,75 @@ def process(file: File):
     results: RegressionResult = doRegressionOnSteadySectionsAvgXY(dataFrame=standardisedDataFrame, originalFileName=fileName, outPath=inPath)
     print("results:", results)
 
-    dbs = DbSource(dbConnectionInfo=dbConnectionInfo)
-    with dbs.getConnection() as cur:
-        # delete previously calculated results for this file:
-        sql = f"DELETE FROM regression_results WHERE ts={results[0].ts} AND engine_id={file.engineId} AND file_id={file.id};"
-        cur.execute(sql)
+    for res in results:
+        # TODO XXX save info db
+        pass
 
-        for res in results:
-            sql = f"INSERT INTO regression_results (ts, engine_id, file_id, function, value, a, b, c, x_min, x_max) " \
-                  f"VALUES ({res.ts}, {file.engineId}, {file.id}, '{res.fn}', {res.val}, {res.a}, {res.b}, {res.c}, {res.xMin}, {res.xMax});"
-            cur.execute(sql)
+
+def calcNominalValues(engineId: int):
+    NUM = 20
+    files: File = listFilesForNominalCalculation(engineId=engineId, limit=NUM)
+    # TODO uncomment (!)
+    # if len(files) != NUM:
+    #     print(f"[WARN] No enough files for nominal data calculation: {len(files)}; required: {NUM}")
+    #     return
+
+    # (1) load data from all files into one dataframe:
+    ssDf = pd.DataFrame()
+
+    for file in files:
+        dir = f"{FILE_STORAGE_ROOT}/{file.id}"
+        # (1a) read reduced data from file:
+        reducedDataFilePath = f"{dir}/" + composeFilename2(file.name, 'reduced', 'csv')
+        df = pd.read_csv(reducedDataFilePath, delimiter=CSV_DELIMITER)
+
+        # (1b) keep data points from within steady (ss) states only:
+        ssIntervals = loadSteadyStates(originalFileName=file.name, ssDir=dir)
+        for interval in ssIntervals:
+            subDf = df.iloc[interval['startIndex']:interval['endIndex']]
+            ssDf = ssDf.append(subDf)
+
+    # (2) calculate regression curves:
+    l = list()  # Y = fn(X)
+    l.append(('NGR', 'SPR'))
+    l.append(('ITTR', 'SPR'))
+    l.append(('ITTR', 'NGR'))
+    l.append(('FCR', 'SPR'))
+    l.append(('FCR', 'NGR'))
+
+    dir = f"{FILE_STORAGE_ROOT}/nominal-eid-{engineId}"
+    Path(dir).mkdir(parents=True, exist_ok=True)
+
+    for yKey, xKey in l:
+        df = ssDf.copy()
+        model, coeffs = doRegressionForKeys(dataFrame=df, originalFileName=f"eid-{engineId}.none",
+                                            yKey=yKey, xKeys=[xKey], fileNameSuffix='', outPath=dir,
+                                            saveDataToFile=False, plot=True)
+
+        # (2b) use average x-value and calculate y-value from the regression curve:
+        xVal = df[xKey].mean()
+        yVal = model.predictVal(xVal)  # this is the nominal value for particular function y = fn(x)
+
+        # (2c) store results into db:
+        function = f"{yKey}-fn-{xKey}"
+        nominalValue = yVal
+        (a, b, c) = coeffs
+        xMin = df[xKey].min()
+        xMax = df[xKey].max()
+        res = RegressionResult(fn=function, ts=0, val=nominalValue, a=a, b=b, c=c, xMin=xMin, xMax=xMax)
+        saveRegressionResult(res=res, engineId=engineId)
+
+        # TODO recalculate all regression results to this new nominal
 
 
 if __name__ == '__main__':
-    file: File = checkForWork()
+    # file: File = checkForWork()
+    #
+    # if file and prepare(file):
+    #     process(file)
+    #     # TODO uncomment (!)
+    #     # setFileStatus(file=file, status=FileStatus.ANALYSIS_COMPLETE)
 
-    if file and prepare(file):
-        process(file)
-        # TODO uncomment (!)
-        # setFileStatus(file=file, status=FileStatus.ANALYSIS_COMPLETE)
+    calcNominalValues(1)
 
     print('KOHEU.')

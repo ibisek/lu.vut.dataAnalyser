@@ -19,13 +19,13 @@ class File(object):
                  source=False, generated=False,
                  status=FileStatus.UNDEF, hash=None):
         self.id = id
-        self.name = name
+        self.name = name                # original filename
         self.flightId = flightId
         self.engineId = engineId
-        self.source = source
-        self.generated = generated
+        self.source = source            # 0/1
+        self.generated = generated      # 0/1
         self.status = status
-        self.hash = hash
+        self.hash = hash                # SHA-256
 
     def __str__(self):
         return f"#File: id: {self.id}\n name: {self.name}\n flightId: {self.flightId}\n engineId: {self.engineId}" \
@@ -34,6 +34,9 @@ class File(object):
 
 
 def getFileForProcessing():
+    """
+    :return: instance of ONE file which is ready for processing (typically a freshly uploaded file)
+    """
     f = None
 
     with DbSource(dbConnectionInfo).getConnection() as c:
@@ -59,4 +62,30 @@ def setFileStatus(file: File, status: FileStatus):
             return True
 
     return False
+
+
+def listFilesForNominalCalculation(engineId, limit=20):
+    """
+    :param engineId:
+    :param limit:
+    :return: list of first <limit> files for nominal values calculation
+    """
+    files = list()
+
+    with DbSource(dbConnectionInfo).getConnection() as c:
+        strSql = f"SELECT * FROM files WHERE engine_id = {engineId} ORDER BY id LIMIT {limit};"
+        c.execute(strSql)
+
+        rows = c.fetchall()
+        for row in rows:
+            (id, name, flightId, engineId, source, generated, status, hash) = row
+
+            f = File(id=id, name=name, flightId=flightId, engineId=engineId,
+                     source=source, generated=generated,
+                     status=FileStatus(status), hash=hash)
+
+            files.append(f)
+
+    return files
+
 
