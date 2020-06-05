@@ -5,6 +5,7 @@ Executable application entries:
 * crossPloting
 * correlationsMultiFile
 * crossPlotting + crossPlotting2
+* serverApp
 
 --
 
