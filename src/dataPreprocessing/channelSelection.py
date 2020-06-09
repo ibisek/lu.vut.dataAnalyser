@@ -202,6 +202,9 @@ def channelSelection(dataFrame, originalFileName, outPath=OUT_PATH):
     # fill missing values:
     # dataFrame.interpolate()
 
+    # add unix timestamp column:
+    dataFrame['ts'] = dataFrame.index[0].value/1e9
+
     fn = composeFilename2(originalFileName, 'selectedChannelsRaw', 'csv')
     fp = f"{outPath}/{fn}"
     print(f"[INFO] Writing selected channels to '{fn}'")
