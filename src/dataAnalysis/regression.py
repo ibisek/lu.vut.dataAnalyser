@@ -20,7 +20,7 @@ from fileUtils import composeFilename, composeFilename2, loadSteadyStates
 from configuration import OUT_PATH, NOMINAL_DATA, UNITS
 from dataAnalysis.ibiModel import IbiModel
 
-RegressionResult = namedtuple('RegressionResult', ['fn', 'ts', 'val', 'a', 'b', 'c', 'xMin', 'xMax'])
+RegressionResult = namedtuple('RegressionResult', ['id', 'ts', 'engineId', 'fileId', 'fn', 'val', 'a', 'b', 'c', 'xMin', 'xMax'])
 
 
 def doRegression1(dataFrame: DataFrame, originalFileName: str):
