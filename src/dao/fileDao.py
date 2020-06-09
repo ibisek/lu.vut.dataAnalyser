@@ -10,6 +10,8 @@ class FileStatus(Enum):
     READY_TO_PROCESS = 1
     UNDER_ANALYSIS = 2
     ANALYSIS_COMPLETE = 3
+    # >=128 error states
+    FILE_EMPTY = 254
     FAILED = 255
 
 
@@ -64,6 +66,31 @@ def setFileStatus(file: File, status: FileStatus):
     return False
 
 
+def listFiles(engineId: int = None):
+
+    eidCond = f"WHERE engine_id = {engineId}"
+
+    files = list()
+
+    with DbSource(dbConnectionInfo).getConnection() as c:
+        strSql = f"SELECT * FROM files " \
+                 f"{eidCond} " \
+                 f"ORDER BY id;"
+        c.execute(strSql)
+
+        rows = c.fetchall()
+        for row in rows:
+            (id, name, flightId, engineId, source, generated, status, hash) = row
+
+            f = File(id=id, name=name, flightId=flightId, engineId=engineId,
+                     source=source, generated=generated,
+                     status=FileStatus(status), hash=hash)
+
+            files.append(f)
+
+    return files
+
+
 def listFilesForNominalCalculation(engineId, limit=20):
     """
     :param engineId:
@@ -73,7 +100,9 @@ def listFilesForNominalCalculation(engineId, limit=20):
     files = list()
 
     with DbSource(dbConnectionInfo).getConnection() as c:
-        strSql = f"SELECT * FROM files WHERE engine_id = {engineId} ORDER BY id LIMIT {limit};"
+        strSql = f"SELECT * FROM files " \
+                 f"WHERE engine_id = {engineId} AND status < 128 " \
+                 f"ORDER BY id LIMIT {limit};"
         c.execute(strSql)
 
         rows = c.fetchall()
