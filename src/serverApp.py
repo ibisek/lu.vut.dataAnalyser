@@ -16,10 +16,11 @@ from dataPreprocessing.omitRows import omitRowsBelowThresholds
 from dataAnalysis.steadyStatesDetector import SteadyStatesDetector
 from dataAnalysis.regression import doRegressionOnSteadySectionsAvgXY, RegressionResult, doRegressionForKeys
 from dataAnalysis.limitingStateDetector import detectLimitingStates
+from dataAnalysis.ibiModel import IbiModel
 
 from dao.configurationDao import getConfiguration
-from dao.fileDao import File, FileStatus, getFileForProcessing, setFileStatus, listFilesForNominalCalculation
-from dao.regressionResultDao import saveRegressionResult
+from dao.fileDao import File, FileStatus, getFileForProcessing, setFileStatus, listFiles, listFilesForNominalCalculation
+from dao.regressionResultDao import saveRegressionResult, getRegressionResults
 
 
 c = getConfiguration()
@@ -82,14 +83,42 @@ def process(file: File):
     standardisedDataFrame = standardiseData(filteredDataFrame, fileName, outPath=inPath)
     standardisedDataFrame = omitRowsBelowThresholds(standardisedDataFrame, fileName)
 
-    SteadyStatesDetector(windowDt=STEADY_STATE_WINDOW_LEN, dVal=STEADY_STATE_DVAL).detectSteadyStates(filteredDataFrame, fileName, outPath=inPath)
+    SteadyStatesDetector(windowDt=STEADY_STATE_WINDOW_LEN, dVal=STEADY_STATE_DVAL).detectSteadyStates(standardisedDataFrame, fileName, outPath=inPath)
 
-    results: RegressionResult = doRegressionOnSteadySectionsAvgXY(dataFrame=standardisedDataFrame, originalFileName=fileName, outPath=inPath)
-    print("results:", results)
 
-    for res in results:
-        # TODO XXX save info db
-        pass
+    # results: RegressionResult = doRegressionOnSteadySectionsAvgXY(dataFrame=standardisedDataFrame, originalFileName=fileName, outPath=inPath)
+    # print("results:", results)
+    #
+    # for res in results:
+    #     # TODO XXX save info db
+    #     pass
+
+    _calcRegressionDeltaForFile(file)
+
+
+def _readReducedDataFromFile(file: File):
+    """
+    Reads reduced data from specified file.
+    :param file:
+    :return: dataFrame with reduced data
+    """
+    directory = f"{FILE_STORAGE_ROOT}/{file.id}"
+    reducedDataFilePath = f"{directory}/" + composeFilename2(file.name, 'reduced', 'csv')
+    df = pd.read_csv(reducedDataFilePath, delimiter=CSV_DELIMITER)
+    return df
+
+
+def _filterOutUnsteadyRecords(file: File, df: pd.DataFrame):
+    ssDf = pd.DataFrame()
+
+    # keep data points from within steady (ss) states only:
+    directory = f"{FILE_STORAGE_ROOT}/{file.id}"
+    ssIntervals = loadSteadyStates(originalFileName=file.name, ssDir=directory)
+    for interval in ssIntervals:
+        subDf = df.iloc[interval['startIndex']:interval['endIndex']]
+        ssDf = ssDf.append(subDf)
+
+    return ssDf
 
 
 def calcNominalValues(engineId: int):
@@ -100,20 +129,13 @@ def calcNominalValues(engineId: int):
     #     print(f"[WARN] No enough files for nominal data calculation: {len(files)}; required: {NUM}")
     #     return
 
-    # (1) load data from all files into one dataframe:
+    # (1) load steady data from all files into one steady states dataframe (ssDf):
     ssDf = pd.DataFrame()
-
     for file in files:
-        dir = f"{FILE_STORAGE_ROOT}/{file.id}"
-        # (1a) read reduced data from file:
-        reducedDataFilePath = f"{dir}/" + composeFilename2(file.name, 'reduced', 'csv')
-        df = pd.read_csv(reducedDataFilePath, delimiter=CSV_DELIMITER)
-
-        # (1b) keep data points from within steady (ss) states only:
-        ssIntervals = loadSteadyStates(originalFileName=file.name, ssDir=dir)
-        for interval in ssIntervals:
-            subDf = df.iloc[interval['startIndex']:interval['endIndex']]
-            ssDf = ssDf.append(subDf)
+        # (1a) read reduced dataFrame from file:
+        df = _readReducedDataFromFile(file)
+        df = _filterOutUnsteadyRecords(file=file, df=df)
+        ssDf = ssDf.append(df)
 
     # (2) calculate regression curves:
     l = list()  # Y = fn(X)
@@ -142,10 +164,59 @@ def calcNominalValues(engineId: int):
         (a, b, c) = coeffs
         xMin = df[xKey].min()
         xMax = df[xKey].max()
-        res = RegressionResult(fn=function, ts=0, val=nominalValue, a=a, b=b, c=c, xMin=xMin, xMax=xMax)
+        res = RegressionResult(id=None, ts=0, engineId=engineId, fileId=file.id, fn=function, val=nominalValue, a=a, b=b, c=c, xMin=xMin, xMax=xMax)
         saveRegressionResult(res=res, engineId=engineId)
 
-        # TODO recalculate all regression results to this new nominal
+    # (3) recalculate all regression results to these new nominal values:
+    recalcAllRegressionResultsForEngine(engineId)
+
+
+def _calcRegressionDeltaForFile(file: File):
+    nominalRRs: dict = getRegressionResults(engineId=file.engineId, fileId=None)
+    if len(nominalRRs.keys()) == 0:
+        return  # no nominal values calculated (yet?)
+
+    reducedDf = _readReducedDataFromFile(file)
+    ssDf = _filterOutUnsteadyRecords(file=file, df=reducedDf)
+
+    for function in nominalRRs.keys():
+        yKey, _, xKey = function.split('-')
+
+        xValue = ssDf[xKey].mean()
+        xMin = ssDf[xKey].min()
+        xMax = ssDf[xKey].max()
+
+        nrr: RegressionResult = nominalRRs[function]
+        print(f"[INFO] {function}: xValue = {xValue:.2f} into <{nrr.xMin:.2f}; {nrr.xMax:.2f}>")
+
+        model = IbiModel(coefs=(nrr.a, nrr.b, nrr.c))
+        yValue = model.predictVal(xValue)
+
+        yDelta = yValue - nrr.val
+        print(f"[INFO] nominal = {nrr.val:.2f}; yVal = {yValue:.2f}; yDelta = {yDelta:.5f}")
+
+        # 'id', 'ts', 'engineId', 'fileId', 'fn', 'val', 'a', 'b', 'c', 'xMin', 'xMax'
+        fileRR = RegressionResult(id=None, ts=int(reducedDf['ts'][0]), engineId=file.engineId, fileId=file.id, fn=function, val=yDelta,
+                                  a=0, b=0, c=0, xMin=xMin, xMax=xMax)
+
+        saveRegressionResult(res=fileRR, file=file)
+
+
+def recalcAllRegressionResultsForEngine(engineId: int):
+    """
+    Recalculates regression results deltas by speficic nominal values for particular engine.
+    :param engineId:
+    :return:
+    """
+
+    files = listFiles(engineId=engineId)
+    for file in files:
+        # TODO uncomment(!)
+        # if file.status != FileStatus.ANALYSIS_COMPLETE:
+        #     continue    # ignore empty or failed files
+
+        print(f"[INFO] Recalculation regression deltas for engineId: {engineId}; file.id: {file.id}")
+        _calcRegressionDeltaForFile(file)
 
 
 if __name__ == '__main__':
@@ -156,6 +227,7 @@ if __name__ == '__main__':
     #     # TODO uncomment (!)
     #     # setFileStatus(file=file, status=FileStatus.ANALYSIS_COMPLETE)
 
-    calcNominalValues(1)
+    # calcNominalValues(1)
+    recalcAllRegressionResultsForEngine(1)
 
     print('KOHEU.')
