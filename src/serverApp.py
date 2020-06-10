@@ -236,9 +236,14 @@ if __name__ == '__main__':
             break
 
         if file and prepare(file):
-            process(file)
-            # TODO uncomment (!)
-            setFileStatus(file=file, status=FileStatus.ANALYSIS_COMPLETE)
+            try:
+                process(file)
+                # TODO uncomment (!)
+                setFileStatus(file=file, status=FileStatus.ANALYSIS_COMPLETE)
+
+            except Exception as ex:
+                print(f"[ERROR] in processing file {file}:", str(ex))
+                setFileStatus(file=file, status=FileStatus.FAILED)
 
     # calcNominalValues(1)
     # recalcAllRegressionResultsForEngine(1)
