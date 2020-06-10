@@ -32,7 +32,7 @@ if __name__ == '__main__':
                 bytes = f.read()
                 fileHash = hashlib.sha256(bytes).hexdigest()
 
-            print("[INFO] file hash:", fileHash, len(fileHash))
+            print("[INFO] file hash:", fileHash)
 
             flightId = None
             engineId = ENGINE_ID
