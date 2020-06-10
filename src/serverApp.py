@@ -53,11 +53,11 @@ def prepare(file: File):
 
     try:
         # create workdir in FILE_STORAGE_ROOT:
-        print(f"[INFO]: mkdir '{dstDir}'")
+        print(f"[INFO] mkdir '{dstDir}'")
         Path(dstDir).mkdir(parents=True, exist_ok=True)
 
         # cp file from FILE_INGESTION_ROOT to FILE_STORAGE_ROOT:
-        print(f"[INFO]: cp '{srcFilePath}' '{dstFilePath}'")
+        print(f"[INFO] cp '{srcFilePath}' '{dstFilePath}'")
         shutil.copy(src=srcFilePath, dst=dstFilePath, follow_symlinks=True)
 
     except FileNotFoundError as e:
@@ -86,7 +86,8 @@ def process(file: File):
     SteadyStatesDetector(windowDt=STEADY_STATE_WINDOW_LEN, dVal=STEADY_STATE_DVAL).detectSteadyStates(standardisedDataFrame, fileName, outPath=inPath)
     steadyStates = loadSteadyStates(originalFileName=fileName, ssDir=inPath)
     if len(steadyStates) == 0:
-        setFileStatus(file=file, status=FileStatus.EMPTY_FILE)
+        setFileStatus(file=file, status=FileStatus.NO_STEADY_STATES)
+        return
 
     # results: RegressionResult = doRegressionOnSteadySectionsAvgXY(dataFrame=standardisedDataFrame, originalFileName=fileName, outPath=inPath)
     # print("results:", results)

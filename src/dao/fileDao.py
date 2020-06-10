@@ -11,7 +11,7 @@ class FileStatus(Enum):
     UNDER_ANALYSIS = 2
     ANALYSIS_COMPLETE = 3
     # >=128 error states
-    EMPTY_FILE = 254    # no steady states detected
+    NO_STEADY_STATES = 200    # no steady states detected
     FAILED = 255
 
 

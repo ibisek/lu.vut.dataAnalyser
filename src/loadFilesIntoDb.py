@@ -41,13 +41,12 @@ if __name__ == '__main__':
             status = FileStatus.UNDEF
 
             file: File = File(id=None, name=fileName, flightId=flightId, engineId=engineId, source=source, generated=generated, status=status, hash=fileHash)
-            print(file)
 
             file = fileDao.save(file)
 
             # mv file from IN_DIR to FILE_INGESTION_ROOT:
             dstFilePath = f"{FILE_INGESTION_ROOT}/{file.id}"
-            print(f"[INFO]: mv '{srcFilePath}' '{dstFilePath}'")
+            print(f"[INFO] mv '{srcFilePath}' '{dstFilePath}'")
             shutil.move(src=srcFilePath, dst=dstFilePath)
 
             file.status = FileStatus.READY_TO_PROCESS
