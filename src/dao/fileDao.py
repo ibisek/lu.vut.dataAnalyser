@@ -11,7 +11,7 @@ class FileStatus(Enum):
     UNDER_ANALYSIS = 2
     ANALYSIS_COMPLETE = 3
     # >=128 error states
-    FILE_EMPTY = 254
+    EMPTY_FILE = 254    # no steady states detected
     FAILED = 255
 
 
@@ -124,7 +124,6 @@ def save(file: File):
     if not file.id:  # new record
         sql = f"INSERT INTO files (name, flight_id, engine_id, source, generated, status, hash) " \
               f"VALUES ('{file.name}', {flightId}, {file.engineId}, {file.source}, {file.generated}, {file.status.value}, '{file.hash}');"
-        print(sql)
 
         with DbSource(dbConnectionInfo).getConnection() as c:
             c.execute(sql)
