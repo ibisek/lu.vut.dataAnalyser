@@ -118,3 +118,24 @@ def listFilesForNominalCalculation(engineId, limit=20):
     return files
 
 
+def save(file: File):
+    flightId = 'null' if not file.flightId else file.flightId
+
+    if not file.id:  # new record
+        sql = f"INSERT INTO files (name, flight_id, engine_id, source, generated, status, hash) " \
+              f"VALUES ('{file.name}', {flightId}, {file.engineId}, {file.source}, {file.generated}, {file.status.value}, '{file.hash}');"
+        print(sql)
+
+        with DbSource(dbConnectionInfo).getConnection() as c:
+            c.execute(sql)
+            file.id = c.lastrowid
+
+    else:   # update existing
+        sql = f"UPDATE files SET name='{file.name}', flight_id={flightId}, engine_id={file.engineId}, " \
+              f"source={file.source}, generated={file.generated}, status={file.status.value}, hash='{file.hash}' " \
+              f"WHERE id={file.id}"
+
+        with DbSource(dbConnectionInfo).getConnection() as c:
+            c.execute(sql)
+
+    return file
