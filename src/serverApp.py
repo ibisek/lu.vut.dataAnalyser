@@ -147,7 +147,7 @@ def calcNominalValues(engineId: int):
     l.append(('FCR', 'SPR'))
     l.append(('FCR', 'NGR'))
 
-    dir = f"{FILE_STORAGE_ROOT}/nominal-eid-{engineId}"
+    dir = f"{FILE_STORAGE_ROOT}/nominal-engineId-{engineId}"
     Path(dir).mkdir(parents=True, exist_ok=True)
 
     for yKey, xKey in l:
