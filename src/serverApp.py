@@ -40,7 +40,7 @@ def checkForWork():
     print(f"[INFO] Processing file id '{file.id}'")
 
     # TODO uncomment (!)
-    # setFileStatus(file=file, status=FileStatus.UNDER_ANALYSIS)
+    setFileStatus(file=file, status=FileStatus.UNDER_ANALYSIS)
 
     return file
 
@@ -56,7 +56,7 @@ def prepare(file: File):
         print(f"[INFO]: mkdir '{dstDir}'")
         Path(dstDir).mkdir(parents=True, exist_ok=True)
 
-        # cp file from FILE_STORAGE_ROOT to FILE_STORAGE_ROOT:
+        # cp file from FILE_INGESTION_ROOT to FILE_STORAGE_ROOT:
         print(f"[INFO]: cp '{srcFilePath}' '{dstFilePath}'")
         shutil.copy(src=srcFilePath, dst=dstFilePath, follow_symlinks=True)
 
@@ -84,7 +84,9 @@ def process(file: File):
     standardisedDataFrame = omitRowsBelowThresholds(standardisedDataFrame, fileName)
 
     SteadyStatesDetector(windowDt=STEADY_STATE_WINDOW_LEN, dVal=STEADY_STATE_DVAL).detectSteadyStates(standardisedDataFrame, fileName, outPath=inPath)
-
+    steadyStates = loadSteadyStates(originalFileName=fileName, ssDir=inPath)
+    if len(steadyStates) == 0:
+        setFileStatus(file=file, status=FileStatus.EMPTY_FILE)
 
     # results: RegressionResult = doRegressionOnSteadySectionsAvgXY(dataFrame=standardisedDataFrame, originalFileName=fileName, outPath=inPath)
     # print("results:", results)
@@ -93,7 +95,7 @@ def process(file: File):
     #     # TODO XXX save info db
     #     pass
 
-    _calcRegressionDeltaForFile(file)
+    calcRegressionDeltaForFile(file)
 
 
 def _readReducedDataFromFile(file: File):
@@ -125,9 +127,9 @@ def calcNominalValues(engineId: int):
     NUM = 20
     files: File = listFilesForNominalCalculation(engineId=engineId, limit=NUM)
     # TODO uncomment (!)
-    # if len(files) != NUM:
-    #     print(f"[WARN] No enough files for nominal data calculation: {len(files)}; required: {NUM}")
-    #     return
+    if len(files) != NUM:
+        print(f"[WARN] No enough files for nominal data calculation: {len(files)}; required: {NUM}")
+        return
 
     # (1) load steady data from all files into one steady states dataframe (ssDf):
     ssDf = pd.DataFrame()
@@ -171,7 +173,13 @@ def calcNominalValues(engineId: int):
     recalcAllRegressionResultsForEngine(engineId)
 
 
-def _calcRegressionDeltaForFile(file: File):
+def calcRegressionDeltaForFile(file: File):
+    """
+    Calculates delta from nominal values for each available function.
+    :param file:
+    :return:
+    """
+
     nominalRRs: dict = getRegressionResults(engineId=file.engineId, fileId=None)
     if len(nominalRRs.keys()) == 0:
         return  # no nominal values calculated (yet?)
@@ -204,7 +212,7 @@ def _calcRegressionDeltaForFile(file: File):
 
 def recalcAllRegressionResultsForEngine(engineId: int):
     """
-    Recalculates regression results deltas by speficic nominal values for particular engine.
+    Recalculates regression results deltas FOR ALL FILES by specific pre-calculated nominal values for particular engine.
     :param engineId:
     :return:
     """
@@ -212,22 +220,26 @@ def recalcAllRegressionResultsForEngine(engineId: int):
     files = listFiles(engineId=engineId)
     for file in files:
         # TODO uncomment(!)
-        # if file.status != FileStatus.ANALYSIS_COMPLETE:
-        #     continue    # ignore empty or failed files
+        if file.status != FileStatus.ANALYSIS_COMPLETE:
+            continue    # ignore empty or failed files
 
         print(f"[INFO] Recalculation regression deltas for engineId: {engineId}; file.id: {file.id}")
-        _calcRegressionDeltaForFile(file)
+        calcRegressionDeltaForFile(file)
 
 
 if __name__ == '__main__':
-    # file: File = checkForWork()
-    #
-    # if file and prepare(file):
-    #     process(file)
-    #     # TODO uncomment (!)
-    #     # setFileStatus(file=file, status=FileStatus.ANALYSIS_COMPLETE)
+    while True:
+        file: File = checkForWork()
+
+        if not file:
+            break
+
+        if file and prepare(file):
+            process(file)
+            # TODO uncomment (!)
+            setFileStatus(file=file, status=FileStatus.ANALYSIS_COMPLETE)
 
     # calcNominalValues(1)
-    recalcAllRegressionResultsForEngine(1)
+    # recalcAllRegressionResultsForEngine(1)
 
     print('KOHEU.')
