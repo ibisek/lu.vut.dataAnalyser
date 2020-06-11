@@ -63,7 +63,7 @@ def plotChannelsOfInterestMultiY(dataFrame, originalFileName, suffix='', reduced
     legendLabels = keys
 
     # steady state indication:
-    intervals = loadSteadyStates(originalFileName)
+    intervals = loadSteadyStates(originalFileName, ssDir=outPath)
     numRows = len(dataFrame)
     arr = np.zeros([numRows])
     for i in range(numRows):
