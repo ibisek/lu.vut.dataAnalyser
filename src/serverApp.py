@@ -18,6 +18,8 @@ from dataAnalysis.regression import doRegressionOnSteadySectionsAvgXY, Regressio
 from dataAnalysis.limitingStateDetector import detectLimitingStates
 from dataAnalysis.ibiModel import IbiModel
 
+from plotting import plotChannelsOfInterest, plotChannelsOfInterestMultiY
+
 from dao.configurationDao import getConfiguration
 from dao.fileDao import File, FileStatus, getFileForProcessing, setFileStatus, listFiles, listFilesForNominalCalculation
 from dao.regressionResultDao import saveRegressionResult, getRegressionResults
@@ -88,6 +90,8 @@ def process(file: File):
     if len(steadyStates) == 0:
         setFileStatus(file=file, status=FileStatus.NO_STEADY_STATES)
         return
+
+    plotChannelsOfInterestMultiY(dataFrame=standardisedDataFrame, originalFileName=fileName, suffix='flightOverview-reduced', reducedChannels=True, outPath=inPath)
 
     # results: RegressionResult = doRegressionOnSteadySectionsAvgXY(dataFrame=standardisedDataFrame, originalFileName=fileName, outPath=inPath)
     # print("results:", results)

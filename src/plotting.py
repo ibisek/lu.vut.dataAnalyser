@@ -53,7 +53,7 @@ def plotChannelsOfInterest(dataFrame, originalFileName, suffix=''):
     plt.close()
 
 
-def plotChannelsOfInterestMultiY(dataFrame, originalFileName, suffix='', reducedChannels=False):
+def plotChannelsOfInterestMultiY(dataFrame, originalFileName, suffix='', reducedChannels=False, outPath=OUT_PATH):
     red = '' if not reducedChannels else 'R'
 
     keys = ['ALT', 'TAS', 'NG'+red, 'TQ'+red, 'NP'+red, 'ITT'+red, 'FC'+red, 'SP'+red, 'SS']
@@ -102,7 +102,8 @@ def plotChannelsOfInterestMultiY(dataFrame, originalFileName, suffix='', reduced
     plt.draw()
     # plt.show()
 
-    fn = composeFilename(originalFileName, suffix, 'png')
-    plt.savefig(fn, dpi=200)
+    fn = composeFilename2(originalFileName, suffix, 'png')
+    fp = f"{outPath}/{fn}"
+    plt.savefig(fp, dpi=200)
 
     plt.close()
