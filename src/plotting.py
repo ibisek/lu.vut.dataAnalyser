@@ -12,6 +12,8 @@ from dataAnalysis.steadyStatesUtils import rowWithinSteadyState
 from mpl_toolkits.axes_grid1 import host_subplot
 import mpl_toolkits.axisartist as AA
 
+from fileUtils import composeFilename2
+
 
 def plotChannelsOfInterest(dataFrame, originalFileName, suffix=''):
 
