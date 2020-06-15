@@ -2,6 +2,9 @@
     Regression results with file_id == null are NOMINAL values (!)
 """
 
+import numpy as np
+import pandas as pd
+
 from db.DbSource import DbSource
 
 from configuration import dbConnectionInfo
@@ -78,3 +81,51 @@ def getRegressionResults(engineId: int, fileId: int):
     else:
         return l
 
+
+def listFunctionsForEngine(engineId: int):
+    """
+    Lists all available regression functions for given engine.
+    :param engineId:
+    :return:
+    """
+    functions = list()
+
+    sql = f"SELECT function FROM regression_results WHERE ts=0 AND file_id IS NULL AND engine_id={engineId};"
+
+    dbs = DbSource(dbConnectionInfo=dbConnectionInfo)
+    with dbs.getConnection() as cur:
+        cur.execute(sql)
+        rows = cur.fetchall()
+        for row in rows:
+            fn = row[0]
+            functions.append(fn)
+
+    return functions
+
+
+def getValues(engineId: int, function: str):
+
+    sql = f"SELECT ts, value FROM regression_results " \
+          f"WHERE ts != 0 AND file_id IS NOT NULL AND " \
+          f"engine_id = {engineId} AND function = '{function}' " \
+          f"ORDER BY ts;"
+
+    dbs = DbSource(dbConnectionInfo=dbConnectionInfo)
+    with dbs.getConnection() as cur:
+        cur.execute(sql)
+        rows = cur.fetchall()
+
+        tss = np.zeros(len(rows))
+        vals = np.zeros(len(rows))
+
+        for i, row in enumerate(rows):
+            tss[i] = row[0]
+            vals[i] = row[1]
+
+        df = pd.DataFrame(columns=['ts', 'value'])
+        df['ts'] = tss
+        df['value'] = vals
+
+        df.index = pd.to_datetime(df['ts'], unit='s')
+
+    return df
