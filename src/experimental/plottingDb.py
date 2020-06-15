@@ -1,10 +1,11 @@
 """
+A script plotting regression results from DB.
+
 @see https://www.datacamp.com/community/tutorials/moving-averages-in-pandas
 """
+
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-
-from configuration import dbConnectionInfo
 
 from dao.regressionResultDao import listFunctionsForEngine, getValues
 
