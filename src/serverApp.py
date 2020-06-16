@@ -182,7 +182,7 @@ def calcRegressionDeltaForFile(file: File):
     """
     Calculates delta from nominal values for each available function.
     :param file:
-    :return:
+    :return: True if delta was calculated
     """
 
     nominalRRs: dict = getRegressionResults(engineId=file.engineId, fileId=None)
@@ -192,6 +192,10 @@ def calcRegressionDeltaForFile(file: File):
     reducedDf = _readReducedDataFromFile(file)
     ssDf = _filterOutUnsteadyRecords(file=file, df=reducedDf)
 
+    if len(ssDf) == 0:
+        print(f"[WARN] No steady states (SS) for file if {file.id}!")
+        return False
+
     for function in nominalRRs.keys():
         yKey, _, xKey = function.split('-')
 
@@ -199,20 +203,30 @@ def calcRegressionDeltaForFile(file: File):
         xMin = ssDf[xKey].min()
         xMax = ssDf[xKey].max()
 
+        # calc regression for specific file and keys:
+        ssDf = ssDf.copy()
+        model, _ = doRegressionForKeys(dataFrame=ssDf, originalFileName=f"eid-{file.engineId}.none",
+                                       yKey=yKey, xKeys=[xKey], fileNameSuffix='', outPath=dir,
+                                       saveDataToFile=False, plot=False)
+
+        yValueCurrentFile = model.predictVal(xValue)  # this is the nominal value for particular function y = fn(x)
+
+        # put file's xVal into nominal function:
         nrr: RegressionResult = nominalRRs[function]
         print(f"[INFO] {function}: xValue = {xValue:.2f} into <{nrr.xMin:.2f}; {nrr.xMax:.2f}>")
+        nominalModel = IbiModel(coefs=(nrr.a, nrr.b, nrr.c))
+        yValueNominal = nominalModel.predictVal(xValue)
 
-        model = IbiModel(coefs=(nrr.a, nrr.b, nrr.c))
-        yValue = model.predictVal(xValue)
-
-        yDelta = yValue - nrr.val
-        print(f"[INFO] nominal = {nrr.val:.2f}; yVal = {yValue:.2f}; yDelta = {yDelta:.5f}")
+        yDelta = yValueNominal - yValueCurrentFile
+        print(f"[INFO] nominal = {nrr.val:.2f}; yVal = {yValueNominal:.2f}; yDelta = {yDelta:.5f}")
 
         # 'id', 'ts', 'engineId', 'fileId', 'fn', 'val', 'a', 'b', 'c', 'xMin', 'xMax'
         fileRR = RegressionResult(id=None, ts=int(reducedDf['ts'][0]), engineId=file.engineId, fileId=file.id, fn=function, val=yDelta,
-                                  a=0, b=0, c=0, xMin=xMin, xMax=xMax)
+                                  a=model.a, b=model.b, c=model.c, xMin=xMin, xMax=xMax)
 
         saveRegressionResult(res=fileRR, file=file)
+
+    return True
 
 
 def recalcAllRegressionResultsForEngine(engineId: int):
@@ -233,23 +247,23 @@ def recalcAllRegressionResultsForEngine(engineId: int):
 
 
 if __name__ == '__main__':
-    while True:
-        file: File = checkForWork()
-
-        if not file:
-            break
-
-        if file and prepare(file):
-            try:
-                process(file)
-                # TODO uncomment (!)
-                setFileStatus(file=file, status=FileStatus.ANALYSIS_COMPLETE)
-
-            except Exception as ex:
-                print(f"[ERROR] in processing file {file}:", str(ex))
-                setFileStatus(file=file, status=FileStatus.FAILED)
+    # while True:
+    #     file: File = checkForWork()
+    #
+    #     if not file:
+    #         break
+    #
+    #     if file and prepare(file):
+    #         try:
+    #             process(file)
+    #             # TODO uncomment (!)
+    #             setFileStatus(file=file, status=FileStatus.ANALYSIS_COMPLETE)
+    #
+    #         except Exception as ex:
+    #             print(f"[ERROR] in processing file {file}:", str(ex))
+    #             setFileStatus(file=file, status=FileStatus.FAILED)
 
     # calcNominalValues(1)
-    # recalcAllRegressionResultsForEngine(1)
+    recalcAllRegressionResultsForEngine(1)
 
     print('KOHEU.')
