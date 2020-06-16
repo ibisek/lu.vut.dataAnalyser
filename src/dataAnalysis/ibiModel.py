@@ -38,6 +38,18 @@ class IbiModel(object):
 
         return Series(yValues)
 
+    @property
+    def a(self):
+        return self.coefs[0]
+
+    @property
+    def b(self):
+        return self.coefs[1]
+
+    @property
+    def c(self):
+        return self.coefs[2]
+
 
 if __name__ == '__main__':
     # x = (1, 2, 3, 4, 6, 7, 8, 9, 5, 10)
