@@ -146,11 +146,12 @@ def calcNominalValues(engineId: int):
 
     # (2) calculate regression curves:
     l = list()  # Y = fn(X)
-    l.append(('NGR', 'SPR'))
+    l.append(('SPR', 'NGR'))
     l.append(('ITTR', 'SPR'))
     l.append(('ITTR', 'NGR'))
     l.append(('FCR', 'SPR'))
     l.append(('FCR', 'NGR'))
+    l.append(('FCR', 'ITTR'))
 
     dir = f"{FILE_STORAGE_ROOT}/nominal-engineId-{engineId}"
     Path(dir).mkdir(parents=True, exist_ok=True)
@@ -263,7 +264,7 @@ if __name__ == '__main__':
     #             print(f"[ERROR] in processing file {file}:", str(ex))
     #             setFileStatus(file=file, status=FileStatus.FAILED)
 
-    # calcNominalValues(1)
-    recalcAllRegressionResultsForEngine(1)
+    calcNominalValues(1)
+    # recalcAllRegressionResultsForEngine(1)
 
     print('KOHEU.')
