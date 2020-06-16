@@ -126,6 +126,6 @@ def getValues(engineId: int, function: str):
         df['ts'] = tss
         df['value'] = vals
 
-        df.index = pd.to_datetime(df['ts'], unit='s')
+        # df.index = pd.to_datetime(df['ts'], unit='s')
 
     return df
