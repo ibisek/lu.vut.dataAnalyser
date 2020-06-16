@@ -14,7 +14,7 @@ if __name__ == '__main__':
     ENGINE_ID = 1
 
     functions = listFunctionsForEngine(ENGINE_ID)
-    print(functions)
+    print("Available functions:", functions)
 
     for fn in functions:
 
@@ -29,7 +29,7 @@ if __name__ == '__main__':
 
         plt.close('all')
 
-        ax = df[['value', 'ma20', 'ma40', 'ema5']].plot(figsize=(20, 8), marker='+', markersize=10, ls='None')
+        ax = df[['value', 'ma20', 'ma40', 'ema5']].plot(figsize=(20, 8), marker='+', markersize=4, ls='None')
 
         plt.subplots_adjust(left=0.04, right=0.98, top=0.94, bottom=0.13)
 
@@ -42,8 +42,8 @@ if __name__ == '__main__':
         plt.xlabel(None)
 
         plt.ylabel('value delta', fontsize=14)
-        ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
-        ax.xaxis.set_minor_formatter(mdates.DateFormatter("%Y-%m-%d"))
+        # ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
+        # ax.xaxis.set_minor_formatter(mdates.DateFormatter("%Y-%m-%d"))
         # axes.set_xlim([xmin, xmax])
         # ax.set_ylim([90, 100])    # NG 90-100
         plt.xticks(rotation=90)
