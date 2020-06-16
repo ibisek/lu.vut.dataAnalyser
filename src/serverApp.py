@@ -112,6 +112,9 @@ def _readReducedDataFromFile(file: File):
     directory = f"{FILE_STORAGE_ROOT}/{file.id}"
     reducedDataFilePath = f"{directory}/" + composeFilename2(file.name, 'reduced', 'csv')
     df = pd.read_csv(reducedDataFilePath, delimiter=CSV_DELIMITER)
+
+    df = omitRowsBelowThresholds(df, reducedDataFilePath)
+
     return df
 
 
@@ -129,7 +132,7 @@ def _filterOutUnsteadyRecords(file: File, df: pd.DataFrame):
 
 
 def calcNominalValues(engineId: int):
-    NUM = 20
+    NUM = 50
     files: File = listFilesForNominalCalculation(engineId=engineId, limit=NUM)
     # TODO uncomment (!)
     if len(files) != NUM:
@@ -222,7 +225,7 @@ def calcRegressionDeltaForFile(file: File):
         print(f"[INFO] nominal = {nrr.val:.2f}; yVal = {yValueNominal:.2f}; yDelta = {yDelta:.5f}")
 
         # 'id', 'ts', 'engineId', 'fileId', 'fn', 'val', 'a', 'b', 'c', 'xMin', 'xMax'
-        fileRR = RegressionResult(id=None, ts=int(reducedDf['ts'][0]), engineId=file.engineId, fileId=file.id, fn=function, val=yDelta,
+        fileRR = RegressionResult(id=None, ts=int(reducedDf['ts'].iloc[0]), engineId=file.engineId, fileId=file.id, fn=function, val=yDelta,
                                   a=model.a, b=model.b, c=model.c, xMin=xMin, xMax=xMax)
 
         saveRegressionResult(res=fileRR, file=file)
