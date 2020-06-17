@@ -91,6 +91,13 @@ def process(file: File):
         setFileStatus(file=file, status=FileStatus.NO_STEADY_STATES)
         return
 
+    # save data from steady states and with NG>=NG_THRESHOLD to file:
+    ssDf = _filterOutUnsteadyRecords(file, standardisedDataFrame)
+    fn = composeFilename2(file.name, 'steadyStatesData', 'csv')
+    fp = f"{inPath}/{fn}"
+    print(f"[INFO] Writing detected steady states data to '{fp}'")
+    ssDf.to_csv(fp, sep=';', encoding='utf_8')
+
     plotChannelsOfInterestMultiY(dataFrame=standardisedDataFrame, originalFileName=fileName, suffix='flightOverview-reduced', reducedChannels=True, outPath=inPath)
 
     # results: RegressionResult = doRegressionOnSteadySectionsAvgXY(dataFrame=standardisedDataFrame, originalFileName=fileName, outPath=inPath)
@@ -253,24 +260,24 @@ def recalcAllRegressionResultsForEngine(engineId: int):
 
 
 if __name__ == '__main__':
-    # while True:
-    #     file: File = checkForWork()
-    #
-    #     if not file:
-    #         break
-    #
-    #     if file and prepare(file):
-    #         try:
-    #             process(file)
-    #             # TODO uncomment (!)
-    #             setFileStatus(file=file, status=FileStatus.ANALYSIS_COMPLETE)
-    #
-    #         except Exception as ex:
-    #             print(f"[ERROR] in processing file {file}:", str(ex))
-    #             setFileStatus(file=file, status=FileStatus.FAILED)
+    while True:
+        file: File = checkForWork()
 
-    ENGINE_ID = 1
-    calcNominalValues(ENGINE_ID)
+        if not file:
+            break
+
+        if file and prepare(file):
+            try:
+                process(file)
+                # TODO uncomment (!)
+                setFileStatus(file=file, status=FileStatus.ANALYSIS_COMPLETE)
+
+            except Exception as ex:
+                print(f"[ERROR] in processing file {file}:", str(ex))
+                setFileStatus(file=file, status=FileStatus.FAILED)
+
+    # ENGINE_ID = 1
+    # calcNominalValues(ENGINE_ID)
     # recalcAllRegressionResultsForEngine(ENGINE_ID)
 
     print('KOHEU.')
