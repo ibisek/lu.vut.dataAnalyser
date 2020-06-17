@@ -23,23 +23,23 @@ if __name__ == '__main__':
 
         df = getValues(ENGINE_ID, fn)
 
-        df['ma20'] = df['value'].rolling(window=20).mean()
-        df['ma40'] = df['value'].rolling(window=40).mean()
-        df['ema5'] = df['value'].expanding(min_periods=5).mean()
+        df['ma20'] = df['delta'].rolling(window=20).mean()
+        df['ma40'] = df['delta'].rolling(window=40).mean()
+        df['ema5'] = df['delta'].expanding(min_periods=5).mean()
 
         plt.close('all')
 
-        ax = df[['value', 'ma20', 'ma40', 'ema5']].plot(figsize=(20, 8), marker='+', markersize=4, ls='None')
+        ax = df[['delta', 'ma20', 'ma40', 'ema5']].plot(figsize=(20, 8), marker='+', markersize=4, ls='None')
 
-        plt.subplots_adjust(left=0.04, right=0.98, top=0.94, bottom=0.13)
+        plt.subplots_adjust(left=0.05, right=0.98, top=0.94, bottom=0.13)
 
         plt.legend(fontsize=14, loc='lower right')
         # ax.get_legend().remove()
 
         plt.title(title, fontsize=20)
 
-        # plt.xlabel('year-month-date', fontsize=14)
-        plt.xlabel(None)
+        plt.xlabel('sample index', fontsize=14)
+        # plt.xlabel(None)
 
         plt.ylabel('value delta', fontsize=14)
         # ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
