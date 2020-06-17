@@ -171,11 +171,12 @@ def calcNominalValues(engineId: int):
 
         # (2c) store results into db:
         function = f"{yKey}-fn-{xKey}"
-        nominalValue = yVal
         (a, b, c) = coeffs
         xMin = df[xKey].min()
         xMax = df[xKey].max()
-        res = RegressionResult(id=None, ts=0, engineId=engineId, fileId=file.id, fn=function, val=nominalValue, a=a, b=b, c=c, xMin=xMin, xMax=xMax)
+        res = RegressionResult(id=None, ts=0, engineId=engineId, fileId=file.id, fn=function,
+                               xValue=xVal, yValue=yVal, delta=0,
+                               a=a, b=b, c=c, xMin=xMin, xMax=xMax)
         saveRegressionResult(res=res, engineId=engineId)
 
     # (3) recalculate all regression results to these new nominal values:
@@ -222,10 +223,11 @@ def calcRegressionDeltaForFile(file: File):
         yValueNominal = nominalModel.predictVal(xValue)
 
         yDelta = yValueNominal - yValueCurrentFile
-        print(f"[INFO] nominal = {nrr.val:.2f}; yVal = {yValueNominal:.2f}; yDelta = {yDelta:.5f}")
+        print(f"[INFO] nominal = {nrr.yValue:.2f}; yVal = {yValueNominal:.2f}; yDelta = {yDelta:.5f}")
 
         # 'id', 'ts', 'engineId', 'fileId', 'fn', 'val', 'a', 'b', 'c', 'xMin', 'xMax'
-        fileRR = RegressionResult(id=None, ts=int(reducedDf['ts'].iloc[0]), engineId=file.engineId, fileId=file.id, fn=function, val=yDelta,
+        fileRR = RegressionResult(id=None, ts=int(reducedDf['ts'].iloc[0]), engineId=file.engineId, fileId=file.id, fn=function,
+                                  xValue=xValue, yValue=yValueCurrentFile, delta=yDelta,
                                   a=model.a, b=model.b, c=model.c, xMin=xMin, xMax=xMax)
 
         saveRegressionResult(res=fileRR, file=file)
@@ -267,7 +269,8 @@ if __name__ == '__main__':
     #             print(f"[ERROR] in processing file {file}:", str(ex))
     #             setFileStatus(file=file, status=FileStatus.FAILED)
 
-    calcNominalValues(1)
-    # recalcAllRegressionResultsForEngine(1)
+    ENGINE_ID = 1
+    calcNominalValues(ENGINE_ID)
+    # recalcAllRegressionResultsForEngine(ENGINE_ID)
 
     print('KOHEU.')
