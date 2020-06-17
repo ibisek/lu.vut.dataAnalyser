@@ -26,12 +26,12 @@ def saveRegressionResult(res: RegressionResult, file: File = None, engineId: int
 
     if file:
         delSql = f"DELETE FROM regression_results WHERE engine_id={file.engineId} AND file_id={file.id} AND function = '{res.fn}';"
-        insertSql = f"INSERT INTO regression_results (ts, engine_id, file_id, function, value, a, b, c, x_min, x_max) " \
-                    f"VALUES ({res.ts}, {file.engineId}, {file.id}, '{res.fn}', {res.val}, {res.a}, {res.b}, {res.c}, {res.xMin}, {res.xMax});"
+        insertSql = f"INSERT INTO regression_results (ts, engine_id, file_id, function, x_value, y_value, delta, a, b, c, x_min, x_max) " \
+                    f"VALUES ({res.ts}, {file.engineId}, {file.id}, '{res.fn}', {res.xValue}, {res.yValue}, {res.delta}, {res.a}, {res.b}, {res.c}, {res.xMin}, {res.xMax});"
     else:
         delSql = f"DELETE FROM regression_results WHERE engine_id={engineId} AND function='{res.fn}' AND file_id IS NULL;"
-        insertSql = f"INSERT INTO regression_results (engine_id, function, value, a, b, c, x_min, x_max) " \
-                    f"VALUES ({engineId}, '{res.fn}', {res.val}, {res.a}, {res.b}, {res.c}, {res.xMin}, {res.xMax});"
+        insertSql = f"INSERT INTO regression_results (engine_id, function, x_value, y_value, delta, a, b, c, x_min, x_max) " \
+                    f"VALUES ({engineId}, '{res.fn}', {res.xValue}, {res.yValue}, {res.delta}, {res.a}, {res.b}, {res.c}, {res.xMin}, {res.xMax});"
 
     # print(f"[DEBUG] DEL: {delSql}")
     # print(f"[DEBUG] INS: {insertSql}")
@@ -56,7 +56,7 @@ def getRegressionResults(engineId: int, fileId: int):
 
     fileIdCond = f"= {fileId}" if fileId else "IS NULL"
 
-    sql = f"SELECT id, ts, function, value, a, b, c, x_min, x_max FROM regression_results " \
+    sql = f"SELECT id, ts, function, x_value, y_value, delta, a, b, c, x_min, x_max FROM regression_results " \
           f"WHERE engine_id = {engineId} AND file_id {fileIdCond} " \
           f"ORDER BY file_id, function;"
 
@@ -68,8 +68,10 @@ def getRegressionResults(engineId: int, fileId: int):
         cur.execute(sql)
         rows = cur.fetchall()
         for row in rows:
-            (id, ts, function, value, a, b, c, xMin, xMax) = row
-            rr = RegressionResult(id=id, ts=ts, engineId=engineId, fileId=fileId, fn=function, val=value, a=a, b=b, c=c, xMin=xMin, xMax=xMax)
+            (id, ts, function, xValue, yValue, delta, a, b, c, xMin, xMax) = row
+            rr = RegressionResult(id=id, ts=ts, engineId=engineId, fileId=fileId, fn=function,
+                                  xValue=xValue, yValue=yValue, delta=delta,
+                                  a=a, b=b, c=c, xMin=xMin, xMax=xMax)
 
             if not fileId:
                 d[function] = rr
@@ -105,7 +107,7 @@ def listFunctionsForEngine(engineId: int):
 
 def getValues(engineId: int, function: str):
 
-    sql = f"SELECT ts, value FROM regression_results " \
+    sql = f"SELECT ts, x_value, y_value, delta FROM regression_results " \
           f"WHERE ts != 0 AND file_id IS NOT NULL AND " \
           f"engine_id = {engineId} AND function = '{function}' " \
           f"ORDER BY ts;"
@@ -116,15 +118,21 @@ def getValues(engineId: int, function: str):
         rows = cur.fetchall()
 
         tss = np.zeros(len(rows))
-        vals = np.zeros(len(rows))
+        xValues = np.zeros(len(rows))
+        yValues = np.zeros(len(rows))
+        deltas = np.zeros(len(rows))
 
         for i, row in enumerate(rows):
             tss[i] = row[0]
-            vals[i] = row[1]
+            xValues[i] = row[1]
+            yValues[i] = row[2]
+            deltas[i] = row[3]
 
-        df = pd.DataFrame(columns=['ts', 'value'])
+        df = pd.DataFrame(columns=['ts', 'x', 'y', 'delta'])
         df['ts'] = tss
-        df['value'] = vals
+        df['x'] = xValues
+        df['y'] = yValues
+        df['delta'] = deltas
 
         # df.index = pd.to_datetime(df['ts'], unit='s')
 
