@@ -104,7 +104,9 @@ CREATE TABLE IF NOT EXISTS regression_results (
   engine_id INT REFERENCES engines.id, 
   file_id INT REFERENCES files.id, 
   function VARCHAR(16) NOT NULL, 
-  value FLOAT(20) DEFAULT 0, 
+  x_value FLOAT(20) DEFAULT 0, 
+  y_value FLOAT(20) DEFAULT 0, 
+  delta FLOAT(20) DEFAULT 0, 
   a FLOAT(20) DEFAULT 0, 
   b FLOAT(20) DEFAULT 0, 
   c FLOAT(20) DEFAULT 0, 
@@ -121,14 +123,27 @@ select * from configuration;
 --delete from files;
 insert into files (name, engine_id, source, status) values ('testing1.csv', 1, true, 1);
 
-update files set status = 1 where id = 1;
+update files set status = 1 where id = 672;
 select * from files;
 
-select * from files where status=1;
+--delete from files;
 
+select * from files where status > 10;
+update files set status = 1 where status =2;
+
+select count(*) from regression_results;
 select * from regression_results;
 
---delete from regression_results;
 
+--delete from regression_results where file_id is not null;
+
+select function, value, a, b, c, x_min, x_max from regression_results where engine_id = 1 AND file_id IS NULL;
+
+
+select * from regression_results;
+select distinct(function) from regression_results where engine_id=1;
+select * from regression_results where ts != 0 and file_id is not null and engine_id=1 order by ts asc;
+
+select * from regression_results where ts = 0 and file_id is null and engine_id=1;
 
 
