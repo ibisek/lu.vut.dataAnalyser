@@ -93,10 +93,11 @@ def process(file: File):
 
     # save data from steady states and with NG>=NG_THRESHOLD to file:
     ssDf = _filterOutUnsteadyRecords(file, standardisedDataFrame)
-    fn = composeFilename2(file.name, 'steadyStatesData', 'csv')
-    fp = f"{inPath}/{fn}"
-    print(f"[INFO] Writing detected steady states data to '{fp}'")
-    ssDf.to_csv(fp, sep=';', encoding='utf_8')
+    if len(ssDf) > 0:
+        fn = composeFilename2(file.name, 'steadyStatesData', 'csv')
+        fp = f"{inPath}/{fn}"
+        print(f"[INFO] Writing detected steady states data to '{fp}'")
+        ssDf.to_csv(fp, sep=';', encoding='utf_8')
 
     plotChannelsOfInterestMultiY(dataFrame=standardisedDataFrame, originalFileName=fileName, suffix='flightOverview-reduced', reducedChannels=True, outPath=inPath)
 
