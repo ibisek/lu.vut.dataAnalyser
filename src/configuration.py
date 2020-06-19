@@ -60,15 +60,16 @@ UNITS = {
     'NGR': '%',
 }
 
-# ['NG', 'TQ', 'FC', 'ITT', 'P0', 'PT', 'T1', 'NP']
+
 KEYS_FOR_STEADY_STATE_DETECTION = ['NG', 'TQ', 'FC', 'ITT', 'P0', 'PT']
+KEYS_FOR_AVG_IN_SSs = ['T0', 'NP', 'OILT', 'OILP', 'TAS', 'SP', 'ALT']
 
 
 DB_HOST = '10.8.0.18'
 DB_PORT = 3306
 DB_NAME = 'radec'
-DB_USER = 'ibisek'
-DB_PASSWORD = 'heslo'
+DB_USER = '**'
+DB_PASSWORD = '**'
 dbConnectionInfo = (DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD)
 
 if DB_PASSWORD != '**':

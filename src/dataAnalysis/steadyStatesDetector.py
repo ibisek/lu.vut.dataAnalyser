@@ -6,7 +6,7 @@ import os
 import json
 import numpy as np
 from math import isnan
-from configuration import OUT_PATH, KEYS_FOR_STEADY_STATE_DETECTION
+from configuration import OUT_PATH, KEYS_FOR_STEADY_STATE_DETECTION, KEYS_FOR_AVG_IN_SSs
 import fileUtils
 
 
@@ -174,6 +174,10 @@ class SteadyStatesDetector(object):
 
                 avgVals = dict()
                 for k, v in dataFrame[KEYS_FOR_STEADY_STATE_DETECTION][startIndex:endIndex].mean().items():
+                    avgVals[k] = v
+
+                # other channels' average values:
+                for k, v in dataFrame[KEYS_FOR_AVG_IN_SSs][startIndex:endIndex].mean().items():
                     avgVals[k] = v
 
                 numPoints = endIndex - startIndex
