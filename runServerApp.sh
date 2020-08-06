@@ -8,7 +8,11 @@ export PYTHONPATH=$PYTHONPATH:.
 
 cd src
 
-python3 serverApp.py
+while true
+do
+  python3 serverApp.py
+  sleep 4
+done
 
 deactivate
 
