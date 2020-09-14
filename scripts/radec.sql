@@ -26,13 +26,35 @@ INSERT INTO equipment_types (part_no, label) VALUES ('TP-1234', 'PBS TP100');
 select * from equipment_types;
 
 
---DROP TABLE IF EXISTS equipment_properties;
+--DROP TABLE IF EXISTS components;
+CREATE TABLE IF NOT EXISTS components (
+  id INT PRIMARY KEY auto_increment,
+  engine_id INT NULL REFERENCES engines.id,
+  equipment_type_id INT NOT NULL REFERENCES equipment_types.id,
+  serial_no VARCHAR(32) NULL
+) charset utf8;
+
+INSERT INTO components (engine_id, equipment_type_id, serial_no) VALUES (2, 6, 'sn_1234');
+INSERT INTO components (engine_id, equipment_type_id, serial_no) VALUES (2, 8, 'sn_1234');
+INSERT INTO components (engine_id, equipment_type_id, serial_no) VALUES (2, 9, 'sn_1234');
+INSERT INTO components (engine_id, equipment_type_id, serial_no) VALUES (2, 10, 'sn_1234');
+
+select * from components;
+
+
+
+DROP TABLE IF EXISTS equipment_properties;
 CREATE TABLE IF NOT EXISTS equipment_properties (
   id INT PRIMARY KEY auto_increment,
   equipment_type_id INT NOT NULL REFERENCES equipment_types.id,
-  k VARCHAR(8) NOT NULL,
+  k VARCHAR(16) NOT NULL,
   v VARCHAR(32) NOT NULL
 ) charset utf8;
+
+INSERT INTO equipment_properties (equipment_type_id, k, v) VALUES (10, 'ELC_LIMIT', '10450');
+
+select * from equipment_properties;
+select * from equipment_types;
 
 
 --DROP TABLE IF EXISTS fleets;
