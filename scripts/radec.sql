@@ -10,27 +10,27 @@ INSERT INTO configuration (k, v) VALUES ('FILE_INGESTION_ROOT', '/var/www/radec/
 INSERT INTO configuration (k, v) VALUES ('FILE_STORAGE_ROOT', '/var/www/radec/storage');
 
 
---DROP TABLE IF EXISTS equipment_types;
-CREATE TABLE IF NOT EXISTS equipment_types (
+--DROP TABLE IF EXISTS equipment;
+CREATE TABLE IF NOT EXISTS equipment (
   id INT PRIMARY KEY auto_increment,
   part_no VARCHAR(32) NOT NULL,
   label VARCHAR(32) NULL,
   description VARCHAR(64) NULL
 ) charset utf8;
 
-INSERT INTO equipment_types (part_no, label) VALUES ('PI-1234', 'Pilatus PC-12');
-INSERT INTO equipment_types (part_no, label) VALUES ('PW-1234', 'Pratt & Whitney Canada PT6 E');
-INSERT INTO equipment_types (part_no, label) VALUES ('CE-1234', 'Cessna 172 Skyhawk');
-INSERT INTO equipment_types (part_no, label) VALUES ('TP-1234', 'PBS TP100');
+INSERT INTO equipment (part_no, label) VALUES ('PI-1234', 'Pilatus PC-12');
+INSERT INTO equipment (part_no, label) VALUES ('PW-1234', 'Pratt & Whitney Canada PT6 E');
+INSERT INTO equipment (part_no, label) VALUES ('CE-1234', 'Cessna 172 Skyhawk');
+INSERT INTO equipment (part_no, label) VALUES ('TP-1234', 'PBS TP100');
 
-select * from equipment_types;
+select * from equipment;
 
 
 --DROP TABLE IF EXISTS components;
 CREATE TABLE IF NOT EXISTS components (
   id INT PRIMARY KEY auto_increment,
   engine_id INT NULL REFERENCES engines.id,
-  equipment_type_id INT NOT NULL REFERENCES equipment_types.id,
+  equipment_type_id INT NOT NULL REFERENCES equipment.id,
   serial_no VARCHAR(32) NULL
 ) charset utf8;
 
@@ -46,7 +46,7 @@ select * from components;
 DROP TABLE IF EXISTS equipment_properties;
 CREATE TABLE IF NOT EXISTS equipment_properties (
   id INT PRIMARY KEY auto_increment,
-  equipment_type_id INT NOT NULL REFERENCES equipment_types.id,
+  equipment_type_id INT NOT NULL REFERENCES equipment.id,
   k VARCHAR(16) NOT NULL,
   v VARCHAR(32) NOT NULL
 ) charset utf8;
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS equipment_properties (
 INSERT INTO equipment_properties (equipment_type_id, k, v) VALUES (10, 'ELC_LIMIT', '10450');
 
 select * from equipment_properties;
-select * from equipment_types;
+select * from equipment;
 
 
 --DROP TABLE IF EXISTS fleets;
@@ -73,7 +73,7 @@ select * from fleets;
 --DROP TABLE IF EXISTS airplanes;
 CREATE TABLE IF NOT EXISTS airplanes (
   id INT PRIMARY KEY auto_increment,
-  equipment_id INT NOT NULL references equipment_types.id,
+  equipment_id INT NOT NULL references equipment.id,
   model VARCHAR(32) NULL,
   year_of_prod INT(4) NULL,
   serial_no VARCHAR(32) NOT NULL,
@@ -95,7 +95,7 @@ select * from airplanes;
 --DROP TABLE IF EXISTS engines;
 CREATE TABLE IF NOT EXISTS engines (
   id INT PRIMARY KEY auto_increment,
-  equipment_type_id INT NOT NULL references equipment_types.id,
+  equipment_type_id INT NOT NULL references equipment.id,
   serial_no VARCHAR(32) NOT NULL,
   year_of_prod INT(4) NULL,
   airplane_id INT REFERENCES aircrafts.id,
