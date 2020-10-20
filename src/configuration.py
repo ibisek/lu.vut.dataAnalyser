@@ -68,8 +68,8 @@ KEYS_FOR_AVG_IN_SSs = ['T0', 'NP', 'OILT', 'OILP', 'TAS', 'SP', 'ALT']
 DB_HOST = '10.8.0.18'
 DB_PORT = 3306
 DB_NAME = 'radec'
-DB_USER = '**'
-DB_PASSWORD = '**'
+DB_USER = 'ibisek'
+DB_PASSWORD = 'heslo'
 dbConnectionInfo = (DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD)
 
 if DB_PASSWORD != '**':
@@ -78,3 +78,6 @@ if DB_PASSWORD != '**':
     os.environ.setdefault('DB_NAME', DB_NAME)
     os.environ.setdefault('DB_USER', DB_USER)
     os.environ.setdefault('DB_PASSWORD', DB_PASSWORD)
+
+INFLUX_DB_NAME = DB_NAME
+INFLUX_DB_HOST = DB_HOST
