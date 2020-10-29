@@ -5,6 +5,8 @@ import numpy as np
 from configuration import NOMINAL_DATA, OUT_PATH
 from pandas import DataFrame
 
+from ..structures import RawDataFileFormat
+
 from fileUtils import composeFilename, composeFilename2
 
 FILE_SET_1 = ['SN131014_AT.csv', 'SN132014_AT.csv', 'SN132018_AT.csv', 'SN133005_AT.csv', 'SN141015_AT.csv',
@@ -22,7 +24,7 @@ def _getKey(keys, k: str):
     return None
 
 
-def _processFS1(df):
+def _processFS1(df: DataFrame) -> pd.DataFrame:
     # Kanaly ze zkusebnovych dat:
     # [0] Ng
     # [2] Tq / Mk
@@ -94,10 +96,10 @@ def _processFS1(df):
     if 'T2' in ndf.keys():
         ndf['T2R'] = (ndf['T2'] + 273.15) * ((15 + 273.15) / (ndf['T0'] + 273.15)) - 273.15
 
-    return ndf
+    return [ndf]
 
 
-def _processFD1(df):
+def _processFD1(df: DataFrame) -> pd.DataFrame:
     """
     Flight data 1.
     :param df:
@@ -132,10 +134,10 @@ def _processFD1(df):
     ambientPress = baroPressPresetPa * np.power(1 - mAmsl.values / 44330, 5.255)
     ndf['P0'] = ambientPress  # [Pa]
 
-    return ndf
+    return [ndf]
 
 
-def _processFD2(df):
+def _processPT6(df: DataFrame) -> pd.DataFrame:
     """
     Flight data 2.
     :param df:
@@ -176,38 +178,74 @@ def _processFD2(df):
     ndf['ALT'] = mAmsl  # alt AMSL [m]
     ndf['TAS'] = ndf['TAS'] * 1.852     # [kt] -> [km/h]
 
-    return ndf
+    return [ndf]
 
 
-def channelSelection(dataFrame, originalFileName, outPath=OUT_PATH):
+def _processH80(df: DataFrame) -> pd.DataFrame:
+    """
+    H80 dev data
+    :param df:
+    :return:
+    """
+
+    ndf1 = DataFrame(index=df.index)    # left engine (#1)
+    ndf2 = DataFrame(index=df.index)    # right engine (#2)
+
+    ndf1['IAS'] = ndf2['IAS'] = df['IAS_LH'] * 1.852     # [kt] -> [km/h]
+    ndf1['ALT'] = ndf2['ALT'] = df['Pressure_Alt'] * 0.3048    # [ft] -> [m] AMSL
+
+    ndf1['NG'] = df['Engine_LH_NG']     # [%]
+    ndf1['ITT'] = df['Engine_LH_ITT']   # [deg.C]
+    ndf1['NP'] = df['Engine_LH_NP']     # [1/min]
+    ndf1['TQ'] = df['Engine_LH_TQ'] * NOMINAL_DATA['TQ']     # [%] - > [Nm]
+    ndf1['FC'] = df['Engine_LH_FF']     # [kg/h]
+
+    ndf2['NG'] = df['Engine_RH_NG']     # [%]
+    ndf2['ITT'] = df['Engine_RH_ITT']   # [deg.C]
+    ndf2['NP'] = df['Engine_RH_NP']     # [1/min]
+    ndf2['TQ'] = df['Engine_RH_TQ'] * NOMINAL_DATA['TQ']     # [%] - > [Nm]
+    ndf2['FC'] = df['Engine_RH_FF']     # [kg/h]
+
+    mAmsl = ndf1['ALT'].astype(float)
+    ambientPress = 101325 * np.power(1 - mAmsl.values / 44330, 5.255)
+    ndf1['P0'] = ndf2['P0'] = ambientPress  # [Pa]
+
+    # TODO 'PT' channel!!
+
+    return [ndf1, ndf2]
+
+
+def channelSelection(fileFormat: RawDataFileFormat, dataFrame, originalFileName, outPath=OUT_PATH):
     # dataFrame = dataFrame.fillna(0)
     # dataFrame.interpolate()  # fill missing values
 
     if originalFileName in FILE_SET_1:
-        dataFrame = _processFS1(dataFrame)
+        dataFrames = _processFS1(dataFrame)
     elif originalFileName in FILE_SET_2:
-        dataFrame = _processFD1(dataFrame)
-    # else:
-    #     print('[FATAL] UNKNOWN file - unable to choose processing method!')
-    #     sys.exit(0)
+        dataFrames = _processFD1(dataFrame)
+    elif fileFormat == RawDataFileFormat.PT6:
+        dataFrames = _processPT6(dataFrame)
+    elif fileFormat == RawDataFileFormat.H80:
+        dataFrames = _processH80(dataFrame)
     else:
-        # "flight-data 2"
-        dataFrame = _processFD2(dataFrame)
+        print('[FATAL] UNKNOWN file format - unable to choose processing method!')
+        sys.exit(0)
 
-    # drop rows where p0 == 0 (causes inf/zero division in dataStandardisation):
-    # dataFrame = dataFrame.replace(0, np.nan)
+    for engineIndex, dataFrame in enumerate(dataFrames, start=1):
+        # drop rows where p0 == 0 (causes inf/zero division in dataStandardisation):
+        # dataFrame = dataFrame.replace(0, np.nan)
 
-    # drop empty data
-    dataFrame = dataFrame.dropna()
-    # fill missing values:
-    # dataFrame.interpolate()
+        # drop empty data
+        dataFrame = dataFrame.dropna()
+        # fill missing values:
+        # dataFrame.interpolate()
 
-    # add unix timestamp column:
-    dataFrame['ts'] = dataFrame.index[0].value/1e9
+        # add unix timestamp column:
+        dataFrame['ts'] = dataFrame.index[0].value/1e9
 
-    fn = composeFilename2(originalFileName, 'selectedChannelsRaw', 'csv')
-    fp = f"{outPath}/{fn}"
-    print(f"[INFO] Writing selected channels to '{fn}'")
-    dataFrame.to_csv(fp, sep=';', encoding='utf_8')
+        fn = composeFilename2(originalFileName, 'selectedChannelsRaw', 'csv', engineIndex=engineIndex)
+        fp = f"{outPath}/{fn}"
+        print(f"[INFO] Writing selected channels to '{fn}'")
+        dataFrame.to_csv(fp, sep=';', encoding='utf_8')
 
-    return dataFrame
+    return dataFrames
