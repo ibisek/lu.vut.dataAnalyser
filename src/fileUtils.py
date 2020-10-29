@@ -35,9 +35,9 @@ def loadSteadyStates(originalFileName: str, ssDir: str = None):
     return intervals
 
 
-def composeFilename2(originalFileName, postfix, extension):
+def composeFilename2(originalFileName, postfix, extension, engineIndex=1):
     fn = originalFileName[:originalFileName.index('.')]
-    fn = f"{fn}-{postfix}.{extension}"
+    fn = f"{fn}-{postfix}-e{engineIndex}.{extension}"
 
     return fn
 
