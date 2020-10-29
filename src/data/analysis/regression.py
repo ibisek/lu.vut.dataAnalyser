@@ -6,19 +6,15 @@
 # Z = fn (a,b,c,d) -> coefs = [1, a, b, c, d, a^2, b^2, c^2, d^2, ab, bc, cd, ac, ad, bd] -> 15 coefs
 #
 
-import json
 import pandas as pd
 from pandas import DataFrame
-import numpy as np
 import matplotlib.pyplot as plt
 from collections import namedtuple
-from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
-from sklearn.preprocessing import PolynomialFeatures
-from sklearn.pipeline import make_pipeline
+from sklearn.linear_model import LinearRegression
 
 from fileUtils import composeFilename, composeFilename2, loadSteadyStates
 from configuration import OUT_PATH, NOMINAL_DATA, UNITS
-from dataAnalysis.ibiModel import IbiModel
+from data.analysis.ibiModel import IbiModel
 
 RegressionResult = namedtuple('RegressionResult', ['id', 'ts', 'engineId', 'fileId', 'fn', 'xValue', 'yValue', 'delta', 'a', 'b', 'c', 'xMin', 'xMax'])
 

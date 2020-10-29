@@ -5,24 +5,25 @@ from pathlib import Path
 
 from configuration import STEADY_STATE_WINDOW_LEN, STEADY_STATE_DVAL, CSV_DELIMITER
 
-from dataSources.fileLoader import loadRawData
+from data.sources.fileLoader import loadRawData
 from fileUtils import loadSteadyStates, composeFilename2
 
-from dataPreprocessing.channelSelection import channelSelection
-from dataPreprocessing.dataFiltering import filterData
-from dataPreprocessing.dataStandartisation import standardiseData
-from dataPreprocessing.omitRows import omitRowsBelowThresholds
+from data.preprocessing.channelSelection import channelSelection
+from data.preprocessing.dataFiltering import filterData
+from data.preprocessing.dataStandartisation import standardiseData
+from data.preprocessing.omitRows import omitRowsBelowThresholds
 
-from dataAnalysis.steadyStatesDetector import SteadyStatesDetector
-from dataAnalysis.regression import doRegressionOnSteadySectionsAvgXY, RegressionResult, doRegressionForKeys
-from dataAnalysis.limitingStateDetector import detectLimitingStates
-from dataAnalysis.ibiModel import IbiModel
+from data.analysis.steadyStatesDetector import SteadyStatesDetector
+from data.analysis.regression import RegressionResult, doRegressionForKeys
+from data.analysis.limitingStateDetector import detectLimitingStates
+from data.analysis.ibiModel import IbiModel
 
-from plotting import plotChannelsOfInterest, plotChannelsOfInterestMultiY
+from plotting import plotChannelsOfInterestMultiY
 
 from dao.configurationDao import getConfiguration
 from dao.fileDao import File, FileStatus, getFileForProcessing, setFileStatus, listFiles, listFilesForNominalCalculation
 from dao.regressionResultDao import saveRegressionResult, getRegressionResults
+from dao.flightRecordingDao import FlightRecordingDao, RecordingType
 
 
 c = getConfiguration()
@@ -84,6 +85,15 @@ def process(file: File):
 
     standardisedDataFrame = standardiseData(filteredDataFrame, fileName, outPath=inPath)
     standardisedDataFrame = omitRowsBelowThresholds(standardisedDataFrame, fileName)
+
+    # TODO nekde ziskat ty IDcka (!)
+    frDao = FlightRecordingDao()
+    engineId = 0
+    flightId = 0
+    cycle_id = 0
+    frDao.storeDf(engineId=engineId, flightId=flightId, cycleId=cycle_id, df=rawDataFrame, recType=RecordingType.RAW)
+    frDao.storeDf(engineId=engineId, flightId=flightId, cycleId=cycle_id, df=filteredDataFrame, recType=RecordingType.FILTERED)
+    frDao.storeDf(engineId=engineId, flightId=flightId, cycleId=cycle_id, df=standardisedDataFrame, recType=RecordingType.STANDARDIZED)
 
     SteadyStatesDetector(windowDt=STEADY_STATE_WINDOW_LEN, dVal=STEADY_STATE_DVAL).detectSteadyStates(standardisedDataFrame, fileName, outPath=inPath)
     steadyStates = loadSteadyStates(originalFileName=fileName, ssDir=inPath)

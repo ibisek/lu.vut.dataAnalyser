@@ -2,31 +2,24 @@
 Ingests raw data files in specified directory and submits them for further processing.
 """
 
-import sys
 import os
 import matplotlib.pyplot as plt
-from plotting import plotChannelsOfInterest, plotChannelsOfInterestMultiY
-from dataSources.fileLoader import loadRawData
-from dataSources.gpxGenerator import genGpx
+from data.sources.fileLoader import loadRawData
 from pandas import DataFrame
 import numpy as np
 import matplotlib.dates as mdates
 
 from fileUtils import composeFilename, loadSteadyStates
-from dataAnalysis.steadyStatesUtils import rowWithinSteadyState
-from configuration import IN_PATH, OUT_PATH, NG_THRESHOLD, SP_THRESHOLD, \
-    KEYS_FOR_STEADY_STATE_DETECTION, STEADY_STATE_WINDOW_LEN, STEADY_STATE_DVAL
+from data.analysis.steadyStatesUtils import rowWithinSteadyState
+from configuration import IN_PATH, OUT_PATH, KEYS_FOR_STEADY_STATE_DETECTION, STEADY_STATE_WINDOW_LEN, STEADY_STATE_DVAL
 
-from dataPreprocessing.channelSelection import channelSelection
-from dataPreprocessing.dataFiltering import filterData
-from dataPreprocessing.dataStandartisation import standardiseData
-from dataPreprocessing.omitRows import omitRowsBelowThresholds
+from data.preprocessing.channelSelection import channelSelection
+from data.preprocessing.dataFiltering import filterData
+from data.preprocessing.dataStandartisation import standardiseData
+from data.preprocessing.omitRows import omitRowsBelowThresholds
 
-from dataAnalysis.limitingStateDetector import detectLimitingStates
-from dataAnalysis.steadyStatesDetector import SteadyStatesDetector
-from dataAnalysis.correlations import analyseCorrelations
-from dataAnalysis.regression import doRegression, doRegressionOnSteadySections, \
-    doRegressionOnSteadyAllSectionsCombined, doRegressionOnSteadySectionsAvgXY, doRegressionOnSteadySectionsAvgXXXY
+from data.analysis.steadyStatesDetector import SteadyStatesDetector
+from data.analysis.regression import doRegressionOnSteadySectionsAvgXY
 
 
 def _displaySteadyStateDetection(dataFrame:DataFrame, originalFileName:str):
@@ -92,6 +85,9 @@ if __name__ == '__main__':
                 # genGpx(inPath, fileName)
                 # continue
 
+                from data.structures import RawDataFileFormat
+                dataFormat = RawDataFileFormat.PT6
+                # dataFormat = RawDataFileFormat.L410
                 rawDataFrame = loadRawData(inPath, fileName)
                 rawDataFrame = channelSelection(rawDataFrame, fileName)
 
@@ -103,7 +99,6 @@ if __name__ == '__main__':
                 # detectLimitingStates(rawDataFrame, fileName)    # limiting states detection on filtered data!
 
                 standardisedDataFrame = standardiseData(filteredDataFrame, fileName)
-
                 standardisedDataFrame = omitRowsBelowThresholds(standardisedDataFrame, fileName)
 
                 # analyseCorrelations(filteredDataFrame, fileName)

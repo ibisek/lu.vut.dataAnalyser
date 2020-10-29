@@ -5,9 +5,7 @@ Calculates correlation between all columns in given file.
 import sys
 from pandas.core.series import Series
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-from dataSources.fileLoader import loadRawData
+from data.sources.fileLoader import loadRawData
 
 from configuration import OUT_PATH
 

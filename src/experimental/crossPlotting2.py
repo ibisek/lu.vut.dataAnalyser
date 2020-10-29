@@ -6,8 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from configuration import CSV_DELIMITER, UNITS
-from dataAnalysis.regression import doRegressionForKeys
-from fileUtils import composeFilename
+from data.analysis.regression import doRegressionForKeys
 
 
 def readFlightData():

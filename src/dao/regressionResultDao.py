@@ -9,7 +9,7 @@ from db.DbSource import DbSource
 
 from configuration import dbConnectionInfo
 from dao.fileDao import File
-from dataAnalysis.regression import RegressionResult
+from data.analysis.regression import RegressionResult
 
 
 def saveRegressionResult(res: RegressionResult, file: File = None, engineId: int = None):

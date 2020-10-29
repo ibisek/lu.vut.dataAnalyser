@@ -9,7 +9,7 @@ import pandas as pd
 from configuration import CSV_DELIMITER
 from fileUtils import composeFilename
 from dataIngestion import loadSteadyStates
-from dataAnalysis.correlations import analyseCorrelations
+from data.analysis.correlations import analyseCorrelations
 
 
 if __name__ == '__main__':

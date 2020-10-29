@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from configuration import OUT_PATH
 from fileUtils import composeFilename, loadSteadyStates
-from dataAnalysis.steadyStatesUtils import rowWithinSteadyState
+from data.analysis.steadyStatesUtils import rowWithinSteadyState
 
 from mpl_toolkits.axes_grid1 import host_subplot
 import mpl_toolkits.axisartist as AA

@@ -5,7 +5,7 @@ import pandas as pd
 
 from configuration import OUT_PATH
 
-from dataAnalysis.steadyStatesDetector import SteadyStatesDetector
+from data.analysis.steadyStatesDetector import SteadyStatesDetector
 
 
 def loadSteadyStates(originalFileName: str, ssDir: str = None):

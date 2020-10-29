@@ -3,14 +3,13 @@ Generates temperature-pressure XY plot for all data within steady states
 to identify conditions in which a particular airplane flies.
 """
 
-import json
 from os import walk
 import pandas as pd
 import matplotlib.pyplot as plt
 
 from configuration import CSV_DELIMITER
 from fileUtils import loadSteadyStates
-from dataAnalysis.steadyStatesUtils import rowWithinSteadyState
+from data.analysis.steadyStatesUtils import rowWithinSteadyState
 
 
 if __name__ == '__main__':
