@@ -65,7 +65,7 @@ KEYS_FOR_STEADY_STATE_DETECTION = ['NG', 'TQ', 'FC', 'ITT', 'P0', 'PT']
 KEYS_FOR_AVG_IN_SSs = ['T0', 'NP', 'OILT', 'OILP', 'TAS', 'SP', 'ALT']
 
 
-DB_HOST = '10.8.0.18'
+DB_HOST = '10.8.0.30'   # radec
 DB_PORT = 3306
 DB_NAME = 'radec'
 DB_USER = 'ibisek'
