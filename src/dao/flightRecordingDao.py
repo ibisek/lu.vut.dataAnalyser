@@ -1,5 +1,7 @@
 """
 Stores and retrieves flight recording data (time-series) to/from the INFLUX db.
+
+https://docs.influxdata.com/influxdb/v1.8/write_protocols/line_protocol_tutorial/
 """
 
 from enum import Enum
