@@ -1,4 +1,6 @@
-
+"""
+Stores and retrieves flight recording data (time-series) to/from the INFLUX db.
+"""
 
 from enum import Enum
 
