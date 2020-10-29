@@ -13,6 +13,7 @@ from fileUtils import composeFilename, loadSteadyStates
 from data.analysis.steadyStatesUtils import rowWithinSteadyState
 from configuration import IN_PATH, OUT_PATH, KEYS_FOR_STEADY_STATE_DETECTION, STEADY_STATE_WINDOW_LEN, STEADY_STATE_DVAL
 
+from data.structures import RawDataFileFormat
 from data.preprocessing.channelSelection import channelSelection
 from data.preprocessing.dataFiltering import filterData
 from data.preprocessing.dataStandartisation import standardiseData
@@ -85,43 +86,46 @@ if __name__ == '__main__':
                 # genGpx(inPath, fileName)
                 # continue
 
-                from data.structures import RawDataFileFormat
-                dataFormat = RawDataFileFormat.PT6
-                # dataFormat = RawDataFileFormat.L410
-                rawDataFrame = loadRawData(inPath, fileName)
-                rawDataFrame = channelSelection(rawDataFrame, fileName)
+                # TODO detect data-file format(!) .. well, but how?
+                # dataFormat = RawDataFileFormat.PT6
+                dataFormat = RawDataFileFormat.H80
+
+                rawDataFrame = loadRawData(fileFormat=dataFormat, inPath=inPath, fileName=fileName)
+                rawDataFrames = channelSelection(fileFormat=dataFormat, dataFrame=rawDataFrame, originalFileName=fileName)
 
                 if len(rawDataFrame) == 0:
                     continue
 
-                filteredDataFrame = filterData(rawDataFrame, fileName)
+                for engineIndex, rawDataFrame in enumerate(rawDataFrames, start=1):
 
-                # detectLimitingStates(rawDataFrame, fileName)    # limiting states detection on filtered data!
+                    filteredDataFrame = filterData(rawDataFrame, fileName)
 
-                standardisedDataFrame = standardiseData(filteredDataFrame, fileName)
-                standardisedDataFrame = omitRowsBelowThresholds(standardisedDataFrame, fileName)
+                    # detectLimitingStates(rawDataFrame, fileName)    # limiting states detection on filtered data!
 
-                # analyseCorrelations(filteredDataFrame, fileName)
+                    standardisedDataFrame = standardiseData(filteredDataFrame, fileName)
+                    standardisedDataFrame = omitRowsBelowThresholds(standardisedDataFrame, fileName)
 
-                SteadyStatesDetector(windowDt=STEADY_STATE_WINDOW_LEN, dVal=STEADY_STATE_DVAL).detectSteadyStates(filteredDataFrame, fileName)
-                # _displaySteadyStateDetection(standardisedDataFrame, fileName)
+                    # analyseCorrelations(filteredDataFrame, fileName)
 
-                # try:
-                #     # plotChannelsOfInterest(rawDataFrame, fileName, suffix='raw')
-                #     # plotChannelsOfInterest(filteredDataFrame, fileName, suffix='filtered')
-                #     # plotChannelsOfInterest(standardisedDataFrame, fileName, suffix='std')
-                #
-                #     plotChannelsOfInterestMultiY(rawDataFrame, fileName, suffix='flightOverview-raw')
-                #     plotChannelsOfInterestMultiY(filteredDataFrame, fileName, suffix='flightOverview-filtered')
-                #     plotChannelsOfInterestMultiY(standardisedDataFrame, fileName, suffix='flightOverview-reduced', reducedChannels=True)
-                #
-                # except Exception as e:
-                #     print("[ERROR] in plotting:", e)
+                    SteadyStatesDetector(windowDt=STEADY_STATE_WINDOW_LEN, dVal=STEADY_STATE_DVAL).detectSteadyStates(filteredDataFrame, fileName)
+                    # _displaySteadyStateDetection(standardisedDataFrame, fileName)
 
-                # doRegression(standardisedDataFrame, fileName)
-                # doRegressionOnSteadySections(standardisedDataFrame, fileName)
-                # doRegressionOnSteadyAllSectionsCombined(standardisedDataFrame, fileName)
-                doRegressionOnSteadySectionsAvgXY(standardisedDataFrame, fileName)
-                # doRegressionOnSteadySectionsAvgXXXY(standardisedDataFrame, fileName)
+                    # try:
+                    #     # plotChannelsOfInterest(rawDataFrame, fileName, suffix='raw')
+                    #     # plotChannelsOfInterest(filteredDataFrame, fileName, suffix='filtered')
+                    #     # plotChannelsOfInterest(standardisedDataFrame, fileName, suffix='std')
+                    #
+                    #     plotChannelsOfInterestMultiY(rawDataFrame, fileName, suffix='flightOverview-raw')
+                    #     plotChannelsOfInterestMultiY(filteredDataFrame, fileName, suffix='flightOverview-filtered')
+                    #     plotChannelsOfInterestMultiY(standardisedDataFrame, fileName, suffix='flightOverview-reduced', reducedChannels=True)
+                    #
+                    # except Exception as e:
+                    #     print("[ERROR] in plotting:", e)
+
+                    # doRegression(standardisedDataFrame, fileName)
+                    # doRegressionOnSteadySections(standardisedDataFrame, fileName)
+                    # doRegressionOnSteadyAllSectionsCombined(standardisedDataFrame, fileName)
+                    doRegressionOnSteadySectionsAvgXY(standardisedDataFrame, fileName)
+                    # doRegressionOnSteadySectionsAvgXXXY(standardisedDataFrame, fileName)
 
     print('Finished for now.')
