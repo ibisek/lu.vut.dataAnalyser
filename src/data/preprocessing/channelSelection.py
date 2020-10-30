@@ -210,7 +210,17 @@ def _processH80(df: DataFrame) -> pd.DataFrame:
     ambientPress = 101325 * np.power(1 - mAmsl.values / 44330, 5.255)
     ndf1['P0'] = ndf2['P0'] = ambientPress  # [Pa]
 
-    # TODO 'PT' channel!!
+    # TODO 'PT' channel not in data file!!
+    ndf1['PT'] = ndf2['PT'] = NOMINAL_DATA['PT']  # tlak v turbine neni v let. datech! -> nominalni tlak 1079 kPa
+    # TODO 'T0' channel not in data file!!
+    ndf1['T0'] = ndf2['T0'] = NOMINAL_DATA['T0']  # [deg.C] teplota okolniho vzduchu
+
+    # TAS = IAS / sqrt(288.15 / (T + 273.15) * (P / 1013.25))
+    ndf1['TAS'] = ndf2['TAS'] = ndf1['IAS'] / np.sqrt(288.15 / (ndf1['T0'] + 273.15) * (ndf1['P0'] / 101325))   # [km/h]
+
+    # Calculated Shaft Power - SP [W]:
+    ndf1['SP'] = ndf1['TQ'] * 2 * math.pi * ndf1['NP'] / 60
+    ndf2['SP'] = ndf2['TQ'] * 2 * math.pi * ndf2['NP'] / 60
 
     return [ndf1, ndf2]
 
