@@ -5,7 +5,7 @@ from fileUtils import composeFilename, composeFilename2
 from configuration import OUT_PATH, FUEL_DENSITY, CONST_R
 
 
-def standardiseData(dataFrame, originalFileName, outPath=OUT_PATH):
+def standardiseData(dataFrame, originalFileName, outPath=OUT_PATH, engineIndex=1):
     """
     :param dataFrame: filtered data
     :param originalFileName
@@ -51,7 +51,7 @@ def standardiseData(dataFrame, originalFileName, outPath=OUT_PATH):
     dataFrame = dataFrame.dropna()  # drop rows with missing values
     # dataFrame = dataFrame.interpolate()  # fill missing values
 
-    fn = composeFilename2(originalFileName, 'reduced', 'csv')
+    fn = composeFilename2(originalFileName, 'reduced', 'csv', engineIndex=engineIndex)
     fp = f"{outPath}/{fn}"
     print(f"[INFO] Writing standardised data to '{fn}'")
     dataFrame.to_csv(fp, sep=';', encoding='utf_8')

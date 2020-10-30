@@ -6,7 +6,7 @@ from configuration import OUT_PATH
 from fileUtils import composeFilename, composeFilename2
 
 
-def filterData(rawDataFrame, originalFileName, channels=None, windowWidth=10, outPath=OUT_PATH):
+def filterData(rawDataFrame, originalFileName, channels=None, windowWidth=10, outPath=OUT_PATH, engineIndex = 1):
     """
     Removes high firequency noise.
     :param rawDataFrame:
@@ -31,7 +31,7 @@ def filterData(rawDataFrame, originalFileName, channels=None, windowWidth=10, ou
     filteredDf = filteredDf.dropna()
     # filteredDf.interpolate()  # fill missing values
 
-    fn = composeFilename2(originalFileName, 'selectedChannelsFiltered', 'csv')
+    fn = composeFilename2(originalFileName, 'selectedChannelsFiltered', 'csv', engineIndex=engineIndex)
     fp = f"{outPath}/{fn}"
 
     print(f"[INFO] Writing filtered data to '{fn}'")
