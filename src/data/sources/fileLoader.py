@@ -39,6 +39,8 @@ def loadRawData(fileFormat: RawDataFileFormat, inPath: str, fileName: str) -> pd
         startDt = datetime.strptime(d, '%m/%d/%Y %H:%M:%S %p')  # start DT of the file
         df.index = df.index.map(lambda x: startDt + timedelta(0, x))
 
+        df['ts'] = df.index.map(lambda x: x.timestamp())
+
         del df['t']     # not needed anymore
 
     else:
