@@ -116,20 +116,20 @@ class SteadyStatesDetector(object):
 
         return None
 
-    def detectSteadyStates(self, dataFrame, originalFileName, outPath=OUT_PATH):
+    def detectSteadyStates(self, dataFrame, originalFileName, outPath=OUT_PATH, engineIndex=1):
         """
         :param dataFrame:
         :param originalFileName: used for saving output to a file
         :param outPath:
+        :param engineIndex: default 1
         :return: nix
         """
         self.dataFrame = dataFrame
         self.originalFileName = originalFileName
 
-        print(f"[INFO] Detecting steady states in '{originalFileName}'..")
-        # print(self.dataFrame.head())
+        print(f"[INFO] Detecting steady states for '{originalFileName}, engine {engineIndex}'..")
 
-        fn = self.getFilename(originalFileName)
+        fn = self.getFilename(originalFileName, engineIndex=engineIndex)
         fp = f"{outPath}/{fn}"
         if os.path.exists(fp):
             print('  - already detected')
@@ -209,12 +209,12 @@ class SteadyStatesDetector(object):
 
         j = json.dumps(d, indent=2)
 
-        fn = self.getFilename(originalFileName)
+        fn = self.getFilename(originalFileName, engineIndex=engineIndex)
         fp = f"{outPath}/{fn}"
         print(f"Writing detected steady states to '{fn}'")
         with open(fp, 'w') as f:
             f.write(j)
 
     @staticmethod
-    def getFilename(originalFileName):
-        return fileUtils.composeFilename2(originalFileName, 'steadyStates', 'json')
+    def getFilename(originalFileName, engineIndex=1):
+        return fileUtils.composeFilename2(originalFileName, 'steadyStates', 'json', engineIndex=engineIndex)
