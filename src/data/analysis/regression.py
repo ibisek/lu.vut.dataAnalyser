@@ -63,7 +63,7 @@ def doRegression1(dataFrame: DataFrame, originalFileName: str):
 
 
 def doRegressionForKeys(dataFrame: DataFrame, originalFileName: str, yKey: str, xKeys: list,
-                        fileNameSuffix='', plot=True, saveDataToFile=True, outPath=OUT_PATH):
+                        fileNameSuffix='', plot=True, saveDataToFile=True, outPath=OUT_PATH, engineIndex=1):
     """
     * Multidimensional regression through the entire flight.
     * Multidimensional regression where NG >= 90%
@@ -75,6 +75,7 @@ def doRegressionForKeys(dataFrame: DataFrame, originalFileName: str, yKey: str, 
     :param plot
     :param saveDataToFile
     :param outPath
+    :param engineIndex
     :return:
     """
     # keys = ['NG', 'TQ', 'FF', 'ITT', 'p0', 'pt', 't1', 'NP', 'P']
@@ -86,7 +87,7 @@ def doRegressionForKeys(dataFrame: DataFrame, originalFileName: str, yKey: str, 
 
     if len(dataFrame) == 0:
         print('[WARN] no data left to regress!')
-        return None
+        return None, None
 
     x = dataFrame[xKeys]
     y = dataFrame[yKey]
@@ -181,7 +182,7 @@ def doRegressionForKeys(dataFrame: DataFrame, originalFileName: str, yKey: str, 
 
             suffix = f"{yKey}=fn({xKeysStr})"
             suffix += "-lin" if goLinear else "-poly"
-            fn = composeFilename2(originalFileName, suffix, 'png')
+            fn = composeFilename2(originalFileName, suffix, 'png', engineIndex=engineIndex)
             fp = f"{outPath}/{fn}"
             plt.savefig(fp, dpi=300)
 
@@ -256,15 +257,16 @@ def doRegressionOnSteadyAllSectionsCombined(dataFrame: DataFrame, originalFileNa
     doRegression(combinedDf, originalFileName, '-combined')
 
 
-def doRegressionOnSteadySectionsAvgXY(dataFrame: DataFrame, originalFileName: str, outPath=OUT_PATH):
+def doRegressionOnSteadySectionsAvgXY(dataFrame: DataFrame, originalFileName: str, outPath=OUT_PATH, engineIndex=1):
     """
     Single dimensional regression Y = fn(X)
     :param dataFrame:
     :param originalFileName:
     :param outPath:
+    :param engineIndex: default 1
     :return: list of RegressionResults
     """
-    intervals = loadSteadyStates(originalFileName=originalFileName, ssDir=outPath)
+    intervals = loadSteadyStates(originalFileName=originalFileName, ssDir=outPath, engineIndex=engineIndex)
     numIntervals = len(intervals)
 
     l = list()  # Y = fn(X)
@@ -340,7 +342,7 @@ def doRegressionOnSteadySectionsAvgXY(dataFrame: DataFrame, originalFileName: st
         # df.sort_values(by=[xKey], inplace=True)   # sort order by X value (so they don't make loops on the chart)
 
         # and now do the regression:
-        model, coeffs = doRegressionForKeys(df, originalFileName, yKey, [xKey], fileNameSuffix='', outPath=outPath)
+        model, coeffs = doRegressionForKeys(df, originalFileName, yKey, [xKey], fileNameSuffix='', outPath=outPath, engineIndex=engineIndex)
         if not model or not any(coeffs):
             continue
 
