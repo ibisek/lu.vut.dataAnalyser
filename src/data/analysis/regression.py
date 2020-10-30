@@ -341,7 +341,7 @@ def doRegressionOnSteadySectionsAvgXY(dataFrame: DataFrame, originalFileName: st
 
         # and now do the regression:
         model, coeffs = doRegressionForKeys(df, originalFileName, yKey, [xKey], fileNameSuffix='', outPath=outPath)
-        if not model or not coeffs:
+        if not model or not any(coeffs):
             continue
 
         if xKey in NOMINAL_DATA:
@@ -373,7 +373,8 @@ def doRegressionOnSteadySectionsAvgXY(dataFrame: DataFrame, originalFileName: st
 
             ts = int(dataFrame.index[0].to_pydatetime().timestamp())     # [s] unix ts of start of this file
             (a, b, c) = coeffs if len(coeffs) == 3 else (0, 0, 0)
-            res: RegressionResult = RegressionResult(fn=f"{yKey}-fn-{xKey}", ts=ts, val=yVal, a=a, b=b, c=c, xMin=min, xMax=max)
+            res: RegressionResult = RegressionResult(id=None, engineId=None, fileId=None, xValue=None, delta=None,
+                                                     fn=f"{yKey}-fn-{xKey}", ts=ts, yValue=yVal, a=a, b=b, c=c, xMin=min, xMax=max)
             results.append(res)
 
     return results
