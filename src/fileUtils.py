@@ -8,14 +8,15 @@ from configuration import OUT_PATH
 from data.analysis.steadyStatesDetector import SteadyStatesDetector
 
 
-def loadSteadyStates(originalFileName: str, ssDir: str = None):
+def loadSteadyStates(originalFileName: str, ssDir: str = None, engineIndex=1):
     """
     :param originalFileName:
     :param ssDir
+    :param engineIndex: default 1
     :return: list of intervals of steady states (from a json file)
     """
     intervals = []
-    ssFileName = SteadyStatesDetector.getFilename(originalFileName)
+    ssFileName = SteadyStatesDetector.getFilename(originalFileName, engineIndex=engineIndex)
     ssFilePath = f"{ssDir}/{ssFileName}"
 
     try:
