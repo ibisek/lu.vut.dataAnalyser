@@ -62,8 +62,7 @@ UNITS = {
 
 
 KEYS_FOR_STEADY_STATE_DETECTION = ['NG', 'TQ', 'FC', 'ITT', 'P0', 'PT']
-# KEYS_FOR_AVG_IN_SSs = ['T0', 'NP', 'OILT', 'OILP', 'TAS', 'SP', 'ALT']  # for PT6
-KEYS_FOR_AVG_IN_SSs = ['T0', 'NP', 'TAS', 'SP', 'ALT']  # for H80
+KEYS_FOR_AVG_IN_SSs = ['T0', 'NP', 'OILT', 'OILP', 'TAS', 'SP', 'ALT']
 
 
 DB_HOST = '10.8.0.30'   # radec
