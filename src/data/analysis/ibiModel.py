@@ -24,7 +24,11 @@ class IbiModel(object):
         return y
 
     def predict(self, xSeries: Series):
-        xValues = xSeries.values
+        if type(xSeries) is Series:
+            xValues = xSeries.values    # numpy.ndarray
+        else:
+            xValues = np.asarray(xSeries[0])
+
         yValues = np.zeros(len(xValues))
 
         for ix, x in enumerate(xValues):
