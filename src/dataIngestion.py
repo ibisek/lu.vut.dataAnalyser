@@ -107,7 +107,7 @@ if __name__ == '__main__':
 
                     # analyseCorrelations(filteredDataFrame, fileName)
 
-                    SteadyStatesDetector(windowDt=STEADY_STATE_WINDOW_LEN, dVal=STEADY_STATE_DVAL).detectSteadyStates(filteredDataFrame, fileName)
+                    SteadyStatesDetector(windowDt=STEADY_STATE_WINDOW_LEN, dVal=STEADY_STATE_DVAL).detectSteadyStates(filteredDataFrame, fileName, engineIndex=engineIndex)
                     # _displaySteadyStateDetection(standardisedDataFrame, fileName)
 
                     # try:
@@ -125,7 +125,7 @@ if __name__ == '__main__':
                     # doRegression(standardisedDataFrame, fileName)
                     # doRegressionOnSteadySections(standardisedDataFrame, fileName)
                     # doRegressionOnSteadyAllSectionsCombined(standardisedDataFrame, fileName)
-                    doRegressionOnSteadySectionsAvgXY(standardisedDataFrame, fileName)
+                    doRegressionOnSteadySectionsAvgXY(standardisedDataFrame, fileName, engineIndex=engineIndex)
                     # doRegressionOnSteadySectionsAvgXXXY(standardisedDataFrame, fileName)
 
     print('Finished for now.')
