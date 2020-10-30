@@ -98,11 +98,11 @@ if __name__ == '__main__':
 
                 for engineIndex, rawDataFrame in enumerate(rawDataFrames, start=1):
 
-                    filteredDataFrame = filterData(rawDataFrame, fileName)
+                    filteredDataFrame = filterData(rawDataFrame, fileName, engineIndex=engineIndex)
 
                     # detectLimitingStates(rawDataFrame, fileName)    # limiting states detection on filtered data!
 
-                    standardisedDataFrame = standardiseData(filteredDataFrame, fileName)
+                    standardisedDataFrame = standardiseData(filteredDataFrame, fileName, engineIndex=engineIndex)
                     standardisedDataFrame = omitRowsBelowThresholds(standardisedDataFrame, fileName)
 
                     # analyseCorrelations(filteredDataFrame, fileName)
