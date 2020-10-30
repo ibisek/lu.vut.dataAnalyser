@@ -216,6 +216,8 @@ def _processH80(df: DataFrame) -> pd.DataFrame:
     # TODO 'OILP' channel not in data file!!
     ndf1['PT'] = ndf2['PT'] = NOMINAL_DATA['PT']  # tlak v turbine neni v let. datech! -> nominalni tlak 1079 kPa
     ndf1['T0'] = ndf2['T0'] = NOMINAL_DATA['T0']  # [deg.C] teplota okolniho vzduchu
+    ndf1['OILT'] = ndf2['OILT'] = 0  # [deg.C]
+    ndf1['OILP'] = ndf2['OILP'] = 0  # [Pa]
 
     # TAS = IAS / sqrt(288.15 / (T + 273.15) * (P / 1013.25))
     ndf1['TAS'] = ndf2['TAS'] = ndf1['IAS'] / np.sqrt(288.15 / (ndf1['T0'] + 273.15) * (ndf1['P0'] / 101325))   # [km/h]
