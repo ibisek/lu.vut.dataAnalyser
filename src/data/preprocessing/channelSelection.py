@@ -211,8 +211,10 @@ def _processH80(df: DataFrame) -> pd.DataFrame:
     ndf1['P0'] = ndf2['P0'] = ambientPress  # [Pa]
 
     # TODO 'PT' channel not in data file!!
-    ndf1['PT'] = ndf2['PT'] = NOMINAL_DATA['PT']  # tlak v turbine neni v let. datech! -> nominalni tlak 1079 kPa
     # TODO 'T0' channel not in data file!!
+    # TODO 'OILT' channel not in data file!!
+    # TODO 'OILP' channel not in data file!!
+    ndf1['PT'] = ndf2['PT'] = NOMINAL_DATA['PT']  # tlak v turbine neni v let. datech! -> nominalni tlak 1079 kPa
     ndf1['T0'] = ndf2['T0'] = NOMINAL_DATA['T0']  # [deg.C] teplota okolniho vzduchu
 
     # TAS = IAS / sqrt(288.15 / (T + 273.15) * (P / 1013.25))
