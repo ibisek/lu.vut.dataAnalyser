@@ -155,6 +155,7 @@ def _processPT6(df: DataFrame) -> pd.DataFrame:
     ndf = ndf.assign(NP=df['E1NP'])  # otacky vrtule
     ndf = ndf.assign(OILT=df['E1OilT'])  # [deg.F]
     ndf = ndf.assign(OILP=df['E1OilP'])  # [psi]
+    ndf = ndf.assign(GS=df['GndSpd'] * 1.852)   # [kt] -> [km/h]
 
     # extra channels:
     ndf = ndf.assign(TAS=df['TAS'])  # [kt]
@@ -214,10 +215,12 @@ def _processH80(df: DataFrame) -> pd.DataFrame:
     # TODO 'T0' channel not in data file!!
     # TODO 'OILT' channel not in data file!!
     # TODO 'OILP' channel not in data file!!
+    # TODO 'GS' channel not in data file!!
     ndf1['PT'] = ndf2['PT'] = NOMINAL_DATA['PT']  # tlak v turbine neni v let. datech! -> nominalni tlak 1079 kPa
     ndf1['T0'] = ndf2['T0'] = NOMINAL_DATA['T0']  # [deg.C] teplota okolniho vzduchu
     ndf1['OILT'] = ndf2['OILT'] = 0  # [deg.C]
     ndf1['OILP'] = ndf2['OILP'] = 0  # [Pa]
+    ndf1['GS'] = ndf2['GS'] = 0      # [km/h]
 
     # TAS = IAS / sqrt(288.15 / (T + 273.15) * (P / 1013.25))
     ndf1['TAS'] = ndf2['TAS'] = ndf1['IAS'] / np.sqrt(288.15 / (ndf1['T0'] + 273.15) * (ndf1['P0'] / 101325))   # [km/h]
