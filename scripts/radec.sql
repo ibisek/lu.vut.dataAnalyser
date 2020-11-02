@@ -10,18 +10,28 @@ INSERT INTO configuration (k, v) VALUES ('FILE_INGESTION_ROOT', '/var/www/radec/
 INSERT INTO configuration (k, v) VALUES ('FILE_STORAGE_ROOT', '/var/www/radec/storage');
 
 
---DROP TABLE IF EXISTS equipment;
+DROP TABLE IF EXISTS equipment;
 CREATE TABLE IF NOT EXISTS equipment (
   id INT PRIMARY KEY auto_increment,
+  type VARCHAR(1),
   part_no VARCHAR(32) NOT NULL,
   label VARCHAR(32) NULL,
   description VARCHAR(64) NULL
 ) charset utf8;
 
-INSERT INTO equipment (part_no, label) VALUES ('PI-1234', 'Pilatus PC-12');
-INSERT INTO equipment (part_no, label) VALUES ('PW-1234', 'Pratt & Whitney Canada PT6 E');
-INSERT INTO equipment (part_no, label) VALUES ('CE-1234', 'Cessna 172 Skyhawk');
-INSERT INTO equipment (part_no, label) VALUES ('TP-1234', 'PBS TP100');
+INSERT INTO equipment (type,part_no, label) VALUES ('A', 'PI-1234', 'Pilatus PC-12');
+INSERT INTO equipment (type,part_no, label) VALUES ('A','CE-1234', 'Cessna 172 Skyhawk');
+INSERT INTO equipment (type,part_no, label) VALUES ('A','AI-1234', 'L-410 UVP-E20');
+INSERT INTO equipment (type,part_no, label) VALUES ('E','PW-1234', 'Pratt & Whitney Canada PT6 E');
+INSERT INTO equipment (type,part_no, label) VALUES ('E','TP-1234', 'PBS TP100');
+INSERT INTO equipment (type,part_no, label) VALUES ('E','GE-1234', 'GE H80');
+INSERT INTO equipment (type,part_no,label,description) VALUES ('C','M601-6081.2','Propeller Shaft',null);
+INSERT INTO equipment (type,part_no,label,description) VALUES ('C','M601-6081.5','Propeller Shaft',null);
+INSERT INTO equipment (type,part_no,label,description) VALUES ('C','M601-4004.5','Free Turbine Shaft',null);
+INSERT INTO equipment (type,part_no,label,description) VALUES ('C','M601-4004.7','Free Turbine Shaft',null);
+INSERT INTO equipment (type,part_no,label,description) VALUES ('C','M601-3220.5','Free Turbine Disc',null);
+INSERT INTO equipment (type,part_no,label,description) VALUES ('C','M601-3156.5','Rear Shaft',null);
+INSERT INTO equipment (type,part_no,label,description) VALUES ('C','M601-3156.9','Rear Shaft',null);
 
 select * from equipment;
 
@@ -30,28 +40,29 @@ select * from equipment;
 CREATE TABLE IF NOT EXISTS components (
   id INT PRIMARY KEY auto_increment,
   engine_id INT NULL REFERENCES engines.id,
-  equipment_type_id INT NOT NULL REFERENCES equipment.id,
-  serial_no VARCHAR(32) NULL
+  equipment_id INT NOT NULL REFERENCES equipment.id,
+  serial_no VARCHAR(32) NULL,
+  archived BOOL
 ) charset utf8;
 
-INSERT INTO components (engine_id, equipment_type_id, serial_no) VALUES (2, 6, 'sn_1234');
-INSERT INTO components (engine_id, equipment_type_id, serial_no) VALUES (2, 8, 'sn_1234');
-INSERT INTO components (engine_id, equipment_type_id, serial_no) VALUES (2, 9, 'sn_1234');
-INSERT INTO components (engine_id, equipment_type_id, serial_no) VALUES (2, 10, 'sn_1234');
+INSERT INTO components (engine_id, equipment_id, serial_no, archived) VALUES (2, 6, 'sn_1234', false);
+INSERT INTO components (engine_id, equipment_id, serial_no, archived) VALUES (2, 8, 'sn_1234', false);
+INSERT INTO components (engine_id, equipment_id, serial_no, archived) VALUES (2, 9, 'sn_1234', false);
+INSERT INTO components (engine_id, equipment_id, serial_no, archived) VALUES (2, 10, 'sn_1234', false);
 
 select * from components;
 
 
-
-DROP TABLE IF EXISTS equipment_properties;
+--DROP TABLE IF EXISTS equipment_properties;
 CREATE TABLE IF NOT EXISTS equipment_properties (
   id INT PRIMARY KEY auto_increment,
   equipment_type_id INT NOT NULL REFERENCES equipment.id,
   k VARCHAR(16) NOT NULL,
-  v VARCHAR(32) NOT NULL
+  v VARCHAR(32) NOT NULL,
+  units VARCHAR(8)
 ) charset utf8;
 
-INSERT INTO equipment_properties (equipment_type_id, k, v) VALUES (10, 'ELC_LIMIT', '10450');
+--INSERT INTO equipment_properties (equipment_type_id, k, v) VALUES (10, 'ELC_LIMIT', '10450');
 
 select * from equipment_properties;
 select * from equipment;
@@ -60,12 +71,12 @@ select * from equipment;
 --DROP TABLE IF EXISTS fleets;
 CREATE TABLE IF NOT EXISTS fleets (
   id INT PRIMARY KEY auto_increment,
-  label VARCHAR(32) NOT NULL,
-  organisation_id INT NOT NULL REFERENCES organisations.id
+  owner_org_id INT NOT NULL REFERENCES organisations.id,
+  label VARCHAR(32) NOT NULL
 ) charset utf8;
 
-INSERT INTO fleets (label, organisation_id) VALUES 
-	('LU Virtual Fleet', 1);
+INSERT INTO fleets (owner_org_id, label) VALUES (1, 'LU Virtual Fleet');
+INSERT INTO fleets (owner_org_id, label) VALUES (2, 'GEAC Virtual Fleet');
 
 select * from fleets;
 
@@ -79,15 +90,19 @@ CREATE TABLE IF NOT EXISTS airplanes (
   serial_no VARCHAR(32) NOT NULL,
   num_engines TINYINT(2) NOT NULL,
   registration VARCHAR(8) NOT NULL,
+  registration_country VARCHAR(2) NOT NULL,
   num_landings INT NOT NULL DEFAULT 0,
   fleet_id INT NULL
 ) charset utf8;
 
-INSERT INTO airplanes (equipment_id, model, year_of_prod, serial_no, num_engines, registration, num_landings, fleet_id) 
-	VALUES (3, '172N', 2020, '2020_01', 1, 'OK-PBS', 0, 1);
+INSERT INTO airplanes (equipment_id, model, year_of_prod, serial_no, num_engines, registration, registration_country, fleet_id) 
+	VALUES (1, 'PC-12/47E', 2019, '2019_01', 1, 'OK-ABC', 'cz', 1);
 
-INSERT INTO airplanes (equipment_id, model, year_of_prod, serial_no, num_engines, registration, num_landings, fleet_id) 
-	VALUES (1, 'PC-12/47E', 2019, '2019_01', 1, 'OK-ABC', 0, 1);
+INSERT INTO airplanes (equipment_id, model, year_of_prod, serial_no, num_engines, registration, registration_country, fleet_id) 
+	VALUES (2, '172N', 2020, '2020_01', 1, 'OK-PBS', 'cz', 1);
+
+INSERT INTO airplanes (equipment_id, model, year_of_prod, serial_no, num_engines, registration, registration_country, fleet_id) 
+	VALUES (3, 'NG', 2020, '2020_11', 1, 'OK-GEAC', 'cz', 2);
 
 select * from airplanes;
 
@@ -95,21 +110,26 @@ select * from airplanes;
 --DROP TABLE IF EXISTS engines;
 CREATE TABLE IF NOT EXISTS engines (
   id INT PRIMARY KEY auto_increment,
-  equipment_type_id INT NOT NULL references equipment.id,
+  equipment_id INT NOT NULL references equipment.id,
   serial_no VARCHAR(32) NOT NULL,
   year_of_prod INT(4) NULL,
   airplane_id INT REFERENCES aircrafts.id,
-  cycles INT NOT NULL DEFAULT 0,
-  hours INT NOT NULL DEFAULT 0
+  engine_no INT,
+  archived BOOL,
+  status VARCHAR(16)
 ) charset utf8;
 
-INSERT INTO engines (equipment_type_id, serial_no, year_of_prod, cycles, hours) 
-	VALUES (2, 'SN_2020_09', 2020, 0, 0);
+INSERT INTO engines (equipment_id, serial_no, year_of_prod, engine_no, airplane_id, archived, status) 
+	VALUES (4, 'SN_2020_01', 2020, 1, 1, false, 'ok');	-- PT6 @ PC-12
 
-INSERT INTO engines (equipment_type_id, serial_no, year_of_prod, cycles, hours) 
-	VALUES (4, 'SN_2020_01', 2020, 0, 0);
+INSERT INTO engines (equipment_id, serial_no, year_of_prod, engine_no, airplane_id, archived, status) 
+	VALUES (6, 'SN_2020_02', 2020, 1, 3, false, 'ok'); -- H80 @ NG
+
+INSERT INTO engines (equipment_id, serial_no, year_of_prod, engine_no, airplane_id, archived, status) 
+	VALUES (6, 'SN_2020_03', 2020, 2, 3, false, 'ok'); -- H80 @ NG
 
 select * from engines;
+
 
 --DROP TABLE IF EXISTS airplane_engine;
 CREATE TABLE IF NOT EXISTS airplane_engine (
@@ -120,11 +140,11 @@ CREATE TABLE IF NOT EXISTS airplane_engine (
 INSERT INTO airplane_engine (airplane_id, engine_id) VALUES (1, 1);
 
 
---DROP TABLE IF EXISTS flights;
+DROP TABLE IF EXISTS flights;
 CREATE TABLE IF NOT EXISTS flights (
   id INT PRIMARY KEY auto_increment,
   airplane_id INT NOT NULL references airplanes.id,
-  takeoff_ts INT NOT NULL,
+  takeoff_ts INT NULL,
   takeoff_lat DECIMAL(8,5) NULL,
   takeoff_lon DECIMAL(8,5) NULL,
   takeoff_location VARCHAR(4) NULL,
@@ -136,6 +156,11 @@ CREATE TABLE IF NOT EXISTS flights (
   cycles_full INT NOT NULL DEFAULT 0,
   cycles_short INT NOT NULL DEFAULT 0
 ) charset utf8;
+
+INSERT INTO flights (airplane_id) VALUES (1);
+INSERT INTO flights (airplane_id) VALUES (3);
+
+select * from flights;
 
 
 --DROP TABLE IF EXISTS flight_engine;
@@ -182,11 +207,14 @@ CREATE TABLE IF NOT EXISTS organisations (
   vat VARCHAR(16) NULL,
   address VARCHAR(255) NULL,
   super TINYINT(1) NOT NULL,
-  enabled TINYINT(1) NOT NULL
+  enabled TINYINT(1) NOT NULL,
+  url VARCHAR(255)
 ) charset utf8;
 
+alter table organisations ADD COLUMN url VARCHAR(255);
+
 INSERT INTO organisations (name, vat, address, super, enabled) VALUES 
-	('LU.VUT', 'CZ00216305', 'Letecký ústav, Technická 2896/2, 616 69 Brno, CZ', true, true);
+	('LU.VUT', 'CZ00216305', 'Letecký ústav, Technická 2896/2, 616 69 Brno, CZ', true, true, 'https://lu.fme.vutbr.cz/');
 select * from organisations;
 
 
