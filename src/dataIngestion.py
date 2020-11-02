@@ -107,6 +107,16 @@ if __name__ == '__main__':
 
                     # analyseCorrelations(filteredDataFrame, fileName)
 
+                    # TEMP insert data into influx:
+                    # from dao.flightRecordingDao import FlightRecordingDao, RecordingType
+                    # frDao = FlightRecordingDao()
+                    # engineId = engineIndex
+                    # flightId = 1
+                    # cycle_id = 1
+                    # frDao.storeDf(engineId=engineId, flightId=flightId, cycleId=cycle_id, df=rawDataFrame, recType=RecordingType.RAW)
+                    # frDao.storeDf(engineId=engineId, flightId=flightId, cycleId=cycle_id, df=filteredDataFrame, recType=RecordingType.FILTERED)
+                    # frDao.storeDf(engineId=engineId, flightId=flightId, cycleId=cycle_id, df=standardisedDataFrame, recType=RecordingType.STANDARDIZED)
+
                     SteadyStatesDetector(windowDt=STEADY_STATE_WINDOW_LEN, dVal=STEADY_STATE_DVAL).detectSteadyStates(filteredDataFrame, fileName, engineIndex=engineIndex)
                     # _displaySteadyStateDetection(standardisedDataFrame, fileName)
 
