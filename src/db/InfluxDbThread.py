@@ -45,13 +45,17 @@ class InfluxDbThread(threading.Thread):
         while self.doRun or self.toDoStatements.qsize() > 0:
             queries = list()
             while self.toDoStatements.qsize() > 0:
-                query = self.toDoStatements.get(block=False)
-                if query:
-                    # print(f"[INFO] influxDbThread sql: {query}")
-                    queries.append(query)
+                try:
+                    query = self.toDoStatements.get(block=False)
+                    if query:
+                        # print(f"[INFO] influxDbThread sql: {query}")
+                        queries.append(query)
 
-                if len(queries) >= 5000:
-                    break   # influx is said to be optimised to 5000 queries/batch
+                    if len(queries) >= 5000:
+                        break   # influx is said to be optimised to 5000 queries/batch
+
+                except Empty:
+                    pass
 
             if len(queries) > 0:
                 try:
