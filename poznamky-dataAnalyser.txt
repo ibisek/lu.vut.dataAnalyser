@@ -9,6 +9,11 @@ Executable application entries:
 
 --
 
+When plotting does not show charts, or just sometimes:
+    https://www.pyimagesearch.com/2015/08/24/resolved-matplotlib-figures-not-showing-up-or-displaying/
+
+--
+
 https://ourcodingclub.github.io/2019/01/07/pandas-time-series.html
 https://www.datacamp.com/community/tutorials/time-series-analysis-tutorial
 https://towardsdatascience.com/four-ways-to-quantify-synchrony-between-time-series-data-b99136c4a9c9
