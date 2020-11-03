@@ -1,4 +1,10 @@
+"""
+influx:
+    select * from flights where engine_id='2' and flight_id='2' and cycle_id='2' and type='fil' limit 10
+"""
 
+
+from datetime import timedelta
 import numpy as np
 from pandas import DataFrame, Series
 import matplotlib.pyplot as plt
@@ -91,14 +97,60 @@ def detectTaxi(df: DataFrame) -> List[Interval]:
     return taxiIntervals
 
 
+def detectEngineStartup(df: DataFrame) -> Interval:
+    """
+    Detection of engine startup.
+    start: NG < 40%
+    end: NG stable on 60% or below
+
+    :param df:
+    :return:
+    """
+
+    x = df.copy(deep=True)
+
+    NG_LOW_THR = 30     # [%]
+    ENGINE_STARTUP_DURATION_MAX = 60    # [s]
+
+    ngBelowTh: Series = x['NG'].loc[x['NG'] < NG_LOW_THR].diff().dropna()
+    if len(ngBelowTh) == 0:
+        return None
+
+    engineStartupStart = ngBelowTh.loc[ngBelowTh > 0].index[0]
+
+    x['dNG'] = x['NG'].diff()
+
+    engineStartupEndEst = engineStartupStart + timedelta(0, ENGINE_STARTUP_DURATION_MAX)    # estimate startup time no longer than thr
+    engineStartupSeries = x[engineStartupStart:engineStartupEndEst]['dNG']
+
+    engineStartupEnd = engineStartupSeries.loc[engineStartupSeries <= 0].index[0]   # first row where dNG <= 0
+
+    # plot startup section:
+    # x['NGx'] = x['NG'] * 10
+    # x['dNGx'] = x['dNG'] * 100
+    # x['dNPx'] = x['NP'].diff() * 10
+    # x[engineStartupStart:engineStartupEndEst][['NGx', 'NP', 'dNGx', 'dNPx']].plot()
+    # plt.show()
+
+    return Interval(start=engineStartupStart, end=engineStartupEnd)
+
+
+def detectEngineShutdown(df: DataFrame) -> Interval:
+    pass
+
+
 if __name__ == '__main__':
 
     frDao = FlightRecordingDao()
 
-    engineId = 1
-    flightId = 1
-    cycle_id = 1
-    df = frDao.loadDf(engineId=engineId, flightId=flightId, cycleId=cycle_id, recType=RecordingType.FILTERED)
+    from collections import namedtuple
+    Engine = namedtuple('Engine', ['engineId', 'flightId', 'cycle_id'])
+
+    # e = Engine(engineId=1, flightId=1, cycle_id=1)      # PT6
+    # e = Engine(engineId=2, flightId=2, cycle_id=2)      # H80 #1
+    e = Engine(engineId=3, flightId=2, cycle_id=3)      # H80 #2
+
+    df = frDao.loadDf(engineId=e.engineId, flightId=e.flightId, cycleId=e.cycle_id, recType=RecordingType.FILTERED)
 
     takeoff = detectTakeOff(df)
     print('[INFO] takeoff START:', takeoff.start)
@@ -108,6 +160,11 @@ if __name__ == '__main__':
     for interval in taxiIntervals:
         dur = (interval.end - interval.start).seconds
         print(f"[INFO] taxi {interval.start} -> {interval.end}; dur: {dur}s")
+
+    engineStartup = detectEngineStartup(df)
+    if engineStartup:
+        print('[INFO] engine startup START:', engineStartup.start)
+        print('[INFO] engine startup   END:', engineStartup.start)
 
     frDao.influx.stop()
     print('KOHEU.')
