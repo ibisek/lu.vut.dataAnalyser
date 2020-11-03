@@ -16,6 +16,13 @@ from data.structures import Interval
 
 
 def _findLandingAfter(df: DataFrame, afterIndexTs: Timestamp):
+    """
+    Finds next landing (IAS = 0) after specified index ts.
+
+    :param df:
+    :param afterIndexTs:
+    :return: index ts
+    """
     x = df.copy(deep=True)[afterIndexTs:]
     iasKey = 'IAS' if 'IAS' in df.keys() else 'TAS'
     landingTs = x.loc[x[iasKey] <= 0.1].index[0]    # == 0 does not work
@@ -36,7 +43,7 @@ def detectTakeOff(df: DataFrame) -> List[Interval]:
     x = df.copy(deep=True)
 
     TO_START_IAS_DELTA = 4       # [km/h]
-    TO_START_IAS_THRESHOLD = 10  # [km/h]
+    TO_START_IAS_THRESHOLD = 20  # [km/h]
 
     iasKey = 'IAS' if 'IAS' in df.keys() else 'TAS'
 
@@ -199,8 +206,8 @@ if __name__ == '__main__':
     Engine = namedtuple('Engine', ['engineId', 'flightId', 'cycle_id'])
 
     # e = Engine(engineId=1, flightId=1, cycle_id=1)      # PT6
-    e = Engine(engineId=2, flightId=2, cycle_id=2)      # H80 #1
-    # e = Engine(engineId=3, flightId=2, cycle_id=3)      # H80 #2
+    # e = Engine(engineId=2, flightId=2, cycle_id=2)      # H80 #1
+    e = Engine(engineId=3, flightId=2, cycle_id=3)      # H80 #2
 
     df = frDao.loadDf(engineId=e.engineId, flightId=e.flightId, cycleId=e.cycle_id, recType=RecordingType.FILTERED)
 
