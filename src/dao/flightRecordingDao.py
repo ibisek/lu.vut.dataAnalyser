@@ -27,7 +27,8 @@ class FlightRecordingDao(object):
 
     def storeDf(self, engineId: int, flightId: int, cycleId: int, df: DataFrame, recType: RecordingType):
         keys = df.keys().tolist()
-        keys.remove('ts')
+        if 'ts' in keys:
+            keys.remove('ts')
         keys = sorted(keys)
 
         for row in df.iterrows():
@@ -61,9 +62,9 @@ class FlightRecordingDao(object):
 
 
 if __name__ == '__main__':
-    engineId = 0
-    flightId = 0
-    cycle_id = 0
+    engineId = 1
+    flightId = 1
+    cycle_id = 1
 
     df = FlightRecordingDao.loadDf(engineId=engineId, flightId=flightId, cycleId=cycle_id, recType=RecordingType.FILTERED)
 
