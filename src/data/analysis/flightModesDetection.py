@@ -3,10 +3,11 @@ influx:
     select * from flights where engine_id='2' and flight_id='2' and cycle_id='2' and type='fil' limit 10
 """
 
-
+from collections import namedtuple
 from datetime import timedelta
 import numpy as np
-from pandas import DataFrame, Series
+from pandas import DataFrame, Series, Timestamp
+
 import matplotlib.pyplot as plt
 from typing import List
 
@@ -14,10 +15,18 @@ from dao.flightRecordingDao import FlightRecordingDao, RecordingType
 from data.structures import Interval
 
 
-def detectTakeOff(df: DataFrame) -> Interval:
+def _findLandingAfter(df: DataFrame, afterIndexTs: Timestamp):
+    x = df.copy(deep=True)[afterIndexTs:]
+    iasKey = 'IAS' if 'IAS' in df.keys() else 'TAS'
+    landingTs = x.loc[x[iasKey] <= 0.1].index[0]    # == 0 does not work
+
+    return landingTs
+
+
+def detectTakeOff(df: DataFrame) -> List[Interval]:
     """
     Detection of TAKE-OFF window/interval.
-    start: IAS (TAS) > 0
+    start: IAS (TAS) > 10 km/h
     end: NG = 0.98NG_max
 
     :param df:
@@ -26,36 +35,84 @@ def detectTakeOff(df: DataFrame) -> Interval:
 
     x = df.copy(deep=True)
 
-    TO_START_IAS_DELTA = 4      # [km/h]
-    TO_START_IAS_THRESHOLD = 0  # [km/h]
+    TO_START_IAS_DELTA = 4       # [km/h]
+    TO_START_IAS_THRESHOLD = 10  # [km/h]
 
     iasKey = 'IAS' if 'IAS' in df.keys() else 'TAS'
 
     tsTakeOffIndexStart = df.loc[df[iasKey] > TO_START_IAS_THRESHOLD].index[0]
-    x = x[tsTakeOffIndexStart:]  # df starting from the moment of takeoff
 
-    ngMax = 0
-    for index, row in x.iterrows():
-        ng = row['NG']
+    takeOffs: List[Interval] = list()
+    doLoop = True
+    while doLoop:
+        x = x[tsTakeOffIndexStart:]  # df starting from the moment of takeoff
 
-        if ng > ngMax:
-            ngMax = ng
+        ngMax = 0
+        for index, row in x.iterrows():
+            ng = row['NG']
 
-        if ng < ngMax * 0.98:
-            tsTakeOffIndexEnd = index
-            break
+            if ng > ngMax:
+                ngMax = ng
 
-    # plot the takeoff section:
-    # x = x[:tsTakeOffIndexEnd]
-    # x['dIAS'] = df[iasKey].diff()*10
-    # x['TO_dIAS'] = x['dIAS'].apply(lambda x: 1 if x > TO_START_IAS_DELTA else 0)
-    # x['ALTx'] = x['ALT']/10
-    # x['dALT'] = x['ALT'].diff()*10
-    # x['TO'] = x[iasKey].apply(lambda x: 100 if x > 0 else 0)
-    # x[[iasKey, 'TO', 'NG', 'ALTx', 'dALT', 'dIAS']].plot()
-    # plt.show()
+            if ng < ngMax * 0.98:
+                tsTakeOffIndexEnd = index
 
-    return Interval(start=tsTakeOffIndexStart, end=tsTakeOffIndexEnd)
+                interval = Interval(start=tsTakeOffIndexStart, end=tsTakeOffIndexEnd)
+                takeOffs.append(interval)
+
+                # plot the takeoff section:
+                # x = x[:tsTakeOffIndexEnd]
+                # x['dIAS'] = df[iasKey].diff() * 10
+                # x['TO_dIAS'] = x['dIAS'].apply(lambda x: 1 if x > TO_START_IAS_DELTA else 0)
+                # x['ALTx'] = x['ALT'] / 10
+                # x['dALT'] = x['ALT'].diff() * 10
+                # x['TO'] = x[iasKey].apply(lambda x: 100 if x > 0 else 0)
+                # x[[iasKey, 'TO', 'NG', 'ALTx', 'dALT', 'dIAS']].plot()
+                # plt.show()
+
+                tsLanding = _findLandingAfter(x, tsTakeOffIndexEnd)   # start searching from this ts again
+                x = x[tsLanding:]   # chop the previous data away
+                xx = x.loc[x[iasKey] > TO_START_IAS_THRESHOLD]
+                if len(xx.index) == 0:
+                    doLoop = False
+                else:
+                    tsTakeOffIndexStart = xx.index[0]
+
+                break
+
+            if index == x.tail(1).index:     # we reached end of the dataframe with no endTime
+                doLoop = False
+
+    return takeOffs
+
+
+def detectRepeatedTakeOff(df: DataFrame) -> Interval:
+    """
+    Detection of repeated TAKE-OFF window/interval.
+    start: IAS (TAS) < 80kt && GS >> 0
+    end: NG = 0.98NG_max
+
+    :param df:
+    :return: Interval
+    """
+
+    x = df.copy(deep=True)
+    # x = x.drop(columns=['ts'])
+
+    RTO_START_IAS_THRESHOLD = 80 * 1.852    # [kt] -> [km/h]
+
+    iasKey = 'IAS' if 'IAS' in df.keys() else 'TAS'
+
+    # speedBelowTs
+    # x['x'] = df.loc[df[iasKey] < RTO_START_IAS_THRESHOLD]
+
+    x['x'] = df[iasKey].apply(lambda x: 100 if x < RTO_START_IAS_THRESHOLD else 0)
+    x[[iasKey, 'x']].plot()
+    plt.show()
+
+    # TODO xxx
+
+    return Interval(start=None, end=None)
 
 
 def detectTaxi(df: DataFrame) -> List[Interval]:
@@ -135,26 +192,26 @@ def detectEngineStartup(df: DataFrame) -> Interval:
     return Interval(start=engineStartupStart, end=engineStartupEnd)
 
 
-def detectEngineShutdown(df: DataFrame) -> Interval:
-    pass
-
-
 if __name__ == '__main__':
 
     frDao = FlightRecordingDao()
 
-    from collections import namedtuple
     Engine = namedtuple('Engine', ['engineId', 'flightId', 'cycle_id'])
 
     # e = Engine(engineId=1, flightId=1, cycle_id=1)      # PT6
-    # e = Engine(engineId=2, flightId=2, cycle_id=2)      # H80 #1
-    e = Engine(engineId=3, flightId=2, cycle_id=3)      # H80 #2
+    e = Engine(engineId=2, flightId=2, cycle_id=2)      # H80 #1
+    # e = Engine(engineId=3, flightId=2, cycle_id=3)      # H80 #2
 
     df = frDao.loadDf(engineId=e.engineId, flightId=e.flightId, cycleId=e.cycle_id, recType=RecordingType.FILTERED)
 
-    takeoff = detectTakeOff(df)
-    print('[INFO] takeoff START:', takeoff.start)
-    print('[INFO] takeoff END:  ', takeoff.end)
+    takeoffs = detectTakeOff(df)
+    for i, takeoff in enumerate(takeoffs):
+        print(f'[INFO] takeoff #{i} START:', takeoff.start)
+        print(f'[INFO] takeoff #{i} END:  ', takeoff.end)
+
+    repeatedTakeoff = detectRepeatedTakeOff(df)
+    print('[INFO] rpt. takeoff START:', repeatedTakeoff.start)
+    print('[INFO] rpt. takeoff END:  ', repeatedTakeoff.end)
 
     taxiIntervals = detectTaxi(df)
     for interval in taxiIntervals:
