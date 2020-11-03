@@ -1,6 +1,10 @@
 """
 influx:
     select * from flights where engine_id='2' and flight_id='2' and cycle_id='2' and type='fil' limit 10
+
+TODO az na to budou data:
+TODO (3) opakovany vzlet: IAS<80kt bez zastaveni
+TODO (4) opakovane spousteni:  NG < 40% a pak zase NG na 60%; L410: NG=57% && NP <240-480>
 """
 
 from collections import namedtuple
