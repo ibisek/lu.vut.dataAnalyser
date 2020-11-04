@@ -198,13 +198,13 @@ def _processH80(df: DataFrame) -> pd.DataFrame:
     ndf1['NG'] = df['Engine_LH_NG']     # [%]
     ndf1['ITT'] = df['Engine_LH_ITT']   # [deg.C]
     ndf1['NP'] = df['Engine_LH_NP']     # [1/min]
-    ndf1['TQ'] = df['Engine_LH_TQ'] * NOMINAL_DATA['TQ']     # [%] - > [Nm]
+    ndf1['TQ'] = df['Engine_LH_TQ'] / 100 * NOMINAL_DATA['TQ']     # [%] - > [Nm]
     ndf1['FC'] = df['Engine_LH_FF']     # [kg/h]
 
     ndf2['NG'] = df['Engine_RH_NG']     # [%]
     ndf2['ITT'] = df['Engine_RH_ITT']   # [deg.C]
     ndf2['NP'] = df['Engine_RH_NP']     # [1/min]
-    ndf2['TQ'] = df['Engine_RH_TQ'] * NOMINAL_DATA['TQ']     # [%] - > [Nm]
+    ndf2['TQ'] = df['Engine_RH_TQ'] / 100 * NOMINAL_DATA['TQ']     # [%] - > [Nm]
     ndf2['FC'] = df['Engine_RH_FF']     # [kg/h]
 
     mAmsl = ndf1['ALT'].astype(float)
