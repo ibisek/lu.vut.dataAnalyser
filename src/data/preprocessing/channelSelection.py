@@ -182,7 +182,7 @@ def _processPT6(df: DataFrame) -> pd.DataFrame:
     return [ndf]
 
 
-def _processH80(df: DataFrame) -> pd.DataFrame:
+def _processH80AI(df: DataFrame) -> pd.DataFrame:
     """
     H80 dev data
     :param df:
@@ -232,6 +232,11 @@ def _processH80(df: DataFrame) -> pd.DataFrame:
     return [ndf1, ndf2]
 
 
+def _processH80AI(df: DataFrame) -> pd.DataFrame:
+    raise NotImplementedError("H80GE jeste neni!!")
+    # TODO xxx
+
+
 def channelSelection(fileFormat: RawDataFileFormat, dataFrame, originalFileName, outPath=OUT_PATH):
     # dataFrame = dataFrame.fillna(0)
     # dataFrame.interpolate()  # fill missing values
@@ -242,8 +247,10 @@ def channelSelection(fileFormat: RawDataFileFormat, dataFrame, originalFileName,
         dataFrames = _processFD1(dataFrame)
     elif fileFormat == RawDataFileFormat.PT6:
         dataFrames = _processPT6(dataFrame)
-    elif fileFormat == RawDataFileFormat.H80:
-        dataFrames = _processH80(dataFrame)
+    elif fileFormat == RawDataFileFormat.H80AI:
+        dataFrames = _processH80AI(dataFrame)
+    elif fileFormat == RawDataFileFormat.H80GE:
+        dataFrames = _processH80GE(dataFrame)
     else:
         print('[FATAL] UNKNOWN file format - unable to choose processing method!')
         sys.exit(0)

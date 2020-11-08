@@ -88,7 +88,8 @@ if __name__ == '__main__':
 
                 # TODO detect data-file format(!) .. well, but how?
                 # dataFormat = RawDataFileFormat.PT6
-                dataFormat = RawDataFileFormat.H80
+                # dataFormat = RawDataFileFormat.H80AI
+                dataFormat = RawDataFileFormat.H80GE
 
                 rawDataFrame = loadRawData(fileFormat=dataFormat, inPath=inPath, fileName=fileName)
                 rawDataFrames = channelSelection(fileFormat=dataFormat, dataFrame=rawDataFrame, originalFileName=fileName)
@@ -110,9 +111,9 @@ if __name__ == '__main__':
                     # TEMP insert data into influx:
                     # from dao.flightRecordingDao import FlightRecordingDao, RecordingType
                     # frDao = FlightRecordingDao()
-                    # engineId = engineIndex
-                    # flightId = 1
-                    # cycle_id = 1
+                    # engineId = 1+engineIndex
+                    # flightId = 2
+                    # cycle_id = engineId
                     # frDao.storeDf(engineId=engineId, flightId=flightId, cycleId=cycle_id, df=rawDataFrame, recType=RecordingType.RAW)
                     # frDao.storeDf(engineId=engineId, flightId=flightId, cycleId=cycle_id, df=filteredDataFrame, recType=RecordingType.FILTERED)
                     # frDao.storeDf(engineId=engineId, flightId=flightId, cycleId=cycle_id, df=standardisedDataFrame, recType=RecordingType.STANDARDIZED)
