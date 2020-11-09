@@ -63,14 +63,14 @@ def _processFS1(df: DataFrame) -> pd.DataFrame:
     ndf = ndf.assign(TQ=df['Mk (Nm)'])  # ft lbs -> Nm; * 1.3558
     ndf = ndf.assign(FC=df['Qp (l/hod)'])
     ndf = ndf.assign(ITT=df[_getKey(df.keys(), 't4')])  ## t4 (°C) | t4 (ˇC)
-    ndf = ndf.assign(P0=df.get('P0 (kPa)', NOMINAL_DATA['P0']/1000))  # tlak okolniho vzduchu [kPa]
+    ndf = ndf.assign(P0=df.get('P0 (kPa)', NOMINAL_DATA['P0'] / 1000))  # tlak okolniho vzduchu [kPa]
     ndf = ndf.assign(PT=df['Pt (kPa)'])  # tlak v torkmetru, tj. v meraku krouticiho momentu [kPa]
     ndf = ndf.assign(T0=df.get(_getKey(df.keys(), 't1'), NOMINAL_DATA['T0']))  # teplota okolniho vzduchu
-    ndf = ndf.assign(NP=df['nV (1/min)'])   # tocky vrtule
+    ndf = ndf.assign(NP=df['nV (1/min)'])  # tocky vrtule
     if key_t2:
-        ndf = ndf.assign(T2=df[key_t2])     # teplota na vystupu z kompresoru
+        ndf = ndf.assign(T2=df[key_t2])  # teplota na vystupu z kompresoru
     if 'P2 (kPa)' in df.keys():
-        ndf = ndf.assign(P2=df['P2 (kPa)'])     # staticky tlak za kompresorem [Pa]
+        ndf = ndf.assign(P2=df['P2 (kPa)'])  # staticky tlak za kompresorem [Pa]
     # ndf = ndf.assign(povv=df['Povv (kPa)'])  # tlak odpousteciho ventilu [kPa]
 
     ndf = ndf.astype(float)
@@ -149,13 +149,13 @@ def _processPT6(df: DataFrame) -> pd.DataFrame:
     ndf = ndf.assign(TQ=df['E1Torq'])  # [ft lbs]; ft lbs -> Nm; * 1.3558
     ndf = ndf.assign(FC=df['E1FFlow'])
     ndf = ndf.assign(ITT=df['E1ITT'])
-    ndf = ndf.assign(P0=101325)  # tlak v turbine neni v let. datech! -> 1013.25hPa; inch -> Pa * 0.3220074 + 0.00000075682566
+    ndf = ndf.assign(P0=101325)  # tlak okolniho vzduchu neni v let. datech! -> 1013.25hPa; inch -> Pa * 0.3220074 + 0.00000075682566
     ndf = ndf.assign(PT=1079000)  # tlak v turbine neni v let. datech! -> nominalni tlak 1079 kPa
     ndf = ndf.assign(T0=df['OAT'])  # teplota okolniho vzduchu
     ndf = ndf.assign(NP=df['E1NP'])  # otacky vrtule
     ndf = ndf.assign(OILT=df['E1OilT'])  # [deg.F]
     ndf = ndf.assign(OILP=df['E1OilP'])  # [psi]
-    ndf = ndf.assign(GS=df['GndSpd'] * 1.852)   # [kt] -> [km/h]
+    ndf = ndf.assign(GS=df['GndSpd'] * 1.852)  # [kt] -> [km/h]
 
     # extra channels:
     ndf = ndf.assign(TAS=df['TAS'])  # [kt]
@@ -164,8 +164,8 @@ def _processPT6(df: DataFrame) -> pd.DataFrame:
 
     ndf['TQ'] = ndf['TQ'] * 1.3558  # [Nm]
     ndf['FC'] = ndf['FC'] * 3.7854  # [US gph] -> [kg/h] pyca, to jsou ale jednotky!!
-    ndf['OILT'] = (ndf['OILT'] - 32) * 5 / 9    # [deg.F] -> [deg.C]
-    ndf['OILP'] = ndf['OILP'] * 6894.76         # [psi] -> [Pa]
+    ndf['OILT'] = (ndf['OILT'] - 32) * 5 / 9  # [deg.F] -> [deg.C]
+    ndf['OILP'] = ndf['OILP'] * 6894.76  # [psi] -> [Pa]
 
     # Calculated Shaft Power - SP [W]:
     ndf['SP'] = ndf['TQ'] * 2 * math.pi * ndf['NP'] / 60
@@ -177,7 +177,7 @@ def _processPT6(df: DataFrame) -> pd.DataFrame:
 
     # extra channels:
     ndf['ALT'] = mAmsl  # alt AMSL [m]
-    ndf['TAS'] = ndf['TAS'] * 1.852     # [kt] -> [km/h]
+    ndf['TAS'] = ndf['TAS'] * 1.852  # [kt] -> [km/h]
 
     return [ndf]
 
@@ -189,23 +189,23 @@ def _processH80AI(df: DataFrame) -> pd.DataFrame:
     :return:
     """
 
-    ndf1 = DataFrame(index=df.index)    # left engine (#1)
-    ndf2 = DataFrame(index=df.index)    # right engine (#2)
+    ndf1 = DataFrame(index=df.index)  # left engine (#1)
+    ndf2 = DataFrame(index=df.index)  # right engine (#2)
 
-    ndf1['IAS'] = ndf2['IAS'] = df['IAS_LH'] * 1.852     # [kt] -> [km/h]
-    ndf1['ALT'] = ndf2['ALT'] = df['Pressure_Alt'] * 0.3048    # [ft] -> [m] AMSL
+    ndf1['IAS'] = ndf2['IAS'] = df['IAS_LH'] * 1.852  # [kt] -> [km/h]
+    ndf1['ALT'] = ndf2['ALT'] = df['Pressure_Alt'] * 0.3048  # [ft] -> [m] AMSL
 
-    ndf1['NG'] = df['Engine_LH_NG']     # [%]
-    ndf1['ITT'] = df['Engine_LH_ITT']   # [deg.C]
-    ndf1['NP'] = df['Engine_LH_NP']     # [1/min]
-    ndf1['TQ'] = df['Engine_LH_TQ'] / 100 * NOMINAL_DATA['TQ']     # [%] - > [Nm]
-    ndf1['FC'] = df['Engine_LH_FF']     # [kg/h]
+    ndf1['NG'] = df['Engine_LH_NG']  # [%]
+    ndf1['ITT'] = df['Engine_LH_ITT']  # [deg.C]
+    ndf1['NP'] = df['Engine_LH_NP']  # [1/min]
+    ndf1['TQ'] = df['Engine_LH_TQ'] / 100 * NOMINAL_DATA['TQ']  # [%] - > [Nm]
+    ndf1['FC'] = df['Engine_LH_FF']  # [kg/h]
 
-    ndf2['NG'] = df['Engine_RH_NG']     # [%]
-    ndf2['ITT'] = df['Engine_RH_ITT']   # [deg.C]
-    ndf2['NP'] = df['Engine_RH_NP']     # [1/min]
-    ndf2['TQ'] = df['Engine_RH_TQ'] / 100 * NOMINAL_DATA['TQ']     # [%] - > [Nm]
-    ndf2['FC'] = df['Engine_RH_FF']     # [kg/h]
+    ndf2['NG'] = df['Engine_RH_NG']  # [%]
+    ndf2['ITT'] = df['Engine_RH_ITT']  # [deg.C]
+    ndf2['NP'] = df['Engine_RH_NP']  # [1/min]
+    ndf2['TQ'] = df['Engine_RH_TQ'] / 100 * NOMINAL_DATA['TQ']  # [%] - > [Nm]
+    ndf2['FC'] = df['Engine_RH_FF']  # [kg/h]
 
     mAmsl = ndf1['ALT'].astype(float)
     ambientPress = 101325 * np.power(1 - mAmsl.values / 44330, 5.255)
@@ -220,10 +220,10 @@ def _processH80AI(df: DataFrame) -> pd.DataFrame:
     ndf1['T0'] = ndf2['T0'] = NOMINAL_DATA['T0']  # [deg.C] teplota okolniho vzduchu
     ndf1['OILT'] = ndf2['OILT'] = 0  # [deg.C]
     ndf1['OILP'] = ndf2['OILP'] = 0  # [Pa]
-    ndf1['GS'] = ndf2['GS'] = 0      # [km/h]
+    ndf1['GS'] = ndf2['GS'] = 0  # [km/h]
 
     # TAS = IAS / sqrt(288.15 / (T + 273.15) * (P / 1013.25))
-    ndf1['TAS'] = ndf2['TAS'] = ndf1['IAS'] / np.sqrt(288.15 / (ndf1['T0'] + 273.15) * (ndf1['P0'] / 101325))   # [km/h]
+    ndf1['TAS'] = ndf2['TAS'] = ndf1['IAS'] / np.sqrt(288.15 / (ndf1['T0'] + 273.15) * (ndf1['P0'] / 101325))  # [km/h]
 
     # Calculated Shaft Power - SP [W]:
     ndf1['SP'] = ndf1['TQ'] * 2 * math.pi * ndf1['NP'] / 60
@@ -232,9 +232,54 @@ def _processH80AI(df: DataFrame) -> pd.DataFrame:
     return [ndf1, ndf2]
 
 
-def _processH80AI(df: DataFrame) -> pd.DataFrame:
-    raise NotImplementedError("H80GE jeste neni!!")
-    # TODO xxx
+def _processH80GE(df: DataFrame) -> pd.DataFrame:
+    # throw away all rows where TAT = 1000 or -1001
+    df = df.loc[df['TAT'] != -1001].loc[df['TAT'] != 1000]
+
+    # colNames = ['Counter', 'PressureAltitude', 'EngLFireWarn', 'ALTcoarse', 'ALTfine', 'TAT', 'IAS', 'EngRn1', 'EngLn1', 'EngLn2', 'EngRn2',
+    #             'ColdJunctionTemp', 'EngLFuelFlow', 'EngLittAux', 'EngRFuelFlow', 'EngRFireWarn', 'EngRittAux', 'EngLtorque', 'EngRtorque', 'dummy']
+
+    ndf1 = DataFrame(index=df.index)  # left engine (#1)
+    ndf2 = DataFrame(index=df.index)  # right engine (#2)
+
+    # TODO 'PT' channel not in data file!!
+    # TODO 'T0' channel not in data file!!
+    # TODO 'OILT' channel not in data file!!
+    # TODO 'OILP' channel not in data file!!
+    # TODO 'GS' channel not in data file!!
+    ndf1['ALT'] = ndf2['ALT'] = df['PressureAltitude'] * 0.3048  # ft -> m AMSL
+    ndf1['T0'] = ndf2['T0'] = df['TAT']  # [deg.C] TODO T0 - neni jak prepocitat
+    ndf1['IAS'] = ndf2['IAS'] = df['IAS']  # [km/h] TODO IAS - neni jak prepocitat
+
+    df['CJT'] = df['ColdJunctionTemp'] * 0.2442 - 550.38  # [deg.C] ..to be added to ITT aux values
+
+    # LEFT engine (#1):
+    ndf1['ITT'] = df['EngLittAux'] * 0.2901 + 0.2707     # + df['CJT']   # [deg.C]
+    ndf1['FF'] = -8.207194079247e-7 * np.power(df['EngLFuelFlow'], 3) + 0.00581486577412 * np.power(df['EngLFuelFlow'], 2) - 13.1871100950172 * df[
+        'EngLFuelFlow'] + 9668.6259  # [l/h]
+    ndf1['NP'] = 295772517.415887 * np.power(df['EngLn1'], -1) - 1.00006952  # [1/n]
+    ndf1['NG'] = 14258778.7402233 * np.power(df['EngLn2'], -1) - 0.999844712  # [%]
+    A = -4.1517624037479
+    B = 2.86510393611708E-02
+    C = 3.90324915407452E-06
+    D = -4.58481385951965E-10
+    ndf1['TQ'] = A + B * df['EngLtorque'] + C * np.power(df['EngLtorque'], 2) + D * np.power(df['EngLtorque'], 3)  # [%]
+    ndf1['TQ'] = ndf1['TQ'] / 100 * NOMINAL_DATA['TQ']  # [Nm]
+
+    # RIGHT engine (#2):
+    ndf2['ITT'] = np.abs(df['EngRittAux']) * 0.2901 + 0.2707   # + df['CJT']   # [deg.C]
+    ndf2['FF'] = -5.895989847309e-7 * np.power(df['EngRFuelFlow'], 3) + 0.00052145591727 * np.power(df['EngRFuelFlow'], 2) + 0.378941513499262 * df[
+        'EngRFuelFlow'] + 0.069354256168146  # [l/h]
+    ndf2['NP'] = 295772517.415887 * np.power(df['EngRn1'], -1) - 1.00006952  # [1/n]
+    ndf2['NG'] = 14258778.7402233 * np.power(df['EngRn2'], -1) - 0.999844712  # [%]
+    A = -7.37001679409291
+    B = 0.030284844582199
+    C = 1.66519454993229E-06
+    D = 9.00251689374884E-11
+    ndf2['TQ'] = A + B * df['EngRtorque'] + C * np.power(df['EngRtorque'], 2) + D * np.power(df['EngRtorque'], 3)  # [%]
+    ndf2['TQ'] = ndf2['TQ'] / 100 * NOMINAL_DATA['TQ']  # [Nm]
+
+    raise NotImplementedError("!! Still TODO H80GE !!")
 
 
 def channelSelection(fileFormat: RawDataFileFormat, dataFrame, originalFileName, outPath=OUT_PATH):
@@ -265,7 +310,7 @@ def channelSelection(fileFormat: RawDataFileFormat, dataFrame, originalFileName,
         # dataFrame.interpolate()
 
         # add unix timestamp column:
-        dataFrame['ts'] = dataFrame.index[0].value/1e9
+        dataFrame['ts'] = dataFrame.index[0].value / 1e9
 
         fn = composeFilename2(originalFileName, 'selectedChannelsRaw', 'csv', engineIndex=engineIndex)
         fp = f"{outPath}/{fn}"
