@@ -28,14 +28,21 @@ def loadRawData(fileFormat: RawDataFileFormat, inPath: str, fileName: str) -> pd
         del df['dummy']
 
     elif fileFormat == RawDataFileFormat.H80GE:
-        raise NotImplementedError("H80GE jeste neni!!")
-        # TODO xxx
+        SKIP_ROWS = [0]
+
+        colNames = ['Counter', 'PressureAltitude', 'EngLFireWarn', 'ALTcoarse', 'ALTfine', 'TAT', 'IAS', 'EngRn1', 'EngLn1', 'EngLn2', 'EngRn2',
+                    'ColdJunctionTemp', 'EngLFuelFlow', 'EngLittAux', 'EngRFuelFlow', 'EngRFireWarn', 'EngRittAux', 'EngLtorque', 'EngRtorque', 'dummy']
+
+        df = pd.read_csv(f"{inPath}/{fileName}", delimiter=',', encoding='cp1250', skiprows=SKIP_ROWS, names=colNames)  # utf_8 | cp1250
+
+        # delete dummy column (the line ends with ',' and thus pandas creates empty column)
+        del df['dummy']
 
     df = df.drop(df.tail(1).index)  # drop last row - often mangled
     df = df.replace('', np.nan)     # replace empty strings by NaN - such will be dropped later on
 
     # create index as datetime object:
-    if fileFormat == RawDataFileFormat.H80:
+    if fileFormat == RawDataFileFormat.H80AI:
         with open(filePath, 'r', encoding="latin-1") as f:
             line = f.readline()     # read the first line in format 2628-F01.01-FDR.dat,8/14/2020 10:32:18 AM,
 
@@ -46,6 +53,17 @@ def loadRawData(fileFormat: RawDataFileFormat, inPath: str, fileName: str) -> pd
         df['ts'] = df.index.map(lambda x: x.timestamp())
 
         del df['t']     # not needed anymore
+
+    elif fileFormat == RawDataFileFormat.H80GE:
+        # start datetime index based on the date & time from filename:
+        fn = fileName[fileName.rfind('/')+1:]       # 'MSN3217_20200403_084854.csv'
+        dtStr = fn[fn.find('_')+1:fn.rfind('.')]    # '20200403_084854'
+        startDt = datetime.strptime(dtStr, '%Y%d%m_%H%M%S')
+        df.index = df.index.map(lambda x: startDt + timedelta(0, x))    # TODO nepracuje s Counterem - DODELAT!!
+
+        df['ts'] = df.index.map(lambda x: x.timestamp())
+
+        del df['Counter']  # not needed anymore
 
     else:
         dateTimeColName = df.keys()[0]
