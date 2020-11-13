@@ -233,8 +233,10 @@ def _processH80AI(df: DataFrame) -> pd.DataFrame:
 
 
 def _processH80GE(df: DataFrame) -> pd.DataFrame:
+    raise NotImplementedError("!! H80GE is errorneus. Do not use. !!")
+
     # throw away all rows where TAT = 1000 or -1001
-    df = df.loc[df['TAT'] != -1001].loc[df['TAT'] != 1000]
+    df = df.loc[df['TAT'] > -512].loc[df['TAT'] < 512]
 
     # colNames = ['Counter', 'PressureAltitude', 'EngLFireWarn', 'ALTcoarse', 'ALTfine', 'TAT', 'IAS', 'EngRn1', 'EngLn1', 'EngLn2', 'EngRn2',
     #             'ColdJunctionTemp', 'EngLFuelFlow', 'EngLittAux', 'EngRFuelFlow', 'EngRFireWarn', 'EngRittAux', 'EngLtorque', 'EngRtorque', 'dummy']
@@ -248,10 +250,11 @@ def _processH80GE(df: DataFrame) -> pd.DataFrame:
     # TODO 'OILP' channel not in data file!!
     # TODO 'GS' channel not in data file!!
     ndf1['ALT'] = ndf2['ALT'] = df['PressureAltitude'] * 0.3048  # ft -> m AMSL
-    ndf1['T0'] = ndf2['T0'] = df['TAT']  # [deg.C] TODO T0 - neni jak prepocitat
-    ndf1['IAS'] = ndf2['IAS'] = df['IAS']  # [km/h] TODO IAS - neni jak prepocitat
-
+    ndf1['T0'] = ndf2['T0'] = df['TAT'] * 0.5  # [deg.C] TODO T0 - neni jak prepocitat
     df['CJT'] = df['ColdJunctionTemp'] * 0.2442 - 550.38  # [deg.C] ..to be added to ITT aux values
+
+    df['IAS'] = df['IAS'].apply(lambda x: x * 0.1)  # TODO/TEMP remove after the original data is FIXED(!)
+    ndf1['IAS'] = ndf2['IAS'] = df['IAS']  # [km/h] TODO IAS - neni jak prepocitat
 
     # LEFT engine (#1):
     ndf1['ITT'] = df['EngLittAux'] * 0.2901 + 0.2707     # + df['CJT']   # [deg.C]
@@ -267,7 +270,8 @@ def _processH80GE(df: DataFrame) -> pd.DataFrame:
     ndf1['TQ'] = ndf1['TQ'] / 100 * NOMINAL_DATA['TQ']  # [Nm]
 
     # RIGHT engine (#2):
-    ndf2['ITT'] = np.abs(df['EngRittAux']) * 0.2901 + 0.2707   # + df['CJT']   # [deg.C]
+    df['EngRittAux'] = df['EngRittAux'].apply(lambda x: x if x >= 0 else x + 4096)  # TODO/TEMP remove after the original data is FIXED(!)
+    ndf2['ITT'] = df['EngRittAux'] * 0.2901 + 0.2707   # + df['CJT']   # [deg.C]
     ndf2['FF'] = -5.895989847309e-7 * np.power(df['EngRFuelFlow'], 3) + 0.00052145591727 * np.power(df['EngRFuelFlow'], 2) + 0.378941513499262 * df[
         'EngRFuelFlow'] + 0.069354256168146  # [l/h]
     ndf2['NP'] = 295772517.415887 * np.power(df['EngRn1'], -1) - 1.00006952  # [1/n]
@@ -278,8 +282,6 @@ def _processH80GE(df: DataFrame) -> pd.DataFrame:
     D = 9.00251689374884E-11
     ndf2['TQ'] = A + B * df['EngRtorque'] + C * np.power(df['EngRtorque'], 2) + D * np.power(df['EngRtorque'], 3)  # [%]
     ndf2['TQ'] = ndf2['TQ'] / 100 * NOMINAL_DATA['TQ']  # [Nm]
-
-    raise NotImplementedError("!! Still TODO H80GE !!")
 
 
 def channelSelection(fileFormat: RawDataFileFormat, dataFrame, originalFileName, outPath=OUT_PATH):
