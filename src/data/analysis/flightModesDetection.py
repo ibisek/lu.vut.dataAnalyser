@@ -3,7 +3,6 @@ influx:
     select * from flights where engine_id='2' and flight_id='2' and cycle_id='2' and type='fil' limit 10
 
 TODO az na to budou data:
-TODO (3) opakovany vzlet: IAS<80kt bez zastaveni
 TODO (4) opakovane spousteni:  NG < 40% a pak zase NG na 60%; L410: NG=57% && NP <240-480>
 """
 
@@ -98,9 +97,7 @@ def detectTakeOff(df: DataFrame) -> List[Interval]:
                 # x['ALTx'] = x['ALT'] / 10
                 # x['dALT'] = x['ALT'].diff() * 10
                 # x['TO'] = x[iasKey].apply(lambda x: 100 if x > 0 else 0)
-                # x['TQx'] = x['TQ']/10   # TODO remove
                 # x[[iasKey, 'TO', 'NG', 'ALTx', 'dALT', 'dIAS', 'TQx']].plot()
-                # print("[INFO] maxNG:", max(x['NG']))    # TODO remove
                 # plt.show()
 
                 tsLanding = _findLandingAfter(x, tsTakeOffIndexEnd)   # start searching from this ts again
