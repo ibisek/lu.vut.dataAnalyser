@@ -37,7 +37,7 @@ def _findTakeoffEndAfter(df: DataFrame, afterIndexTs: Timestamp):
     """
     :param df:
     :param afterIndexTs:
-    :return: ts of take-off and (decrease in NG by 2%)
+    :return: ts of take-off end (decrease from peak NG after take-off start by 2%)
     """
     ngMax = 0
     for index, row in df[afterIndexTs:].iterrows():
@@ -77,41 +77,31 @@ def detectTakeOff(df: DataFrame) -> List[Interval]:
     while doLoop:
         x = x[tsTakeOffIndexStart:]  # df starting from the moment of takeoff
 
-        ngMax = 0
-        for index, row in x.iterrows():
-            ng = row['NG']
+        tsTakeOffIndexEnd = _findTakeoffEndAfter(x, tsTakeOffIndexStart)
+        if not tsTakeOffIndexStart:
+            doLoop = False
 
-            if ng > ngMax:
-                ngMax = ng
+        else:
+            interval = Interval(start=tsTakeOffIndexStart, end=tsTakeOffIndexEnd)
+            takeOffs.append(interval)
 
-            if ng < ngMax * 0.98:
-                tsTakeOffIndexEnd = index
+            # plot the takeoff section:
+            # x = x[:tsTakeOffIndexEnd]
+            # x['dIAS'] = df[iasKey].diff() * 10
+            # x['TO_dIAS'] = x['dIAS'].apply(lambda x: 1 if x > TO_START_IAS_DELTA else 0)
+            # x['ALTx'] = x['ALT'] / 10
+            # x['dALT'] = x['ALT'].diff() * 10
+            # x['TO'] = x[iasKey].apply(lambda x: 100 if x > 0 else 0)
+            # x[[iasKey, 'TO', 'NG', 'ALTx', 'dALT', 'dIAS', 'TQx']].plot()
+            # plt.show()
 
-                interval = Interval(start=tsTakeOffIndexStart, end=tsTakeOffIndexEnd)
-                takeOffs.append(interval)
-
-                # plot the takeoff section:
-                # x = x[:tsTakeOffIndexEnd]
-                # x['dIAS'] = df[iasKey].diff() * 10
-                # x['TO_dIAS'] = x['dIAS'].apply(lambda x: 1 if x > TO_START_IAS_DELTA else 0)
-                # x['ALTx'] = x['ALT'] / 10
-                # x['dALT'] = x['ALT'].diff() * 10
-                # x['TO'] = x[iasKey].apply(lambda x: 100 if x > 0 else 0)
-                # x[[iasKey, 'TO', 'NG', 'ALTx', 'dALT', 'dIAS', 'TQx']].plot()
-                # plt.show()
-
-                tsLanding = _findLandingAfter(x, tsTakeOffIndexEnd)   # start searching from this ts again
-                x = x[tsLanding:]   # chop the previous data away
-                xx = x.loc[x[iasKey] > TO_START_IAS_THRESHOLD]
-                if len(xx.index) == 0:
-                    doLoop = False
-                else:
-                    tsTakeOffIndexStart = xx.index[0]
-
-                break
-
-            if index == x.tail(1).index:     # we reached end of the dataframe with no endTime
+            tsLanding = _findLandingAfter(x, tsTakeOffIndexEnd)  # start searching from this ts again
+            x = x[tsLanding:]  # chop the previous data away
+            xx = x.loc[x[iasKey] > TO_START_IAS_THRESHOLD]
+            if len(xx.index) == 0:
                 doLoop = False
+            else:
+                tsTakeOffIndexStart = xx.index[0]
 
     return takeOffs
 
