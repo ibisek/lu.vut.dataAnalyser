@@ -3,7 +3,7 @@ influx:
     select * from flights where engine_id='2' and flight_id='2' and cycle_id='2' and type='fil' limit 10
 
 TODO az na to budou data:
-TODO (4) opakovane spousteni:  NG < 40% a pak zase NG na 60%; L410: NG=57% && NP <240-480>
+TODO (4) opakovane spousteni:  NG < 40% a pak zase NG na 60%; L410: NG=57% && NP <240-480> (pro PT6 neresit)
 """
 
 from collections import namedtuple
@@ -281,7 +281,11 @@ if __name__ == '__main__':
     engineStartup = detectEngineStartup(df)
     if engineStartup:
         print('[INFO] engine startup START:', engineStartup.start)
-        print('[INFO] engine startup   END:', engineStartup.start)
+        print('[INFO] engine startup END:  ', engineStartup.start)
 
     frDao.influx.stop()
+
+    # iasKey = 'IAS' if 'IAS' in df.keys() else 'TAS'
+    # df[['GS', iasKey, 'NG', 'NP', 'ALT']].plot()
+    # plt.show()
     print('KOHEU.')
