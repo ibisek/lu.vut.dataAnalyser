@@ -53,9 +53,39 @@ def _findTakeoffEndAfter(df: DataFrame, afterIndexTs: Timestamp):
     return None
 
 
-def detectTakeOff(df: DataFrame) -> List[Interval]:
+def detectTakeOff(df: DataFrame, ngStart=100.1, ngEnd=100.1) -> List[Interval]:
     """
     Detection of TAKE-OFF window/interval.
+    Ng>100,1% po dobu delší jak 10 sec, až po pokles pod 100,1%
+    start: NG >= 100,1%
+    end: NG < 100,1%
+    duration min: 10s
+    :param df:
+    :param ngStart
+    :param ngEnd
+    :return:
+    """
+
+    df = df.copy(deep=True)
+    iasKey = 'IAS' if 'IAS' in df.keys() else 'TAS'
+
+    takeOffs: List[Interval] = list()
+
+    numSuchDataPoints = len(df.loc[df['NG'] > ngStart])
+    while numSuchDataPoints:
+        tsTakeOffIndexStart = df.loc[df['NG'] > ngStart].index[0]
+        # TODO find the interval..
+        raise NotImplementedError('ERROR: detectTakeOff NOT implemented yet! (no data)')
+
+        # TODO cut-off df after the end and search again:
+        numSuchDataPoints = len(df.loc[df['NG'] > ngStart])
+
+    return takeOffs
+
+
+def detectClimb(df: DataFrame) -> List[Interval]:
+    """
+    Detection of CLIMB window/interval.
     start: IAS (TAS) > 10 km/h
     end: NG = 0.98NG_max
 
@@ -72,7 +102,7 @@ def detectTakeOff(df: DataFrame) -> List[Interval]:
 
     tsTakeOffIndexStart = df.loc[df[iasKey] > TO_START_IAS_THRESHOLD].index[0]
 
-    takeOffs: List[Interval] = list()
+    climbs: List[Interval] = list()
     doLoop = True
     while doLoop:
         x = x[tsTakeOffIndexStart:]  # df starting from the moment of takeoff
@@ -83,7 +113,7 @@ def detectTakeOff(df: DataFrame) -> List[Interval]:
 
         else:
             interval = Interval(start=tsTakeOffIndexStart, end=tsTakeOffIndexEnd)
-            takeOffs.append(interval)
+            climbs.append(interval)
 
             # plot the takeoff section:
             # x = x[:tsTakeOffIndexEnd]
@@ -103,10 +133,10 @@ def detectTakeOff(df: DataFrame) -> List[Interval]:
             else:
                 tsTakeOffIndexStart = xx.index[0]
 
-    return takeOffs
+    return climbs
 
 
-def detectRepeatedTakeOffs(df: DataFrame, takeOffs: List[Interval]) -> List[Interval]:
+def detectRepeatedTakeOffs(df: DataFrame, climbs: List[Interval]) -> List[Interval]:
     """
     Detection of repeated TAKE-OFF window/interval.
     start: IAS (TAS) < 80kt && GS >> 0
@@ -116,8 +146,8 @@ def detectRepeatedTakeOffs(df: DataFrame, takeOffs: List[Interval]) -> List[Inte
     :param takeOffs:
     :return: Interval
     """
-    firstTakeOffTs = takeOffs[0].start
-    lastLandingTs = takeOffs[len(takeOffs)-1].end
+    firstTakeOffTs = climbs[0].start
+    lastLandingTs = climbs[len(climbs)-1].end
     df = df[firstTakeOffTs: lastLandingTs]
 
     RTO_START_IAS_THRESHOLD_HIGH = 80 * 1.852    # [kt] -> [km/h]
@@ -247,8 +277,8 @@ if __name__ == '__main__':
 
     Engine = namedtuple('Engine', ['engineId', 'flightId', 'cycle_id'])
 
-    # e = Engine(engineId=1, flightId=1, cycle_id=1)      # PT6
-    e = Engine(engineId=2, flightId=2, cycle_id=2)      # H80 AI
+    e = Engine(engineId=1, flightId=1, cycle_id=1)      # PT6
+    # e = Engine(engineId=2, flightId=2, cycle_id=2)      # H80 AI
     # e = Engine(engineId=3, flightId=2, cycle_id=3)      # H80 GE
 
     df = frDao.loadDf(engineId=e.engineId, flightId=e.flightId, cycleId=e.cycle_id, recType=RecordingType.FILTERED)
@@ -258,7 +288,12 @@ if __name__ == '__main__':
         print(f'[INFO] takeoff #{i} START:', takeoff.start)
         print(f'[INFO] takeoff #{i} END:  ', takeoff.end)
 
-    repeatedTakeoffs = detectRepeatedTakeOffs(df, takeoffs)
+    climbs = detectClimb(df)
+    for i, climb in enumerate(climbs):
+        print(f'[INFO] climb #{i} START:', climb.start)
+        print(f'[INFO] climb #{i} END:  ', climb.end)
+
+    repeatedTakeoffs = detectRepeatedTakeOffs(df, climbs)
     for i, interval in enumerate(repeatedTakeoffs):
         print(f'[INFO] Repeated takeoff #{i} START:', interval.start)
         print(f'[INFO] Repeated takeoff #{i} END:  ', interval.end)
