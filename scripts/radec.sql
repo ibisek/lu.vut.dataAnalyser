@@ -221,10 +221,7 @@ CREATE TABLE IF NOT EXISTS flight_engine (
 CREATE TABLE IF NOT EXISTS files (
   id INT PRIMARY KEY auto_increment,
   name VARCHAR(32) NOT NULL,
-  flight_id INT NULL,
-  engine_id INT NOT NULL references engines.id,
-  source BOOL NOT NULL DEFAULT 0,
-  generated BOOL NOT NULL DEFAULT 0,
+  raw BOOL NOT NULL DEFAULT 0,
   status INT NOT NULL DEFAULT 0,
   hash VARCHAR(256) NULL
 ) charset utf8;
@@ -404,3 +401,4 @@ select * from regression_results where ts = 0 and file_id is null and engine_id=
 select * from configuration;
 
 select id, login, admin from users;
+
