@@ -143,6 +143,7 @@ INSERT INTO airplane_engine (airplane_id, engine_id) VALUES (1, 1);
 --DROP TABLE IF EXISTS flights;
 CREATE TABLE IF NOT EXISTS flights (
   id INT PRIMARY KEY auto_increment,
+  idx INT DEFAULT 0,
   airplane_id INT NOT NULL references airplanes.id,
   takeoff_ts INT NULL,
   takeoff_lat DECIMAL(8,5) NULL,
@@ -152,13 +153,24 @@ CREATE TABLE IF NOT EXISTS flights (
   landing_lat DECIMAL(8,5) NULL,
   landing_lon DECIMAL(8,5) NULL,
   landing_location VARCHAR(4) NULL,
-  duration INT NOT NULL DEFAULT 0,
-  cycles_full INT NOT NULL DEFAULT 0,
-  cycles_short INT NOT NULL DEFAULT 0
+  flight_time INT NOT NULL DEFAULT 0,
+  operation_time INT NOT NULL DEFAULT 0,
+  LNDCount INT default 0,
+  LNDHeavy FLOAT,
+  NoSUL INT default 0,
+  NoSUR INT default 0,
+  NoTOAll INT default 0,
+  NoTORep INT default 0,
+  ABC BOOL default false,
+  AFOn BOOL default false,
+  APOn BOOL default false,
+  VetAcc BOOL default false,
+  AuxPumpOn BOOL default false,
+  PitchLock BOOL default false
 ) charset utf8;
 
-INSERT INTO flights (airplane_id) VALUES (1);
-INSERT INTO flights (airplane_id) VALUES (3);
+INSERT INTO flights (id, airplane_id) VALUES (1, 1);
+INSERT INTO flights (id, airplane_id) VALUES (2, 3);
 
 select * from flights;
 
@@ -354,3 +366,5 @@ select * from regression_results where ts != 0 and file_id is not null and engin
 select * from regression_results where ts = 0 and file_id is null and engine_id=1;
 
 select * from configuration;
+
+select id, login, admin from users;
