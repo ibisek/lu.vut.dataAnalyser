@@ -140,7 +140,7 @@ CREATE TABLE IF NOT EXISTS airplane_engine (
 INSERT INTO airplane_engine (airplane_id, engine_id) VALUES (1, 1);
 
 
-DROP TABLE IF EXISTS flights;
+--DROP TABLE IF EXISTS flights;
 CREATE TABLE IF NOT EXISTS flights (
   id INT PRIMARY KEY auto_increment,
   airplane_id INT NOT NULL references airplanes.id,
@@ -231,6 +231,92 @@ CREATE TABLE IF NOT EXISTS users (
   admin TINYINT(1) NOT NULL DEFAULT 0,
   organisation_id INT NOT NULL REFERENCES organisations.id
 ) charset utf8;
+
+
+--DROP TABLE IF EXISTS cycles;
+CREATE TABLE IF NOT EXISTS cycles (
+  id INT PRIMARY KEY auto_increment,
+  engine_id INT NOT NULL references engines.id,
+  flight_id INT NOT NULL references flights.id,
+  file_id INT references files.id,
+  type VARCHAR(1),
+  -- over limit flags:
+  NGlimL BOOL,
+  NPlimL BOOL,
+  ITTlimL BOOL,
+  TQlimL BOOL,
+  OilPlimL BOOL,
+  FuelPlimL BOOL,
+  FireWarning BOOL,
+  -- engine start-up mode:
+  BeTimeSU INT,
+  TimeSUg INT,
+  TimeSUgIdle INT,
+  TimePeHeat INT,
+  ITTSUg FLOAT,
+  ALTSUg FLOAT,
+  OilP FLOAT,
+  OilTBe FLOAT,
+  FuelP FLOAT,
+  CASmax FLOAT,
+  EndTimeSU INT,
+  -- take-off mode:
+  BeTimeTO INT,
+  TimeTO INT,
+  NGRTO FLOAT,
+  NPTO FLOAT,
+  TQ FLOAT,
+  ITTTO FLOAT,
+  AltTO FLOAT,
+  OilPMinTO FLOAT,
+  OilPMaxTO FLOAT,
+  OilTMaxTO FLOAT,
+  FuelPMinTO FLOAT,
+  FuelPMaxTO FLOAT,
+  EndTimeTO INT,
+  -- climb mode
+  BeTimeClim INT,
+  TimeClim INT,
+  NGRClim FLOAT,
+  NPClim FLOAT,
+  TQClim FLOAT,
+  ITTClim FLOAT,
+  ALTClim FLOAT,
+  OilPMinClim FLOAT,
+  OilPMaxClim FLOAT,
+  OilTMaxClim FLOAT,
+  FuelPMinClim FLOAT,
+  FuelPMaxClim FLOAT,
+  EndTimeClim INT,
+  -- cruise mode:
+  BeTimeCruis INT,
+  NGCruis FLOAT,
+  NPCruis FLOAT,
+  TQCruis FLOAT,
+  ITTCruis FLOAT,
+  AltCruis FLOAT,
+  OilPMinCruis FLOAT,
+  OilPMaxCruis FLOAT,
+  OilTMaxCruis FLOAT,
+  FuelPMinCruis FLOAT,
+  FuelPMaxCruis FLOAT,
+  EndTimeCruis INT,
+  -- idle mode:
+  BeTimeIdle INT,
+  TimeIdle INT,
+  TimeIdleHyPumpIdle INT,
+  NGIdle FLOAT,
+  ITTIdle FLOAT,
+  AltIdle FLOAT,
+  OilPMinIdle FLOAT,
+  OilPMaxIdle FLOAT,
+  OilTMaxIdle FLOAT,
+  FuelPMinIdle FLOAT,
+  FuelPMaxIdle FLOAT,
+  EndTimeIdle INT
+) charset utf8;
+
+select * from cycles;
 
 --
 
