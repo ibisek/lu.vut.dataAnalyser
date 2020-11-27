@@ -17,6 +17,7 @@ class Alchemy(object):
         self.base = automap_base()
         engine = create_engine(SQLALCHEMY_DB_URI)
         self.base.prepare(engine, reflect=True)
+
         self.session = Session(engine)
         self.session.autoflush = True
 
