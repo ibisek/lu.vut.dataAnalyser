@@ -114,9 +114,45 @@ CREATE TABLE IF NOT EXISTS engines (
   serial_no VARCHAR(32) NOT NULL,
   year_of_prod INT(4) NULL,
   airplane_id INT REFERENCES aircrafts.id,
-  engine_no INT,
-  archived BOOL,
-  status VARCHAR(16)
+  engine_no INT default 0, -- alocation on the airframe
+  archived BOOL default false,
+  status VARCHAR(16),
+  -- eng.counters:
+  CYCLENo INT default 0,
+  CYCLENoTO FLOAT default 0,
+  CYCLERep FLOAT default 0,
+  EqCyle FLOAT default 0,
+  EqCycleSim FLOAT default 0,
+  -- components:
+  ACD1NoC FLOAT default 0,
+  ACD1NoCS FLOAT default 0,
+  ACD1NoR FLOAT default 0,
+  ACD2NoC FLOAT default 0,
+  ACD2NoCS FLOAT default 0,
+  ACD2NoR FLOAT default 0,
+  ImpNoC FLOAT default 0,
+  ImpNoCS FLOAT default 0,
+  ImpNoR FLOAT default 0,
+  MShaftNoC FLOAT default 0,
+  MShaftNoCS FLOAT default 0,
+  MShaftNoR FLOAT default 0,
+  FRSNoC FLOAT default 0,
+  FRSNoCS FLOAT default 0,
+  FRSNoR FLOAT default 0,
+  CTDNoC FLOAT default 0,
+  CTDNoCS FLOAT default 0,
+  CTDNoR FLOAT default 0,
+  RShaftNoC FLOAT default 0,
+  RShaftNoCS FLOAT default 0,
+  RShaftNoR FLOAT default 0,
+  FTDNoC FLOAT default 0,
+  FTDNoCS FLOAT default 0,
+  FTDNoR FLOAT default 0,
+  FShaftNoC FLOAT default 0,
+  FShaftNoCS FLOAT default 0,
+  FShaftNoR FLOAT default 0,
+  PShaftNo FLOAT default 0,
+  PShaftNoR FLOAT default 0
 ) charset utf8;
 
 INSERT INTO engines (equipment_id, serial_no, year_of_prod, engine_no, airplane_id, archived, status) 
@@ -169,8 +205,8 @@ CREATE TABLE IF NOT EXISTS flights (
   PitchLock BOOL default false
 ) charset utf8;
 
-INSERT INTO flights (id, airplane_id) VALUES (1, 1);
-INSERT INTO flights (id, airplane_id) VALUES (2, 3);
+INSERT INTO flights (airplane_id) VALUES (1);
+INSERT INTO flights (airplane_id) VALUES (3);
 
 select * from flights;
 
