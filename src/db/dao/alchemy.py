@@ -24,7 +24,13 @@ class Alchemy(object):
         # self.session.commit() # causes KeyError exception on a probably already-deleted object
         self.session.close()
 
-    def save(self):
+    def createNew(self):
+        return self.table()
+
+    def save(self, obj=None):
+        if obj:
+            self.session.add(obj)
+
         self.session.commit()
 
     def get(self, **kwargs):
