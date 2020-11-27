@@ -21,8 +21,11 @@ class Alchemy(object):
         self.session.autoflush = True
 
     def __del__(self):
-        self.session.commit()
+        # self.session.commit() # causes KeyError exception on a probably already-deleted object
         self.session.close()
+
+    def save(self):
+        self.session.commit()
 
     def get(self, **kwargs):
         """

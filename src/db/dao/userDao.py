@@ -12,9 +12,14 @@ class UserDao(Alchemy):
 
 
 if __name__ == '__main__':
-    d = UserDao()
+    ud = UserDao()
     # res = d.get(login='pepa')
-    res = d.getOne(login='pepa', enabled=None)
-    print(res)
-    if res:
-        print(res.__dict__)
+    user = ud.getOne(login='pepa', enabled=None)
+    print(user)
+    if user:
+        print(user.__dict__)
+        print("orgid:", user.organisation_id)
+
+        # user.organisation_id += 1
+        # d.session.commit()  # needs to be done manually here or..
+        ud.save()
