@@ -87,14 +87,14 @@ if __name__ == '__main__':
                 # continue
 
                 # TODO detect data-file format(!) .. well, but how?
-                # dataFormat = RawDataFileFormat.PT6
+                dataFormat = RawDataFileFormat.PT6
                 # dataFormat = RawDataFileFormat.H80AI
-                dataFormat = RawDataFileFormat.H80GE
+                # dataFormat = RawDataFileFormat.H80GE
 
                 rawDataFrame = loadRawData(fileFormat=dataFormat, inPath=inPath, fileName=fileName)
                 rawDataFrames = channelSelection(fileFormat=dataFormat, dataFrame=rawDataFrame, originalFileName=fileName)
 
-                if len(rawDataFrame) == 0:
+                if len(rawDataFrames) == 0:
                     continue
 
                 for engineIndex, rawDataFrame in enumerate(rawDataFrames, start=1):
