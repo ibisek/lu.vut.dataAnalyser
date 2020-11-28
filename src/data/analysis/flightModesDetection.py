@@ -51,7 +51,7 @@ def _findTakeoffEndAfter(df: DataFrame, afterIndexTs: Timestamp):
     return None
 
 
-def detectTakeOff(df: DataFrame, ngStart=100.1, ngEnd=100.1) -> List[Interval]:
+def detectTakeOffs(df: DataFrame, ngStart=100.1, ngEnd=100.1) -> List[Interval]:
     """
     Detection of TAKE-OFF window/interval.
     Ng>100,1% po dobu delší jak 10 sec, až po pokles pod 100,1%
@@ -349,7 +349,7 @@ if __name__ == '__main__':
 
     df = frDao.loadDf(engineId=ew.engineId, flightId=ew.flightId, cycleId=ew.cycleId, recType=RecordingType.FILTERED)
 
-    takeoffs = detectTakeOff(df)
+    takeoffs = detectTakeOffs(df)
     for i, takeoff in enumerate(takeoffs):
         print(f'[INFO] takeoff #{i} {takeoff.start} -> {takeoff.end}')
 
@@ -374,8 +374,8 @@ if __name__ == '__main__':
     for idle in engineIdles:
         print(f'[INFO] engine idle {idle.start} -> {idle.end}', )
 
-    cruiseIntervals = detectEngineCruises(df)
-    for i, cruise in enumerate(cruiseIntervals):
+    engineCruiseIntervals = detectEngineCruises(df)
+    for i, cruise in enumerate(engineCruiseIntervals):
         print(f'[INFO] cruise {i} {cruise.start} -> {cruise.end}', )
 
     frDao.influx.stop()

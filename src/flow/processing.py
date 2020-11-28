@@ -9,7 +9,7 @@ from typing import List
 from pandas import DataFrame
 
 from data.structures import EngineWork, Interval
-from data.analysis.flightModesDetection import detectTakeOff, detectClimbs, detectRepeatedTakeOffs, detectTaxi, detectEngineStartup, detectEngineIdles, detectEngineCruises
+from data.analysis.flightModesDetection import detectTakeOffs, detectClimbs, detectRepeatedTakeOffs, detectTaxi, detectEngineStartup, detectEngineIdles, detectEngineCruises
 from dao.flightRecordingDao import FlightRecordingDao, RecordingType
 from db.dao.cyclesDao import CyclesDao
 
@@ -44,34 +44,34 @@ class Processing:
         cycle.EndTimeClim = endTs
 
     def _detectPhases(self, df: DataFrame):
-        self.takeoffs = detectTakeOff(df)
-        for i, takeoff in enumerate(self.takeoffs):
+        self.takeoffIntervals = detectTakeOffs(df)
+        for i, takeoff in enumerate(self.takeoffIntervals):
             print(f'[INFO] takeoff #{i} {takeoff.start} -> {takeoff.end}')
 
         self.climbIntervals = detectClimbs(df)
         for i, climb in enumerate(self.climbIntervals):
             print(f'[INFO] climb #{i} {climb.start} -> {climb.end}:')
 
-        self.repeatedTakeoffs = detectRepeatedTakeOffs(df, self.climbIntervals)
-        for i, interval in enumerate(self.repeatedTakeoffs):
+        self.repeatedTakeoffIntervals = detectRepeatedTakeOffs(df, self.climbIntervals)
+        for i, interval in enumerate(self.repeatedTakeoffIntervals):
             print(f'[INFO] Repeated takeoff #{i} {interval.start} -> {interval.end}')
 
         self.taxiIntervals = detectTaxi(df)
-        for interval in self.taxiIntervals:
+        for i, interval in enumerate(self.taxiIntervals):
             dur = (interval.end - interval.start).seconds
-            print(f"[INFO] taxi {interval.start} -> {interval.end}; dur: {dur}s")
+            print(f"[INFO] taxi #{i} {interval.start} -> {interval.end}; dur: {dur}s")
 
-        self.engineStartup = detectEngineStartup(df)  # TODO startup-S?
+        self.engineStartup = detectEngineStartup(df)  # TODO startup-S? can be more than one?
         if self.engineStartup:
             print(f'[INFO] engine startup {self.engineStartup.start} -> {self.engineStartup.end}:', )
 
         self.engineIdles = detectEngineIdles(df)
-        for idle in self.engineIdles:
-            print(f'[INFO] engine idle {idle.start} -> {idle.end}', )
+        for i, idle in enumerate(self.engineIdles):
+            print(f'[INFO] engine idle #{i} {idle.start} -> {idle.end}', )
 
-        self.cruiseIntervals = detectEngineCruises(df)
-        for i, cruise in enumerate(self.cruiseIntervals):
-            print(f'[INFO] cruise {i} {cruise.start} -> {cruise.end}', )
+        self.engineCruiseIntervals = detectEngineCruises(df)
+        for i, cruise in enumerate(self.engineCruiseIntervals):
+            print(f'[INFO] cruise #{i} {cruise.start} -> {cruise.end}', )
 
     def process(self, engineWork: EngineWork):
         print(f'[INFO] Processing flight data for engineId={ew.engineId}; flightId={ew.flightId}; cycleId={ew.cycleId}')
