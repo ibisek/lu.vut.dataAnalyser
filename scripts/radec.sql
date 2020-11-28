@@ -167,13 +167,13 @@ INSERT INTO engines (equipment_id, serial_no, year_of_prod, engine_no, airplane_
 select * from engines;
 
 
---DROP TABLE IF EXISTS airplane_engine;
-CREATE TABLE IF NOT EXISTS airplane_engine (
+--DROP TABLE IF EXISTS airplanes_engines;
+CREATE TABLE IF NOT EXISTS airplanes_engines (
   airplane_id INT NOT NULL references airplanes.id,
   engine_id INT NOT NULL references engines.id
 ) charset utf8;
 
-INSERT INTO airplane_engine (airplane_id, engine_id) VALUES (1, 1);
+INSERT INTO airplanes_engines (airplane_id, engine_id) VALUES (1, 1);
 
 
 --DROP TABLE IF EXISTS flights;
@@ -211,8 +211,8 @@ INSERT INTO flights (airplane_id) VALUES (3);
 select * from flights;
 
 
---DROP TABLE IF EXISTS flight_engine;
-CREATE TABLE IF NOT EXISTS flight_engine (
+--DROP TABLE IF EXISTS flights_engines;
+CREATE TABLE IF NOT EXISTS flights_engines (
   flight_id INT NOT NULL references fligts.id,
   engine_id INT NOT NULL references engines.id
 ) charset utf8;
@@ -221,11 +221,10 @@ CREATE TABLE IF NOT EXISTS flight_engine (
 CREATE TABLE IF NOT EXISTS files (
   id INT PRIMARY KEY auto_increment,
   name VARCHAR(32) NOT NULL,
-  raw BOOL NOT NULL DEFAULT 0,
+  raw BOOL DEFAULT false,
   status INT NOT NULL DEFAULT 0,
   hash VARCHAR(256) NULL
 ) charset utf8;
-
 
 --DROP TABLE IF EXISTS regression_results;
 CREATE TABLE IF NOT EXISTS regression_results (
@@ -244,6 +243,11 @@ CREATE TABLE IF NOT EXISTS regression_results (
   x_max FLOAT(20) DEFAULT 0
 ) charset utf8;
 
+--DROP TABLE IF EXISTS flights_files;
+CREATE TABLE IF NOT EXISTS flights_files (
+  flight_id INT references flights.id,
+  file_id INT references files.id
+) charset utf8;
 
 --DROP TABLE IF EXISTS organisations;
 CREATE TABLE IF NOT EXISTS organisations (
@@ -402,3 +406,22 @@ select * from configuration;
 
 select id, login, admin from users;
 
+--
+--insert into files (name, raw, hash) values ('log_190323_090817_LKTB.csv', true, '0c4db7ec609361af08af2829713292b3e502ae79060e7861ad4d9b27573d2791');
+select * from files;
+--insert into flights_files (flight_id, file_id) values (1, 1);
+select * from flights_files;
+--insert into flights_engines values(1,1);
+select * from flights_engines;
+
+select * from flights;
+
+select * from airplanes;
+
+select * from engines;
+
+select * from files;
+
+select * from cycles;
+
+delete from cycles;
