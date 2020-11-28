@@ -9,7 +9,7 @@ from typing import List
 from pandas import DataFrame
 
 from data.structures import EngineWork, Interval
-from data.analysis.flightModesDetection import detectTakeOff, detectClimbs, detectRepeatedTakeOffs, detectTaxi, detectEngineStartup, detectEngineIdles
+from data.analysis.flightModesDetection import detectTakeOff, detectClimbs, detectRepeatedTakeOffs, detectTaxi, detectEngineStartup, detectEngineIdles, detectEngineCruises
 from dao.flightRecordingDao import FlightRecordingDao, RecordingType
 from db.dao.cyclesDao import CyclesDao
 
@@ -69,8 +69,11 @@ class Processing:
         for idle in self.engineIdles:
             print(f'[INFO] engine idle {idle.start} -> {idle.end}', )
 
+        self.cruiseIntervals = detectEngineCruises(df)
+        for i, cruise in enumerate(self.cruiseIntervals):
+            print(f'[INFO] cruise {i} {cruise.start} -> {cruise.end}', )
 
-def process(self, engineWork: EngineWork):
+    def process(self, engineWork: EngineWork):
         print(f'[INFO] Processing flight data for engineId={ew.engineId}; flightId={ew.flightId}; cycleId={ew.cycleId}')
         df = self.frDao.loadDf(engineId=engineWork.engineId, flightId=engineWork.flightId, cycleId=engineWork.cycleId, recType=RecordingType.FILTERED)
         self._detectPhases(df)
