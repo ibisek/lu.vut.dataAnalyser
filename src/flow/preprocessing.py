@@ -79,12 +79,12 @@ def prepare(file: File):
     return True
 
 
-def process(file: File):
+def preprocess(file: File):
     inPath = f"{FILE_STORAGE_ROOT}/{file.id}"
     fileName = file.name
 
     from data.structures import RawDataFileFormat
-    format: RawDataFileFormat = RawDataFileFormat.PT6   # TODO zjistit z DB !!
+    format: RawDataFileFormat = RawDataFileFormat.PT6   # TODO vytahnout z DB !!
 
     rawDataFrame = loadRawData(fileFormat=format, inPath=inPath, fileName=fileName)
     rawDataFrames = channelSelection(fileFormat=format, dataFrame=rawDataFrame, originalFileName=fileName, outPath=inPath)
@@ -310,10 +310,11 @@ if __name__ == '__main__':
 
         if file and prepare(file):
             try:
-                process(file)
+                preprocess(file)
 
                 # TODO uncomment (!)
-                FileDao.setFileStatus(file=file, status=FileStatus.ANALYSIS_COMPLETE)
+                # TODO move analysis is now complete not until analysis.py finishes
+                # FileDao.setFileStatus(file=file, status=FileStatus.ANALYSIS_COMPLETE)
 
             except Exception as ex:
                 print(f"[ERROR] in processing file {file}:", str(ex))
