@@ -1,7 +1,7 @@
 from db.dao.alchemy import Alchemy
 
 
-class CycleDao(Alchemy):
+class CyclesDao(Alchemy):
 
     def __init__(self):
         super().__init__()

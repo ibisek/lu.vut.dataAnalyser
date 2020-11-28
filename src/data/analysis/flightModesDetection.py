@@ -308,6 +308,37 @@ def detectEngineIdles(df: DataFrame) -> List[Interval]:
     return intervals
 
 
+def detectEngineCruises(df: DataFrame) -> List[Interval]:
+    """
+    Detection of engine-in-cruise-mode intervals.
+    60 < NG < 97.8%
+    len >= 10s
+
+    :param df:
+    :return:
+    """
+    NG_THR_MIN = 60    # [%]
+    NG_THR_MAX = 97.8  # [%]
+    MIN_DURATION = 10  # [s]
+
+    intervals = list()
+
+    intervalStart = intervalEnd = None
+    for index, row in df.iterrows():
+        if not intervalStart and NG_THR_MIN < row['NG'] < NG_THR_MAX:
+            intervalStart = index
+
+        if intervalStart and (row['NG'] < NG_THR_MIN or row['NG'] > NG_THR_MAX):
+            intervalEnd = index
+            sec = (intervalEnd - intervalStart).seconds
+            if sec >= MIN_DURATION:
+                intervals.append(Interval(start=intervalStart, end=intervalEnd))
+
+            intervalStart = None
+
+    return intervals
+
+
 if __name__ == '__main__':
 
     frDao = FlightRecordingDao()
@@ -322,11 +353,11 @@ if __name__ == '__main__':
     for i, takeoff in enumerate(takeoffs):
         print(f'[INFO] takeoff #{i} {takeoff.start} -> {takeoff.end}')
 
-    climbs = detectClimbs(df)
-    for i, climb in enumerate(climbs):
+    climbIntervals = detectClimbs(df)
+    for i, climb in enumerate(climbIntervals):
         print(f'[INFO] climb #{i} {climb.start} -> {climb.end}:')
 
-    repeatedTakeoffs = detectRepeatedTakeOffs(df, climbs)
+    repeatedTakeoffs = detectRepeatedTakeOffs(df, climbIntervals)
     for i, interval in enumerate(repeatedTakeoffs):
         print(f'[INFO] Repeated takeoff #{i} {interval.start} -> {interval.end}')
 
@@ -342,6 +373,10 @@ if __name__ == '__main__':
     engineIdles = detectEngineIdles(df)
     for idle in engineIdles:
         print(f'[INFO] engine idle {idle.start} -> {idle.end}', )
+
+    cruiseIntervals = detectEngineCruises(df)
+    for i, cruise in enumerate(cruiseIntervals):
+        print(f'[INFO] cruise {i} {cruise.start} -> {cruise.end}', )
 
     frDao.influx.stop()
 
