@@ -6,16 +6,14 @@ TODO az na to budou data:
 TODO (4) opakovane spousteni:  NG < 40% a pak zase NG na 60%; L410: NG=57% && NP <240-480> (pro PT6 neresit)
 """
 
-from collections import namedtuple
 from datetime import timedelta
-import numpy as np
 from pandas import DataFrame, Series, Timestamp
 
 import matplotlib.pyplot as plt
 from typing import List
 
 from dao.flightRecordingDao import FlightRecordingDao, RecordingType
-from data.structures import Interval
+from data.structures import Interval, EngineWork
 
 
 def _findLandingAfter(df: DataFrame, afterIndexTs: Timestamp):
@@ -28,7 +26,7 @@ def _findLandingAfter(df: DataFrame, afterIndexTs: Timestamp):
     """
     x = df.copy(deep=True)[afterIndexTs:]
     iasKey = 'IAS' if 'IAS' in df.keys() else 'TAS'
-    landingTs = x.loc[x[iasKey] <= 0.1].index[0]    # == 0 does not work
+    landingTs = x.loc[x[iasKey] <= 0.1].index[0]  # == 0 does not work
 
     return landingTs
 
@@ -83,7 +81,7 @@ def detectTakeOff(df: DataFrame, ngStart=100.1, ngEnd=100.1) -> List[Interval]:
     return takeOffs
 
 
-def detectClimb(df: DataFrame) -> List[Interval]:
+def detectClimbs(df: DataFrame) -> List[Interval]:
     """
     Detection of CLIMB window/interval.
     start: IAS (TAS) > 10 km/h
@@ -95,7 +93,7 @@ def detectClimb(df: DataFrame) -> List[Interval]:
 
     x = df.copy(deep=True)
 
-    TO_START_IAS_DELTA = 4       # [km/h]
+    TO_START_IAS_DELTA = 4  # [km/h]
     TO_START_IAS_THRESHOLD = 20  # [km/h]
 
     iasKey = 'IAS' if 'IAS' in df.keys() else 'TAS'
@@ -136,22 +134,23 @@ def detectClimb(df: DataFrame) -> List[Interval]:
     return climbs
 
 
-def detectRepeatedTakeOffs(df: DataFrame, climbs: List[Interval]) -> List[Interval]:
+def detectRepeatedTakeOffs(df: DataFrame, climbIntervals: List[Interval]) -> List[Interval]:
     """
     Detection of repeated TAKE-OFF window/interval.
     start: IAS (TAS) < 80kt && GS >> 0
     end: NG = 0.98NG_max
 
     :param df:
+    :param climbIntervals:
     :param takeOffs:
     :return: Interval
     """
-    firstTakeOffTs = climbs[0].start
-    lastLandingTs = climbs[len(climbs)-1].end
+    firstTakeOffTs = climbIntervals[0].start
+    lastLandingTs = climbIntervals[len(climbIntervals) - 1].end
     df = df[firstTakeOffTs: lastLandingTs]
 
-    RTO_START_IAS_THRESHOLD_HIGH = 80 * 1.852    # [kt] -> [km/h]
-    RTO_START_IAS_THRESHOLD_LOW = 50 * 1.852    # [kt] -> [km/h]
+    RTO_START_IAS_THRESHOLD_HIGH = 80 * 1.852  # [kt] -> [km/h]
+    RTO_START_IAS_THRESHOLD_LOW = 50 * 1.852  # [kt] -> [km/h]
 
     iasKey = 'IAS' if 'IAS' in df.keys() else 'TAS'
 
@@ -178,8 +177,8 @@ def detectRepeatedTakeOffs(df: DataFrame, climbs: List[Interval]) -> List[Interv
             rptToStartTs = row.name
 
             # if in the next 60s we don't see landing (IAS < low thr), this is beginning of repeated takeoff
-            sampleSpacing = (df.iloc[i+1].name - df.iloc[i].name).seconds
-            x = df[rptToStartTs:].head(int(1/sampleSpacing * 60))
+            sampleSpacing = (df.iloc[i + 1].name - df.iloc[i].name).seconds
+            x = df[rptToStartTs:].head(int(1 / sampleSpacing * 60))
             x = x[x[iasKey] < RTO_START_IAS_THRESHOLD_LOW]
             if len(x) != 0:  # there is landing after this NG spike
                 wasAboveThr = False
@@ -189,7 +188,7 @@ def detectRepeatedTakeOffs(df: DataFrame, climbs: List[Interval]) -> List[Interv
             rptToEndTs = _findTakeoffEndAfter(df, rptToStartTs)
             if rptToEndTs:
                 repeatedTakeoffs.append(Interval(start=rptToStartTs, end=rptToEndTs))
-                wasAboveThr = False     # initiate new RTO search
+                wasAboveThr = False  # initiate new RTO search
 
     return repeatedTakeoffs
 
@@ -206,19 +205,19 @@ def detectTaxi(df: DataFrame) -> List[Interval]:
 
     x = df.copy(deep=True)
 
-    TAXI_LOW_SPEED_THR = 2    # [km/h]
+    TAXI_LOW_SPEED_THR = 2  # [km/h]
     TAXI_HIGH_SPEED_THR = 50  # [km/h]
-    TAXI_MIN_DURATION = 20    # [s]
+    TAXI_MIN_DURATION = 20  # [s]
 
     x['TAXI_flag'] = x['GS'].apply(lambda x: 1 if TAXI_LOW_SPEED_THR < x < TAXI_HIGH_SPEED_THR else 0)
-    x['TAXI_state_change'] = x['TAXI_flag'].diff()      # mark where taxiing changes (stopped 2 taxiing | taxiing to stop)
-    changesInGS: Series = x.loc[x['TAXI_state_change'] != 0]['TAXI_state_change']    # select only rows with changes
+    x['TAXI_state_change'] = x['TAXI_flag'].diff()  # mark where taxiing changes (stopped 2 taxiing | taxiing to stop)
+    changesInGS: Series = x.loc[x['TAXI_state_change'] != 0]['TAXI_state_change']  # select only rows with changes
     changesInGS = changesInGS.dropna()
 
     taxiIntervals = list()
     taxiStart = None
     for index, item in changesInGS.iteritems():
-        if item == 1:   # TAXI start
+        if item == 1:  # TAXI start
             taxiStart = index
         if item == -1:  # TAXI end
             taxiEnd = index
@@ -245,8 +244,8 @@ def detectEngineStartup(df: DataFrame) -> Interval:
 
     x = df.copy(deep=True)
 
-    NG_LOW_THR = 30     # [%]
-    ENGINE_STARTUP_DURATION_MAX = 60    # [s]
+    NG_LOW_THR = 30  # [%]
+    ENGINE_STARTUP_DURATION_MAX = 60  # [s]
 
     ngBelowTh: Series = x['NG'].loc[x['NG'] < NG_LOW_THR].diff().dropna()
     if len(ngBelowTh) == 0:
@@ -256,10 +255,10 @@ def detectEngineStartup(df: DataFrame) -> Interval:
 
     x['dNG'] = x['NG'].diff()
 
-    engineStartupEndEst = engineStartupStart + timedelta(0, ENGINE_STARTUP_DURATION_MAX)    # estimate startup time no longer than thr
+    engineStartupEndEst = engineStartupStart + timedelta(0, ENGINE_STARTUP_DURATION_MAX)  # estimate startup time no longer than thr
     engineStartupSeries = x[engineStartupStart:engineStartupEndEst]['dNG']
 
-    engineStartupEnd = engineStartupSeries.loc[engineStartupSeries <= 0].index[0]   # first row where dNG <= 0
+    engineStartupEnd = engineStartupSeries.loc[engineStartupSeries <= 0].index[0]  # first row where dNG <= 0
 
     # plot startup section:
     # x['NGx'] = x['NG'] * 10
@@ -271,42 +270,78 @@ def detectEngineStartup(df: DataFrame) -> Interval:
     return Interval(start=engineStartupStart, end=engineStartupEnd)
 
 
+def detectEngineIdles(df: DataFrame) -> List[Interval]:
+    """
+    Detection of engine idling.
+    NG < 57%
+    len >= 10s
+
+    :param df:
+    :return:
+    """
+    NG_THR = 57  # [%]
+    MIN_DURATION = 10  # [s]
+
+    intervals = list()
+
+    idleStart = idleEnd = None
+    for index, row in df.iterrows():
+        if not idleStart and row['NG'] < NG_THR:
+            idleStart = index
+
+        if idleStart and row['NG'] > NG_THR:
+            idleEnd = index
+            sec = (idleEnd - idleStart).seconds
+            if sec >= MIN_DURATION:
+                intervals.append(Interval(start=idleStart, end=idleEnd))
+
+            idleStart = None
+            idleEnd = None
+
+    lastRow = df.tail(1)
+    if idleStart and not idleEnd and lastRow['NG'][0] < NG_THR:
+        idleEnd = lastRow.index[0]
+        sec = (idleEnd - idleStart).seconds
+        if sec >= MIN_DURATION:
+            intervals.append(Interval(start=idleStart, end=idleEnd))
+
+    return intervals
+
+
 if __name__ == '__main__':
 
     frDao = FlightRecordingDao()
 
-    Engine = namedtuple('Engine', ['engineId', 'flightId', 'cycle_id'])
+    ew = EngineWork(engineId=1, flightId=1, cycleId=1)  # PT6
+    # ew = Engine(engineId=2, flightId=2, cycleId=2)      # H80 AI
+    # ew = Engine(engineId=3, flightId=2, cycleId=3)      # H80 GE
 
-    e = Engine(engineId=1, flightId=1, cycle_id=1)      # PT6
-    # e = Engine(engineId=2, flightId=2, cycle_id=2)      # H80 AI
-    # e = Engine(engineId=3, flightId=2, cycle_id=3)      # H80 GE
-
-    df = frDao.loadDf(engineId=e.engineId, flightId=e.flightId, cycleId=e.cycle_id, recType=RecordingType.FILTERED)
+    df = frDao.loadDf(engineId=ew.engineId, flightId=ew.flightId, cycleId=ew.cycleId, recType=RecordingType.FILTERED)
 
     takeoffs = detectTakeOff(df)
     for i, takeoff in enumerate(takeoffs):
-        print(f'[INFO] takeoff #{i} START:', takeoff.start)
-        print(f'[INFO] takeoff #{i} END:  ', takeoff.end)
+        print(f'[INFO] takeoff #{i} {takeoff.start} -> {takeoff.end}')
 
-    climbs = detectClimb(df)
+    climbs = detectClimbs(df)
     for i, climb in enumerate(climbs):
-        print(f'[INFO] climb #{i} START:', climb.start)
-        print(f'[INFO] climb #{i} END:  ', climb.end)
+        print(f'[INFO] climb #{i} {climb.start} -> {climb.end}:')
 
     repeatedTakeoffs = detectRepeatedTakeOffs(df, climbs)
     for i, interval in enumerate(repeatedTakeoffs):
-        print(f'[INFO] Repeated takeoff #{i} START:', interval.start)
-        print(f'[INFO] Repeated takeoff #{i} END:  ', interval.end)
+        print(f'[INFO] Repeated takeoff #{i} {interval.start} -> {interval.end}')
 
     taxiIntervals = detectTaxi(df)
     for interval in taxiIntervals:
         dur = (interval.end - interval.start).seconds
         print(f"[INFO] taxi {interval.start} -> {interval.end}; dur: {dur}s")
 
-    engineStartup = detectEngineStartup(df)
+    engineStartup = detectEngineStartup(df)  # TODO startup-S?
     if engineStartup:
-        print('[INFO] engine startup START:', engineStartup.start)
-        print('[INFO] engine startup END:  ', engineStartup.start)
+        print(f'[INFO] engine startup {engineStartup.start} -> {engineStartup.end}:', )
+
+    engineIdles = detectEngineIdles(df)
+    for idle in engineIdles:
+        print(f'[INFO] engine idle {idle.start} -> {idle.end}', )
 
     frDao.influx.stop()
 
