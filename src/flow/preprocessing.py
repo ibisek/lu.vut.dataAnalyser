@@ -7,10 +7,10 @@ Step #1:
 import shutil
 import pandas as pd
 from pathlib import Path
+from typing import List
 
 from configuration import STEADY_STATE_WINDOW_LEN, STEADY_STATE_DVAL, CSV_DELIMITER
 
-from data.sources.fileLoader import loadRawData
 from fileUtils import loadSteadyStates, composeFilename2
 
 from data.preprocessing.channelSelection import channelSelection
@@ -23,6 +23,9 @@ from data.analysis.regression import RegressionResult, doRegressionForKeys
 from data.analysis.limitingStateDetector import detectLimitingStates
 from data.analysis.ibiModel import IbiModel
 
+from data.sources.fileLoader import loadRawData
+from data.structures import EngineWork
+
 from plotting import plotChannelsOfInterestMultiY
 
 from dao.configurationDao import getConfiguration
@@ -32,7 +35,7 @@ from dao.regressionResultDao import saveRegressionResult, getRegressionResults
 from dao.flightRecordingDao import FlightRecordingDao, RecordingType
 
 from db.dao.enginesDao import EnginesDao
-from db.dao.cyclesDao import CycleDao
+from db.dao.cyclesDao import CyclesDao
 from db.dao.flightsDao import FlightsDao
 
 
@@ -79,7 +82,7 @@ def prepare(file: File):
     return True
 
 
-def preprocess(file: File):
+def preprocess(file: File) -> List[EngineWork]:
     inPath = f"{FILE_STORAGE_ROOT}/{file.id}"
     fileName = file.name
 
@@ -98,6 +101,8 @@ def preprocess(file: File):
     engineIds = EnginesDao().getEngineIdsForRawFlight(file.id)
     assert len(rawDataFrames) == len(engineIds)
 
+    engineWorks: List[EngineWork] = []
+
     for engineIndex, rawDataFrame in enumerate(rawDataFrames, start=1):
         engineId = engineIds[engineIndex-1]
 
@@ -108,7 +113,7 @@ def preprocess(file: File):
         standardisedDataFrame = omitRowsBelowThresholds(standardisedDataFrame, fileName)
 
         # create new cycle for per engine record:
-        cycleDao = CycleDao()
+        cycleDao = CyclesDao()
         cycle = cycleDao.createNew()
         cycle.file_id = file.id
         cycle.engine_id = engineId
@@ -120,6 +125,8 @@ def preprocess(file: File):
         frDao.storeDf(engineId=engineId, flightId=flightId, cycleId=cycle.id, df=rawDataFrame, recType=RecordingType.RAW)
         frDao.storeDf(engineId=engineId, flightId=flightId, cycleId=cycle.id, df=filteredDataFrame, recType=RecordingType.FILTERED)
         frDao.storeDf(engineId=engineId, flightId=flightId, cycleId=cycle.id, df=standardisedDataFrame, recType=RecordingType.STANDARDIZED)
+
+        engineWorks.append(EngineWork(id=engineId, flightId=flightId, cycleId=cycle.id))
 
         # TODO the remaining analyses (LU.VUT) are not run at this stage of development
         continue
@@ -150,6 +157,8 @@ def preprocess(file: File):
 
         # TODO
         # calcRegressionDeltaForFile(file)
+
+    return engineWorks
 
 
 def _readReducedDataFromFile(file: File):
@@ -311,10 +320,6 @@ if __name__ == '__main__':
         if file and prepare(file):
             try:
                 preprocess(file)
-
-                # TODO uncomment (!)
-                # TODO move analysis is now complete not until analysis.py finishes
-                # FileDao.setFileStatus(file=file, status=FileStatus.ANALYSIS_COMPLETE)
 
             except Exception as ex:
                 print(f"[ERROR] in processing file {file}:", str(ex))
