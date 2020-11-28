@@ -1,8 +1,14 @@
 
+from typing import List
+
+from data.structures import EngineWork
 from dao.fileDao import FileDao, File, FileStatus
-from flow.preprocessing import checkForWork, prepare, process
+from flow.preprocessing import checkForWork, prepare, preprocess
+from flow.processing import Processing
 
 if __name__ == '__main__':
+    processing = Processing()
+
     while True:
         file: File = checkForWork()
 
@@ -11,7 +17,10 @@ if __name__ == '__main__':
 
         if file and prepare(file):
             try:
-                process(file)
+                engineWorks: List[EngineWork] = preprocess(file)
+                for ew in engineWorks:
+                    processing.process(engineWorks=ew)
+
                 # TODO uncomment (!)
                 FileDao.setFileStatus(file=file, status=FileStatus.ANALYSIS_COMPLETE)
 
