@@ -30,7 +30,7 @@ class Processing:
         duration = endTs - startTs
 
         cycle.BeTimeClim = startTs
-        cycle.TimeClim = duration
+        cycle.TimeClim = duration   # TODO is really needed when it can be calculated?
         cycle.NGRClim = max(df['NG'])
         cycle.NPClim = max(df['NP'])
         cycle.TQClim = max(df['TQ'])
@@ -42,6 +42,42 @@ class Processing:
         # cycle.FuelPMinClim = min(df['X'])     # TODO not in data!
         # cycle.FuelPMaxClim = max(df['X'])     # TODO not in data!
         cycle.EndTimeClim = endTs
+
+    @staticmethod
+    def _analyseEngineCruiseInterval(df: DataFrame, cycle):
+        startTs = df.head(1)['ts'][0]
+        endTs = df.tail(1)['ts'][0]
+
+        cycle.BeTimeCruis = startTs
+        cycle.NGCruis = max(df['NG'])
+        cycle.NPCruis = max(df['NP'])
+        cycle.TQCruis = max(df['TQ'])
+        cycle.ITTCruis = max(df['ITT'])
+        cycle.AltCruis = max(df['ALT'])
+        cycle.OilPMinCruis = min(df['OILP'])
+        cycle.OilPMaxCruis = max(df['OILP'])
+        cycle.OilTMaxCruis = max(df['OILT'])
+        # cycle.FuelPMinCruis = min(df['X'])     # TODO not in data!
+        # cycle.FuelPMaxCruis = max(df['X'])     # TODO not in data!
+        cycle.EndTimeCruis = endTs
+
+    @staticmethod
+    def _analyseIdle(df: DataFrame, cycle):
+        startTs = df.head(1)['ts'][0]
+        endTs = df.tail(1)['ts'][0]
+
+        cycle.BeTimeIdle = startTs
+        # cycle.TimeIdle = 666     # TODO wtf?!
+        # cycle.TimeIdleHyPumpIdle = 666     # TODO wtf?!
+        cycle.NGIdle = max(df['NG'])
+        cycle.ITTIdle = max(df['ITT'])
+        cycle.AltIdle = max(df['ALT'])
+        cycle.OilPMinIdle = min(df['OILP'])
+        cycle.OilPMaxIdle = max(df['OILP'])
+        cycle.OilTMaxIdle = max(df['OILT'])
+        cycle.FuelPMinIdle = min(df['X'])     # TODO not in data!
+        cycle.FuelPMaxIdle = max(df['X'])     # TODO not in data!
+        cycle.EndTimeIdle = endTs
 
     def _detectPhases(self, df: DataFrame):
         self.takeoffIntervals = detectTakeOffs(df)
@@ -80,14 +116,16 @@ class Processing:
 
         cycle = self.cyclesDao.getOne(id=ew.cycleId)
 
-        # self._analyseEngineStartup()
+        # self._analyseEngineStartup()  # TODO xxx
 
         for climbInterval in self.climbIntervals:
             self._analyseClimbInterval(df[climbInterval.start:climbInterval.end], cycle)
 
-        # self._analyseCruise()
+        for engCruiseInterval in self.engineCruiseIntervals:
+            self._analyseCruise(df[engCruiseInterval.start:engCruiseInterval.end], cycle)
 
-        # self._analyseIdle()
+        for idleInterval in self.engineIdles:
+            self._analyseIdle(df[idleInterval.start:idleInterval.end], cycle)
 
         print('Y')
         # self.cyclesDao.save()
