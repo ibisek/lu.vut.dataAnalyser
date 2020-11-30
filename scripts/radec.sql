@@ -81,6 +81,13 @@ INSERT INTO fleets (owner_org_id, label) VALUES (2, 'GEAC Virtual Fleet');
 select * from fleets;
 
 
+--DROP TABLE IF EXISTS fleets_organisations;
+CREATE TABLE IF NOT EXISTS fleets_organisations (
+  fleet_id INT NOT NULL REFERENCES fleets.id,
+  organisation_id INT NOT NULL REFERENCES organisations.id
+) charset utf8;
+
+
 --DROP TABLE IF EXISTS airplanes;
 CREATE TABLE IF NOT EXISTS airplanes (
   id INT PRIMARY KEY auto_increment,
@@ -115,6 +122,7 @@ CREATE TABLE IF NOT EXISTS engines (
   year_of_prod INT(4) NULL,
   airplane_id INT REFERENCES aircrafts.id,
   engine_no INT default 0, -- alocation on the airframe
+  flight_id INT REFERENCES flights.id,
   archived BOOL default false,
   status VARCHAR(16),
   -- eng.counters:
@@ -165,6 +173,18 @@ INSERT INTO engines (equipment_id, serial_no, year_of_prod, engine_no, airplane_
 	VALUES (6, 'SN_2020_03', 2020, 2, 3, false, 'ok'); -- H80 @ NG
 
 select * from engines;
+
+
+--DROP TABLE IF EXISTS airplanes_organisations;
+CREATE TABLE IF NOT EXISTS airplanes_organisations (
+  airplane_id INT NOT NULL references airplanes.id,
+  organisation_id INT NOT NULL references organisations.id,
+  relation_type VARCHAR(1) NOT NULL DEFAULT 'O'
+) charset utf8;
+
+INSERT INTO airplanes_organisations (airplane_id, organisation_id, relation_type) VALUES (1, 1, 'O');	-- LU.VUT - PC12
+INSERT INTO airplanes_organisations (airplane_id, organisation_id, relation_type) VALUES (2, 1, 'O');	-- LU.VUT - C172
+INSERT INTO airplanes_organisations (airplane_id, organisation_id, relation_type) VALUES (3, 2, 'O');	-- LU.VUT - L410NG
 
 
 --DROP TABLE IF EXISTS airplanes_engines;
@@ -424,4 +444,4 @@ select * from files;
 
 select * from cycles;
 
-delete from cycles;
+--delete from cycles;
