@@ -264,7 +264,7 @@ def detectEngineStartups(df: DataFrame) -> List[Interval]:
     while True:
         startIndex = df.loc[df['NG'] > NG_LOW_THR].index[0]  # first index above low thr
         df = df[startIndex:]
-        dNG = df['NG'].diff().rolling(10, center=True).mean()
+        dNG = df['NG'].diff().rolling(5, center=True).mean()
         endIndex = dNG[dNG < 0].head(1).index[0]   # until first derivation is < 0 (non-rising value)
 
         interval = Interval(start=startIndex, end=endIndex)
