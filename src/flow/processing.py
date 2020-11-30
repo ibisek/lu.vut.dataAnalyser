@@ -9,7 +9,8 @@ from typing import List
 from pandas import DataFrame
 
 from data.structures import EngineWork, Interval
-from data.analysis.flightModesDetection import detectTakeOffs, detectClimbs, detectRepeatedTakeOffs, detectTaxi, detectEngineStartup, detectEngineIdles, detectEngineCruises
+from data.analysis.flightModesDetection import detectTakeOffs, detectClimbs, detectRepeatedTakeOffs, \
+    detectTaxi, detectEngineStartups, detectEngineIdles, detectEngineCruises
 from dao.flightRecordingDao import FlightRecordingDao, RecordingType
 from db.dao.cyclesDao import CyclesDao
 
@@ -58,13 +59,40 @@ class Processing:
     #     cycle.FireWarning = True
 
     @staticmethod
+    def _analyseEngineStartup(df: DataFrame, cycle):
+        # TODO xxx
+        raise NotImplementedError()
+
+    @staticmethod
+    def _analyseTakeOffInterval(df: DataFrame, cycle):
+        startTs = df.head(1)['ts'][0]
+        endTs = df.tail(1)['ts'][0]
+        duration = endTs - startTs
+
+        cycle.BeTimeTO = startTs
+        cycle.TimeTO = duration
+        cycle.NGRTO = _max(cycle.NGRTO, max(df['NG']))
+        cycle.NPTO = _max(cycle.NPTO, max(df['NP']))
+        cycle.TQTO = _max(cycle.TQTO, max(df['TQ']))
+        cycle.ITTTO = _max(cycle.ITTTO, max(df['ITT']))
+        cycle.AltTO = _max(cycle.AltTO, max(df['ALT']))
+        cycle.OilPMinTO = _min(cycle.OilPMinTO, min(df['OILP']))
+        cycle.OilPMaxTO = _max(cycle.OilPMaxTO, max(df['OILP']))
+        cycle.OilTMaxTO = _max(cycle.OilTMaxTO, max(df['OILT']))
+        # cycle.FuelPMinTO = _min(, min(df['X']))     # TODO not in data!
+        # cycle.FuelPMaxTO = _max(, max(df['X']))     # TODO not in data!
+        cycle.EndTimeTO = endTs
+
+        raise NotImplementedError()
+
+    @staticmethod
     def _analyseClimbInterval(df: DataFrame, cycle):
         startTs = df.head(1)['ts'][0]
         endTs = df.tail(1)['ts'][0]
         duration = endTs - startTs
 
         cycle.BeTimeClim = startTs
-        cycle.TimeClim = duration   # TODO is really needed when it can be calculated?
+        cycle.TimeClim = duration
         cycle.NGRClim = _max(cycle.NGRClim, max(df['NG']))
         cycle.NPClim = _max(cycle.NPClim, max(df['NP']))
         cycle.TQClim = _max(cycle.TQClim, max(df['TQ']))
@@ -114,6 +142,11 @@ class Processing:
         cycle.EndTimeIdle = endTs
 
     def _detectPhases(self, df: DataFrame):
+        self.engStartups = self.detectEngineStartups(df)
+        for i, engineStartup in enumerate(self.engStartups):
+            print(f'[INFO] engine startup #{i} {engineStartup.start} -> {engineStartup.end}')
+        # TODO in case of multiple -> crate subcycles; hell yeah! Master is the first, subs are the consequent ones; detection by NG only
+
         self.takeoffIntervals = detectTakeOffs(df)
         for i, takeoff in enumerate(self.takeoffIntervals):
             print(f'[INFO] takeoff #{i} {takeoff.start} -> {takeoff.end}')
@@ -131,10 +164,6 @@ class Processing:
             dur = (interval.end - interval.start).seconds
             print(f"[INFO] taxi #{i} {interval.start} -> {interval.end}; dur: {dur}s")
 
-        self.engineStartup = detectEngineStartup(df)  # TODO startup-S? can there be more than one?
-        if self.engineStartup:
-            print(f'[INFO] engine startup {self.engineStartup.start} -> {self.engineStartup.end}:', )
-
         self.engineIdles = detectEngineIdles(df)
         for i, idle in enumerate(self.engineIdles):
             print(f'[INFO] engine idle #{i} {idle.start} -> {idle.end}', )
@@ -150,7 +179,11 @@ class Processing:
 
         cycle = self.cyclesDao.getOne(id=ew.cycleId)
 
-        # self._analyseEngineStartup()  # TODO xxx
+        for engStartup in self.engineStartupIntervals:
+            self._analyseEngineStartup(df[engStartup.start:engStartup.end], cycle)
+
+        for takeoffInterval in self.takeoffIntervals:
+            self._analyseTakeOffInterval(df[takeoffInterval.start:takeoffInterval.end], cycle)
 
         for climbInterval in self.climbIntervals:
             self._analyseClimbInterval(df[climbInterval.start:climbInterval.end], cycle)
@@ -166,9 +199,10 @@ class Processing:
 
 
 if __name__ == '__main__':
-    ew = EngineWork(engineId=1, flightId=1, cycleId=10)  # PT6
-    # ew = Engine(engineId=2, flightId=2, cycleId=2)      # H80 AI
-    # ew = Engine(engineId=3, flightId=2, cycleId=3)      # H80 GE
+    # ew = EngineWork(engineId=1, flightId=1, cycleId=10)     # PT6
+    ew = EngineWork(engineId=2, flightId=2, cycleId=12)     # H80 AI.1
+    # ew = EngineWork(engineId=3, flightId=2, cycleId=13)     # H80 AI.2
+    # ew = Engine(engineId=3, flightId=2, cycleId=3)          # H80 GE
 
     p = Processing()
     p.process(ew)
