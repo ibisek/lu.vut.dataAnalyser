@@ -69,15 +69,6 @@ def detectTakeOffs(df: DataFrame, ngStart=100.1, ngEnd=100.1) -> List[Interval]:
     df = df.copy(deep=True)
     iasKey = 'IAS' if 'IAS' in df.keys() else 'TAS'
 
-    # numSuchDataPoints = len(df.loc[df['NG'] > ngStart])
-    # while numSuchDataPoints:
-    #     tsTakeOffIndexStart = df.loc[df['NG'] > ngStart].index[0]
-    #     # TODO find the interval..
-    #     raise NotImplementedError('ERROR: detectTakeOff NOT implemented yet! (no data)')
-    #
-    #     # TODO cut-off df after the end and search again:
-    #     numSuchDataPoints = len(df.loc[df['NG'] > ngStart])
-
     takeOffs: List[Interval] = []
 
     numSuchDataPoints = len(df.loc[df['NG'] > ngStart])
@@ -259,41 +250,30 @@ def detectTaxi(df: DataFrame) -> List[Interval]:
 def detectEngineStartups(df: DataFrame) -> List[Interval]:
     """
     Detection of engine startups.
-    start: NG < 40%
+    start: NG < 30%
     end: NG stable on 60% or below
 
     :param df:
     :return: list of intervals
     """
+    NG_LOW_THR = 0  # [%]
 
-    x = df.copy(deep=True)
-
-    NG_LOW_THR = 30  # [%]
-    ENGINE_STARTUP_DURATION_MAX = 60  # [s]
-
+    df = df.copy(deep=True)
     startups = []
 
-    ngBelowTh: Series = x['NG'].loc[x['NG'] < NG_LOW_THR].diff().dropna()
-    if len(ngBelowTh) == 0:
-        return startups
+    while True:
+        startIndex = df.loc[df['NG'] > NG_LOW_THR].index[0]  # first index above low thr
+        df = df[startIndex:]
+        dNG = df['NG'].diff().rolling(10, center=True).mean()
+        endIndex = dNG[dNG < 0].head(1).index[0]   # until first derivation is < 0 (non-rising value)
 
-    engineStartupStart = ngBelowTh.loc[ngBelowTh > 0].index[0]
+        interval = Interval(start=startIndex, end=endIndex)
+        startups.append(interval)
+        # print(f'[INFO] Detected engine startup in interval {interval.start} -> {interval.end}')
 
-    x['dNG'] = x['NG'].diff()
-
-    engineStartupEndEst = engineStartupStart + timedelta(0, ENGINE_STARTUP_DURATION_MAX)  # estimate startup time no longer than thr
-    engineStartupSeries = x[engineStartupStart:engineStartupEndEst]['dNG']
-
-    engineStartupEnd = engineStartupSeries.loc[engineStartupSeries <= 0].index[0]  # first row where dNG <= 0
-
-    # plot startup section:
-    # x['NGx'] = x['NG'] * 10
-    # x['dNGx'] = x['dNG'] * 100
-    # x['dNPx'] = x['NP'].diff() * 10
-    # x[engineStartupStart:engineStartupEndEst][['NGx', 'NP', 'dNGx', 'dNPx']].plot()
-    # plt.show()
-
-    startups.append(Interval(start=engineStartupStart, end=engineStartupEnd))
+        df = df.loc[df['NG'] < NG_LOW_THR]
+        if len(df) == 0:
+            break
 
     return startups
 
@@ -378,7 +358,7 @@ if __name__ == '__main__':
 
     df = frDao.loadDf(engineId=ew.engineId, flightId=ew.flightId, cycleId=ew.cycleId, recType=RecordingType.FILTERED)
 
-    engineStartups = detectEngineStartups(df)  # TODO startup-S?
+    engineStartups = detectEngineStartups(df)
     for i, engineStartup in enumerate(engineStartups):
         print(f'[INFO] engine startup #{i} {engineStartup.start} -> {engineStartup.end}')
 
