@@ -98,18 +98,17 @@ CREATE TABLE IF NOT EXISTS airplanes (
   num_engines TINYINT(2) NOT NULL,
   registration VARCHAR(8) NOT NULL,
   registration_country VARCHAR(2) NOT NULL,
-  num_landings INT NOT NULL DEFAULT 0,
-  fleet_id INT NULL
+  num_landings INT NOT NULL DEFAULT 0
 ) charset utf8;
 
-INSERT INTO airplanes (equipment_id, model, year_of_prod, serial_no, num_engines, registration, registration_country, fleet_id) 
-	VALUES (1, 'PC-12/47E', 2019, '2019_01', 1, 'OK-ABC', 'cz', 1);
+INSERT INTO airplanes (equipment_id, model, year_of_prod, serial_no, num_engines, registration, registration_country) 
+	VALUES (1, 'PC-12/47E', 2019, '2019_01', 1, 'OK-ABC', 'cz');
 
-INSERT INTO airplanes (equipment_id, model, year_of_prod, serial_no, num_engines, registration, registration_country, fleet_id) 
-	VALUES (2, '172N', 2020, '2020_01', 1, 'OK-PBS', 'cz', 1);
+INSERT INTO airplanes (equipment_id, model, year_of_prod, serial_no, num_engines, registration, registration_country) 
+	VALUES (2, '172N', 2020, '2020_01', 1, 'OK-PBS', 'cz');
 
-INSERT INTO airplanes (equipment_id, model, year_of_prod, serial_no, num_engines, registration, registration_country, fleet_id) 
-	VALUES (3, 'NG', 2020, '2020_11', 1, 'OK-GEAC', 'cz', 2);
+INSERT INTO airplanes (equipment_id, model, year_of_prod, serial_no, num_engines, registration, registration_country) 
+	VALUES (3, 'NG', 2020, '2020_11', 1, 'OK-GEAC', 'cz');
 
 select * from airplanes;
 
