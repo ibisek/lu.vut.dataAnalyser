@@ -319,4 +319,10 @@ def channelSelection(fileFormat: RawDataFileFormat, dataFrame, originalFileName,
         print(f"[INFO] Writing selected channels to '{fn}'")
         dataFrame.to_csv(fp, sep=';', encoding='utf_8')
 
+        # TODO populate missing channels with zeros:
+        if 'FUELP' not in dataFrame:
+            dataFrame['FUELP'] = 0
+        if 'FIRE' not in dataFrame:
+            dataFrame['FIRE'] = 0
+
     return dataFrames
