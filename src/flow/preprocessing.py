@@ -86,11 +86,8 @@ def preprocess(file: File) -> List[EngineWork]:
     inPath = f"{FILE_STORAGE_ROOT}/{file.id}"
     fileName = file.name
 
-    from data.structures import RawDataFileFormat
-    format: RawDataFileFormat = RawDataFileFormat.PT6   # TODO vytahnout z DB !!
-
-    rawDataFrame = loadRawData(fileFormat=format, inPath=inPath, fileName=fileName)
-    rawDataFrames = channelSelection(fileFormat=format, dataFrame=rawDataFrame, originalFileName=fileName, outPath=inPath)
+    rawDataFrame = loadRawData(fileFormat=file.format, inPath=inPath, fileName=fileName)
+    rawDataFrames = channelSelection(fileFormat=file.format, dataFrame=rawDataFrame, originalFileName=fileName, outPath=inPath)
 
     if len(rawDataFrames) == 0:
         return True
@@ -126,7 +123,7 @@ def preprocess(file: File) -> List[EngineWork]:
         frDao.storeDf(engineId=engineId, flightId=flightId, cycleId=cycle.id, df=filteredDataFrame, recType=RecordingType.FILTERED)
         frDao.storeDf(engineId=engineId, flightId=flightId, cycleId=cycle.id, df=standardisedDataFrame, recType=RecordingType.STANDARDIZED)
 
-        engineWorks.append(EngineWork(id=engineId, flightId=flightId, cycleId=cycle.id))
+        engineWorks.append(EngineWork(engineId=engineId, flightId=flightId, cycleId=cycle.id))
 
         # TODO the remaining analyses (LU.VUT) are not run at this stage of development
         continue
@@ -313,17 +310,17 @@ def recalcAllRegressionResultsForEngine(engineId: int):
 if __name__ == '__main__':
     while True:
         file: File = checkForWork()
-
         if not file:
             break
 
-        if file and prepare(file):
-            try:
+        try:
+            if file and prepare(file):
+                FileDao.setFileStatus(file=file, status=FileStatus.UNDER_ANALYSIS)
                 preprocess(file)
 
-            except Exception as ex:
-                print(f"[ERROR] in processing file {file}:", str(ex))
-                FileDao.setFileStatus(file=file, status=FileStatus.FAILED)
+        except Exception as ex:
+            print(f"[ERROR] in processing file {file}:", str(ex))
+            FileDao.setFileStatus(file=file, status=FileStatus.FAILED)
 
     # ENGINE_ID = 1
     # calcNominalValues(ENGINE_ID)
