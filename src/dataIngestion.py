@@ -13,7 +13,7 @@ from fileUtils import composeFilename, loadSteadyStates
 from data.analysis.steadyStatesUtils import rowWithinSteadyState
 from configuration import IN_PATH, OUT_PATH, KEYS_FOR_STEADY_STATE_DETECTION, STEADY_STATE_WINDOW_LEN, STEADY_STATE_DVAL
 
-from data.structures import RawDataFileFormat
+from data.structures import FileFormat
 from data.preprocessing.channelSelection import channelSelection
 from data.preprocessing.dataFiltering import filterData
 from data.preprocessing.dataStandartisation import standardiseData
@@ -87,9 +87,9 @@ if __name__ == '__main__':
                 # continue
 
                 # TODO detect data-file format(!) .. well, but how?
-                dataFormat = RawDataFileFormat.PT6
-                # dataFormat = RawDataFileFormat.H80AI
-                # dataFormat = RawDataFileFormat.H80GE
+                dataFormat = FileFormat.PT6
+                # dataFormat = FileFormat.H80AI
+                # dataFormat = FileFormat.H80GE
 
                 rawDataFrame = loadRawData(fileFormat=dataFormat, inPath=inPath, fileName=fileName)
                 rawDataFrames = channelSelection(fileFormat=dataFormat, dataFrame=rawDataFrame, originalFileName=fileName)

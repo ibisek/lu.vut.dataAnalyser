@@ -7,17 +7,17 @@ import pandas as pd
 from datetime import datetime, timedelta
 
 from configuration import CSV_DELIMITER
-from data.structures import RawDataFileFormat
+from data.structures import FileFormat
 
 
-def loadRawData(fileFormat: RawDataFileFormat, inPath: str, fileName: str) -> pd.DataFrame:
+def loadRawData(fileFormat: FileFormat, inPath: str, fileName: str) -> pd.DataFrame:
     filePath = f"{inPath}/{fileName}"
 
-    if fileFormat == RawDataFileFormat.PT6:
+    if fileFormat == FileFormat.PT6:
         SKIP_ROWS = [0, 1]
         df = pd.read_csv(f"{inPath}/{fileName}", delimiter=CSV_DELIMITER, encoding='cp1250', skiprows=SKIP_ROWS)  # utf_8 | cp1250
 
-    elif fileFormat == RawDataFileFormat.H80AI:
+    elif fileFormat == FileFormat.H80AI:
         SKIP_ROWS = [0, 1, 2, 3]
         colNames = ['t', 'IAS_LH', 'Pressure_Alt', 'Engine_LH_NG', 'Engine_LH_ITT', 'Engine_LH_NP', 'Engine_LH_TQ', 'Engine_LH_FF', 'Engine_RH_NG',
                     'Engine_RH_ITT', 'Engine_RH_NP', 'Engine_RH_TQ', 'Engine_RH_FF', 'dummy']
@@ -27,7 +27,7 @@ def loadRawData(fileFormat: RawDataFileFormat, inPath: str, fileName: str) -> pd
         # delete dummy column (the line ends with ',' and thus pandas creates empty column)
         del df['dummy']
 
-    elif fileFormat == RawDataFileFormat.H80GE:
+    elif fileFormat == FileFormat.H80GE:
         SKIP_ROWS = [0]
 
         colNames = ['Counter', 'PressureAltitude', 'EngLFireWarn', 'ALTcoarse', 'ALTfine', 'TAT', 'IAS', 'EngRn1', 'EngLn1', 'EngLn2', 'EngRn2',
@@ -42,7 +42,7 @@ def loadRawData(fileFormat: RawDataFileFormat, inPath: str, fileName: str) -> pd
     df = df.replace('', np.nan)     # replace empty strings by NaN - such will be dropped later on
 
     # create index as datetime object:
-    if fileFormat == RawDataFileFormat.H80AI:
+    if fileFormat == FileFormat.H80AI:
         with open(filePath, 'r', encoding="latin-1") as f:
             line = f.readline()     # read the first line in format 2628-F01.01-FDR.dat,8/14/2020 10:32:18 AM,
 
@@ -54,7 +54,7 @@ def loadRawData(fileFormat: RawDataFileFormat, inPath: str, fileName: str) -> pd
 
         del df['t']     # not needed anymore
 
-    elif fileFormat == RawDataFileFormat.H80GE:
+    elif fileFormat == FileFormat.H80GE:
         # start datetime index based on the date & time from filename:
         fn = fileName[fileName.rfind('/')+1:]       # 'MSN3217_20200403_084854.csv'
         dtStr = fn[fn.find('_')+1:fn.rfind('.')]    # '20200403_084854'
