@@ -68,19 +68,15 @@ class FileDao:
         files = list()
 
         with DbSource(dbConnectionInfo).getConnection() as c:
-            strSql = f"SELECT * FROM files " \
+            strSql = f"SELECT id, name, raw, format, status, hash FROM files " \
                      f"{eidCond} " \
                      f"ORDER BY id;"
             c.execute(strSql)
 
             rows = c.fetchall()
             for row in rows:
-                (id, name, flightId, engineId, source, generated, status, hash) = row
-
-                f = File(id=id, name=name, flightId=flightId, engineId=engineId,
-                         source=source, generated=generated,
-                         status=FileStatus(status), hash=hash)
-
+                (id, name, raw, format, status, hash) = row
+                f = File(id=id, name=name, raw=raw, format=FileFormat(format), status=FileStatus(status), hash=hash)
                 files.append(f)
 
         return files
@@ -95,7 +91,7 @@ class FileDao:
         files = list()
 
         with DbSource(dbConnectionInfo).getConnection() as c:
-            strSql = f"SELECT * FROM files " \
+            strSql = f"SELECT id, name, raw, format, status, hash FROM files " \
                      f"WHERE engine_id = {engineId} AND status < 128 " \
                      f"ORDER BY id LIMIT {limit};"
             c.execute(strSql)
@@ -103,11 +99,7 @@ class FileDao:
             rows = c.fetchall()
             for row in rows:
                 (id, name, flightId, engineId, source, generated, status, hash) = row
-
-                f = File(id=id, name=name, flightId=flightId, engineId=engineId,
-                         source=source, generated=generated,
-                         status=FileStatus(status), hash=hash)
-
+                f = File(id=id, name=name, raw=raw, format=FileFormat(format), status=FileStatus(status), hash=hash)
                 files.append(f)
 
         return files
@@ -117,16 +109,16 @@ class FileDao:
         flightId = 'null' if not file.flightId else file.flightId
 
         if not file.id:  # new record
-            sql = f"INSERT INTO files (name, flight_id, engine_id, source, generated, status, hash) " \
-                  f"VALUES ('{file.name}', {flightId}, {file.engineId}, {file.source}, {file.generated}, {file.status.value}, '{file.hash}');"
+            sql = f"INSERT INTO files (name, raw, format, status, hash) " \
+                  f"VALUES ('{file.name}', {file.raw}, {file.format.value}, {file.status.value}, '{file.hash}');"
 
             with DbSource(dbConnectionInfo).getConnection() as c:
                 c.execute(sql)
                 file.id = c.lastrowid
 
         else:   # update existing
-            sql = f"UPDATE files SET name='{file.name}', flight_id={flightId}, engine_id={file.engineId}, " \
-                  f"source={file.source}, generated={file.generated}, status={file.status.value}, hash='{file.hash}' " \
+            sql = f"UPDATE files SET name='{file.name}', raw={file.raw}, format={file.format.value}, " \
+                  f"status={file.status.value}, hash='{file.hash}' " \
                   f"WHERE id={file.id}"
 
             with DbSource(dbConnectionInfo).getConnection() as c:
