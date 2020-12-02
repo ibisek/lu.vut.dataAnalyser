@@ -317,6 +317,7 @@ CREATE TABLE IF NOT EXISTS users (
 --DROP TABLE IF EXISTS cycles;	
 CREATE TABLE IF NOT EXISTS cycles (
   id INT PRIMARY KEY auto_increment,
+  idx INT NOT NULL DEFAULT 0,
   engine_id INT NOT NULL references engines.id,
   flight_id INT NOT NULL references flights.id,
   file_id INT references files.id,
