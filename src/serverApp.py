@@ -17,6 +17,8 @@ if __name__ == '__main__':
 
         if file and prepare(file):
             try:
+                FileDao.setFileStatus(file=file, status=FileStatus.UNDER_ANALYSIS)
+
                 engineWorks: List[EngineWork] = preprocess(file)
                 for ew in engineWorks:
                     processing.process(engineWorks=ew)
