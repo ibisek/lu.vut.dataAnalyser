@@ -205,7 +205,6 @@ class Processing:
     @staticmethod
     def _analyseEntireFlightParams(df: DataFrame, cycle):
         cycle.ITTOpMax = _max(cycle.ITTOpMax, max(df['ITT']))
-        print('X')
 
     def process(self, engineWork: EngineWork):
         print(f'[INFO] Processing flight data for engineId={ew.engineId}; flightId={ew.flightId}; cycleId={ew.cycleId}')
@@ -231,15 +230,15 @@ class Processing:
 
         self._analyseEntireFlightParams(df=df, cycle=cycle)
 
-        # TODO uncomment!
-        # self.cyclesDao.save()
+        self.cyclesDao.prepareForSave(cycle)
+        self.cyclesDao.save()
 
 
 if __name__ == '__main__':
-    # ew = EngineWork(engineId=1, flightId=1, cycleId=10)     # PT6
-    ew = EngineWork(engineId=2, flightId=2, cycleId=12)     # H80 AI.1
-    # ew = EngineWork(engineId=3, flightId=2, cycleId=13)     # H80 AI.2
-    # ew = Engine(engineId=3, flightId=2, cycleId=3)          # H80 GE
+    # ew = EngineWork(engineId=1, flightId=1, cycleId=20)     # PT6
+    ew = EngineWork(engineId=2, flightId=2, cycleId=21)     # H80 AI.1
+    # ew = EngineWork(engineId=3, flightId=2, cycleId=22)     # H80 AI.2
+    # ew = Engine(engineId=3, flightId=2, cycleId=X)          # H80 GE
 
     p = Processing()
     p.process(ew)
