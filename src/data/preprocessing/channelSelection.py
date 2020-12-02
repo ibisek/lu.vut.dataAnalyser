@@ -298,8 +298,7 @@ def channelSelection(fileFormat: FileFormat, dataFrame, originalFileName, outPat
     elif fileFormat == FileFormat.H80GE:
         dataFrames = _processH80GE(dataFrame)
     else:
-        print('[FATAL] UNKNOWN file format - unable to choose processing method!')
-        sys.exit(0)
+        raise NotImplementedError(f'[FATAL] UNKNOWN file format {fileFormat} - unable to choose processing method!\n originalFileName: {originalFileName}')
 
     for engineIndex, dataFrame in enumerate(dataFrames, start=1):
         # drop rows where p0 == 0 (causes inf/zero division in dataStandardisation):
@@ -313,27 +312,38 @@ def channelSelection(fileFormat: FileFormat, dataFrame, originalFileName, outPat
         # add unix timestamp column:
         dataFrame['ts'] = dataFrame.index[0].value / 1e9
 
+        dataFrame = _populateMissingChannels(dataFrame)
+
         fn = composeFilename2(originalFileName, 'selectedChannelsRaw', 'csv', engineIndex=engineIndex)
         fp = f"{outPath}/{fn}"
         print(f"[INFO] Writing selected channels to '{fn}'")
         dataFrame.to_csv(fp, sep=';', encoding='utf_8')
 
-        # populate missing channels with zeros:
-        if 'GS' not in dataFrame:   # ground speed
-            dataFrame['GS'] = 0
-        if 'T0' not in dataFrame:   # OAT outside air temperature
-            dataFrame['T0'] = 0
-        if 'P0' not in dataFrame:   # ambient pressure
-            dataFrame['P0'] = 0
-        if 'PT' not in dataFrame:   # turbine pressure
-            dataFrame['PT'] = 0
-        if 'T2' not in dataFrame:
-            dataFrame['T2'] = 0
-        if 'P2' not in dataFrame:
-            dataFrame['P2'] = 0
-        if 'FUELP' not in dataFrame:    # fuel pressure
-            dataFrame['FUELP'] = 0
-        if 'FIRE' not in dataFrame:     # engine on fire indication
-            dataFrame['FIRE'] = 0
+        dataFrames[engineIndex-1] = dataFrame   # we are working with a copy in the loop (!)
 
-        return dataFrames
+    return dataFrames
+
+
+def _populateMissingChannels(dataFrame: DataFrame) -> DataFrame:
+    """
+    :param dataFrame:
+    :return: dataFrame with populated missing channels with zeros
+    """
+    if 'GS' not in dataFrame:  # ground speed
+        dataFrame['GS'] = 0
+    if 'T0' not in dataFrame:  # OAT outside air temperature
+        dataFrame['T0'] = 0
+    if 'P0' not in dataFrame:  # ambient pressure
+        dataFrame['P0'] = 0
+    if 'PT' not in dataFrame:  # turbine pressure
+        dataFrame['PT'] = 0
+    if 'T2' not in dataFrame:
+        dataFrame['T2'] = 0
+    if 'P2' not in dataFrame:
+        dataFrame['P2'] = 0
+    if 'FUELP' not in dataFrame:  # fuel pressure
+        dataFrame['FUELP'] = 0
+    if 'FIRE' not in dataFrame:  # engine on fire indication
+        dataFrame['FIRE'] = 0
+
+    return dataFrame
