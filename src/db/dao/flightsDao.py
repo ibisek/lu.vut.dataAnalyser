@@ -16,7 +16,7 @@ class FlightsDao(Alchemy):
 
         with DbSource(dbConnectionInfo).getConnection() as c:
             strSql = f"SELECT f.id FROM flights AS f " \
-                     f"JOIN flights_files AS ff ON ff.flight_id = f.id " \
+                     f"JOIN files_flights AS ff ON ff.flight_id = f.id " \
                      f"JOIN files AS fi ON fi.id = ff.file_id " \
                      f"WHERE fi.id={fileId};"
             c.execute(strSql)
