@@ -11,7 +11,9 @@ from pandas import DataFrame
 from data.structures import EngineWork, Interval
 from data.analysis.flightModesDetection import detectTakeOffs, detectClimbs, detectRepeatedTakeOffs, \
     detectTaxi, detectEngineStartups, detectEngineIdles, detectEngineCruises
+from data.analysis.overLimitsDetection import checkCruiseLimits, checkEngineIdleLimits, checkEngineStartupLimits
 from dao.flightRecordingDao import FlightRecordingDao, RecordingType
+from dao.engineLimits import EngineLimits
 from db.dao.cyclesDao import CyclesDao
 
 
@@ -202,10 +204,13 @@ class Processing:
         for i, cruise in enumerate(self.engineCruiseIntervals):
             print(f'[INFO] cruise #{i} {cruise.start} -> {cruise.end}', )
 
+    lim = EngineLimits()
+
     @staticmethod
     def _analyseEntireFlightParams(df: DataFrame, cycle):
-        # max ITT during the whole flight:
+        # max ITT, NG, NP, TQ during the whole flight:
         cycle.ITTOpMax = _max(cycle.ITTOpMax, max(df['ITT']))
+        cycle.TQlimL = _max(cycle.TQlimL, max(df['TQ']) > EngineLimits.H80['TQLim'])
         # fire warning
         cycle.FireWarning = _max(cycle.FireWarning, 1 if max(df['FIRE']) > 0 else 0)
 
@@ -217,23 +222,29 @@ class Processing:
         cycle = self.cyclesDao.getOne(id=ew.cycleId)
 
         for engStartup in self.engineStartupIntervals:
-            self._analyseEngineStartup(dfStartup=df[engStartup.start:engStartup.end], dfFull=df, cycle=cycle)
+            startupDf = df[engStartup.start:engStartup.end]
+            self._analyseEngineStartup(dfStartup=startupDf, dfFull=df, cycle=cycle)
+            checkEngineStartupLimits(df=startupDf, cycle=cycle)
 
         for takeoffInterval in self.takeoffIntervals:
             self._analyseTakeOffInterval(df[takeoffInterval.start:takeoffInterval.end], cycle)
+            # TODO check over-limits
 
         for climbInterval in self.climbIntervals:
             self._analyseClimbInterval(df[climbInterval.start:climbInterval.end], cycle)
+            # TODO check over-limits
 
         for engCruiseInterval in self.engineCruiseIntervals:
-            self._analyseEngineCruiseInterval(df[engCruiseInterval.start:engCruiseInterval.end], cycle)
+            cruiseDf = df[engCruiseInterval.start:engCruiseInterval.end]
+            self._analyseEngineCruiseInterval(df=cruiseDf, cycle=cycle)
+            checkCruiseLimits(df=cruiseDf, cycle=cycle)
 
         for idleInterval in self.engineIdles:
-            self._analyseIdleInterval(df[idleInterval.start:idleInterval.end], cycle)
+            idleDf = df[idleInterval.start:idleInterval.end]
+            self._analyseIdleInterval(df=idleDf, cycle=cycle)
+            checkEngineIdleLimits(df=idleDf, cycle=cycle)
 
         self._analyseEntireFlightParams(df=df, cycle=cycle)
-
-        # TODO limits detection
 
         self.cyclesDao.prepareForSave(cycle)
         self.cyclesDao.save()
