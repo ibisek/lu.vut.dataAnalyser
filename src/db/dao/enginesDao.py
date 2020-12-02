@@ -19,7 +19,7 @@ class EnginesDao(Alchemy):
         with DbSource(dbConnectionInfo).getConnection() as c:
             strSql = f"select e.id from engines as e " \
                      f"join engines_flights as ef on e.id=ef.engine_id " \
-                     f"join flights as f on fe.flight_id = f.id " \
+                     f"join flights as f on ef.flight_id = f.id " \
                      f"where f.id={flightId} and f.idx=0;"
             c.execute(strSql)
 
