@@ -5,7 +5,7 @@ import numpy as np
 from configuration import NOMINAL_DATA, OUT_PATH
 from pandas import DataFrame
 
-from ..structures import RawDataFileFormat
+from ..structures import FileFormat
 
 from fileUtils import composeFilename2
 
@@ -283,7 +283,7 @@ def _processH80GE(df: DataFrame) -> pd.DataFrame:
     ndf2['TQ'] = ndf2['TQ'] / 100 * NOMINAL_DATA['TQ']  # [Nm]
 
 
-def channelSelection(fileFormat: RawDataFileFormat, dataFrame, originalFileName, outPath=OUT_PATH):
+def channelSelection(fileFormat: FileFormat, dataFrame, originalFileName, outPath=OUT_PATH):
     # dataFrame = dataFrame.fillna(0)
     # dataFrame.interpolate()  # fill missing values
 
@@ -291,11 +291,11 @@ def channelSelection(fileFormat: RawDataFileFormat, dataFrame, originalFileName,
         dataFrames = _processFS1(dataFrame)
     elif originalFileName in FILE_SET_2:
         dataFrames = _processFD1(dataFrame)
-    elif fileFormat == RawDataFileFormat.PT6:
+    elif fileFormat == FileFormat.PT6:
         dataFrames = _processPT6(dataFrame)
-    elif fileFormat == RawDataFileFormat.H80AI:
+    elif fileFormat == FileFormat.H80AI:
         dataFrames = _processH80AI(dataFrame)
-    elif fileFormat == RawDataFileFormat.H80GE:
+    elif fileFormat == FileFormat.H80GE:
         dataFrames = _processH80GE(dataFrame)
     else:
         print('[FATAL] UNKNOWN file format - unable to choose processing method!')
