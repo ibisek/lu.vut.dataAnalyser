@@ -230,20 +230,33 @@ INSERT INTO flights (airplane_id) VALUES (3);
 select * from flights;
 
 
---DROP TABLE IF EXISTS flights_engines;
-CREATE TABLE IF NOT EXISTS flights_engines (
-  flight_id INT NOT NULL references fligts.id,
-  engine_id INT NOT NULL references engines.id
+--DROP TABLE IF EXISTS engines_flights;
+CREATE TABLE IF NOT EXISTS engines_flights (
+  engine_id INT NOT NULL references engines.id,
+  flight_id INT NOT NULL references fligts.id
 ) charset utf8;
+
+--DROP TABLE IF EXISTS file_formats;
+CREATE TABLE IF NOT EXISTS file_formats (
+  id INT PRIMARY KEY auto_increment,
+  name VARCHAR(32) NOT NULL
+) charset utf8;
+
+INSERT INTO file_formats (name) VALUES ('PT6');
+INSERT INTO file_formats (name) VALUES ('H80AI');
+INSERT INTO file_formats (name) VALUES ('H80GE');
 
 --DROP TABLE IF EXISTS files;
 CREATE TABLE IF NOT EXISTS files (
   id INT PRIMARY KEY auto_increment,
   name VARCHAR(32) NOT NULL,
   raw BOOL DEFAULT false,
+  format INT NOT NULL references file_formats.id,
   status INT NOT NULL DEFAULT 0,
   hash VARCHAR(256) NULL
 ) charset utf8;
+
+alter table files add column format INT NOT NULL references file_formats.id;
 
 --DROP TABLE IF EXISTS regression_results;
 CREATE TABLE IF NOT EXISTS regression_results (
@@ -262,10 +275,10 @@ CREATE TABLE IF NOT EXISTS regression_results (
   x_max FLOAT(20) DEFAULT 0
 ) charset utf8;
 
---DROP TABLE IF EXISTS flights_files;
-CREATE TABLE IF NOT EXISTS flights_files (
-  flight_id INT references flights.id,
-  file_id INT references files.id
+--DROP TABLE IF EXISTS files_flights;
+CREATE TABLE IF NOT EXISTS files_flights (
+  file_id INT references files.id,
+  flight_id INT references flights.id
 ) charset utf8;
 
 --DROP TABLE IF EXISTS organisations;
@@ -435,10 +448,11 @@ select * from files;
 --insert into flights_files (flight_id, file_id) values (1, 1);
 --insert into flights_files (flight_id, file_id) values (2, 2);
 select * from flights_files;
---insert into flights_engines values(1,1);	-- PT6
---insert into flights_engines values(2,2);	-- H80.1
---insert into flights_engines values(2,3);	-- H80.2
-select * from flights_engines;
+
+--insert into engines_flights values(1,1);	-- PT6
+--insert into engines_flights values(2,2);	-- H80.1
+--insert into engines_flights values(3,2);	-- H80.2
+--select * from engines_flights;
 
 select * from flights;
 
