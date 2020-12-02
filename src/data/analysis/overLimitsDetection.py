@@ -60,27 +60,27 @@ def checkEngineIdleLimits(df: DataFrame, cycle):
     ittLim = 1 if max(df['ITT']) > EngineLimits.H80['ITTLimIdle'] else 0
     if ittLim:
         cycle.ITTlimL = _max(cycle.ITTlimL, ittLim)
-        Notifications.create(NotificationType.VALUE_ABOVE_LIMIT, f'ITT during engine idle: {cycle.ITTlimL} deg.C')
+        Notifications.createValAboveLim(f'ITT during engine idle: {cycle.ITTlimL} deg.C')
 
 
 def checkEngineStartupLimits(df: DataFrame, cycle):
     # ground engine start-up:
     if cycle.TimeSUg > EngineLimits.H80['TimeLimSUg']:
-        Notifications.create(NotificationType.VALUE_ABOVE_LIMIT, f'Time to ignition: {cycle.TimeSUg} s')
+        Notifications.createValAboveLim(f'Time to ignition: {cycle.TimeSUg} s')
 
     if cycle.TimeSUgIdle > EngineLimits.H80['TimeLimSUgIdle']:
-        Notifications.create(NotificationType.VALUE_ABOVE_LIMIT, f'Time to idle: {cycle.TimeSUgIdle} s')
+        Notifications.createValAboveLim(f'Time to idle: {cycle.TimeSUgIdle} s')
 
     if cycle.ITTSUg > EngineLimits.H80['ITTLimSUg']:
         cycle.ITTlimL &= 1
-        Notifications.create(NotificationType.VALUE_ABOVE_LIMIT, f'Altitude during engine startup: {cycle.ITTlimL} deg.C')
+        Notifications.createValAboveLim(f'Altitude during engine startup: {cycle.ITTlimL} deg.C')
 
     if cycle.ALTSUg > EngineLimits.H80['ALTLimSUg']:
-        Notifications.create(NotificationType.VALUE_ABOVE_LIMIT, f'Altitude during engine startup: {cycle.ALTSUg} m')
+        Notifications.createValAboveLim(f'Altitude during engine startup: {cycle.ALTSUg} m')
 
     if cycle.OilP < EngineLimits.H80['OilPLim']:
-        Notifications.create(NotificationType.VALUE_BELOW_LIMIT, f'Oil pressure before engine startup: {cycle.OilP} Pa')
+        Notifications.createValBelowLim(NotificationType.VALUE_BELOW_LIMIT, f'Oil pressure before engine startup: {cycle.OilP} Pa')
 
     if cycle.OilTBe < EngineLimits.H80['OilTeLim']:
-        Notifications.create(NotificationType.VALUE_BELOW_LIMIT, f'Oil temperature before engine startup: {cycle.OilTBe} deg.C')
+        Notifications.createValBelowLim(f'Oil temperature before engine startup: {cycle.OilTBe} deg.C')
 

@@ -13,7 +13,7 @@ class NotificationType(Enum):
 class Notifications:
 
     @staticmethod
-    def create(type: NotificationType, cycle, message: str):
+    def _create(type: NotificationType, cycle, message: str):
 
         notificationsDao = NotificationsDao()
 
@@ -26,3 +26,21 @@ class Notifications:
         n.checked = False
 
         notificationsDao.save(n)
+
+    # convenience methods:
+
+    @staticmethod
+    def createValAboveLim(cycle, message: str):
+        Notifications._create(NotificationType.VALUE_ABOVE_LIMIT, cycle, message)
+
+    @staticmethod
+    def createValBelowLim(cycle, message: str):
+        Notifications._create(NotificationType.VALUE_BELOW_LIMIT, cycle, message)
+
+    @staticmethod
+    def createInfo(cycle, message: str):
+        Notifications._create(NotificationType.INFO, cycle, message)
+
+    @staticmethod
+    def createWarning(cycle, message: str):
+        Notifications._create(NotificationType.WARNING, cycle, message)
