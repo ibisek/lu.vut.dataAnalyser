@@ -59,9 +59,41 @@ class Processing:
     #     cycle.FireWarning = True
 
     @staticmethod
-    def _analyseEngineStartup(df: DataFrame, cycle):
-        # TODO xxx
-        raise NotImplementedError()
+    def _analyseEngineStartup(dfStartup: DataFrame, dfFull: DataFrame, cycle):
+        startTs = dfStartup.head(1)['ts'][0]
+        endTs = dfStartup.tail(1)['ts'][0]
+        duration = int(endTs - startTs)
+
+        cycle.BeTimeSU = startTs
+
+        # time to engine ignition:
+        dITT = dfStartup['ITT'].diff().dropna()
+        ittRaisingTs = dITT.loc[dITT > 0].head(1).index[0].timestamp()
+        cycle.TimeSUg = int(ittRaisingTs - startTs)
+
+        # start-up time till idle:
+        cycle.TimeSUgIdle = duration
+
+        # time from engine start-up till NG >= 60 (for how long was the engine idling after start-up):
+        x = dfFull.loc[dfStartup.tail(1).index[0]:]
+        ngRaisingTs = x['NG'][x['NG'] >= 60].head(1).index[0].timestamp()
+        cycle.TimePeHeat = int(ngRaisingTs - endTs)
+
+        cycle.ITTSUg = _max(cycle.ITTSUg, max(dfStartup['ITT']))
+        cycle.ALTSUg = _max(cycle.ALTSUg, max(dfStartup['ALT']))
+        cycle.OilP = dfStartup['OILP'].head(1)[0]
+        cycle.OilTBe = dfStartup['OILT'].head(1)[0]
+        cycle.FuelP = _max(cycle.FuelP, min(dfStartup['FUELP']))  # TODO min/max?
+
+        iasKey = 'IAS' if 'IAS' in dfStartup.keys() else 'TAS'
+        cycle.CASmax = _max(cycle.CASmax, max(dfStartup[iasKey]))
+
+        cycle.EndTimeSU = endTs
+
+        # max ITT during ignition:
+        cycle.ITTSUmax = _max(cycle.ITTSUmax, max(dfStartup['ITT']))
+        # max ITT startup gradient:
+        cycle.ITTSUgrad = _max(cycle.ITTSUgrad, max(dfStartup['ITT'].diff().dropna()))  # assumes samples in 1s interval!!
 
     @staticmethod
     def _analyseTakeOffInterval(df: DataFrame, cycle):
@@ -71,7 +103,7 @@ class Processing:
 
         cycle.BeTimeTO = startTs
         cycle.TimeTO = duration
-        cycle.NGRTO = _max(cycle.NGRTO, max(df['NG']))
+        cycle.NGTO = _max(cycle.NGTO, max(df['NG']))
         cycle.NPTO = _max(cycle.NPTO, max(df['NP']))
         cycle.TQTO = _max(cycle.TQTO, max(df['TQ']))
         cycle.ITTTO = _max(cycle.ITTTO, max(df['ITT']))
@@ -79,11 +111,9 @@ class Processing:
         cycle.OilPMinTO = _min(cycle.OilPMinTO, min(df['OILP']))
         cycle.OilPMaxTO = _max(cycle.OilPMaxTO, max(df['OILP']))
         cycle.OilTMaxTO = _max(cycle.OilTMaxTO, max(df['OILT']))
-        # cycle.FuelPMinTO = _min(, min(df['X']))     # TODO not in data!
-        # cycle.FuelPMaxTO = _max(, max(df['X']))     # TODO not in data!
+        cycle.FuelPMinTO = _min(cycle.FuelPMinTO, min(df['FUELP']))
+        cycle.FuelPMaxTO = _max(cycle.FuelPMaxTO, max(df['FUELP']))
         cycle.EndTimeTO = endTs
-
-        raise NotImplementedError()
 
     @staticmethod
     def _analyseClimbInterval(df: DataFrame, cycle):
@@ -101,8 +131,8 @@ class Processing:
         cycle.OilPMinClim = _min(cycle.OilPMinClim, min(df['OILP']))
         cycle.OilPMaxClim = _max(cycle.OilPMaxClim, max(df['OILP']))
         cycle.OilTMaxClim = _max(cycle.OilTMaxClim, max(df['OILT']))
-        # cycle.FuelPMinClim = _min(, min(df['X']))     # TODO not in data!
-        # cycle.FuelPMaxClim = _max(, max(df['X']))     # TODO not in data!
+        cycle.FuelPMinClim = _min(cycle.FuelPMinClim, min(df['FUELP']))
+        cycle.FuelPMaxClim = _max(cycle.FuelPMaxClim, max(df['FUELP']))
         cycle.EndTimeClim = endTs
 
     @staticmethod
@@ -119,8 +149,8 @@ class Processing:
         cycle.OilPMinCruis = _min(cycle.OilPMinCruis, min(df['OILP']))
         cycle.OilPMaxCruis = _max(cycle.OilPMaxCruis, max(df['OILP']))
         cycle.OilTMaxCruis = _max(cycle.OilTMaxCruis, max(df['OILT']))
-        # cycle.FuelPMinCruis = _min(cycle.FuelPMinCruis, min(df['X']))     # TODO not in data!
-        # cycle.FuelPMaxCruis = _max(cycle.FuelPMaxCruis, max(df['X']))     # TODO not in data!
+        cycle.FuelPMinCruis = _min(cycle.FuelPMinCruis, min(df['FUELP']))
+        cycle.FuelPMaxCruis = _max(cycle.FuelPMaxCruis, max(df['FUELP']))
         cycle.EndTimeCruis = endTs
 
     @staticmethod
@@ -137,13 +167,13 @@ class Processing:
         cycle.OilPMinIdle = _min(cycle.OilPMinIdle, min(df['OILP']))
         cycle.OilPMaxIdle = _max(cycle.OilPMaxIdle, max(df['OILP']))
         cycle.OilTMaxIdle = _max(cycle.OilTMaxIdle, max(df['OILT']))
-        # cycle.FuelPMinIdle = _min(cycle.FuelPMinIdle, min(df['X']))     # TODO not in data!
-        # cycle.FuelPMaxIdle = _max(cycle.FuelPMaxIdle, max(df['X']))     # TODO not in data!
+        cycle.FuelPMinIdle = _min(cycle.FuelPMinIdle, min(df['FUELP']))
+        cycle.FuelPMaxIdle = _max(cycle.FuelPMaxIdle, max(df['FUELP']))
         cycle.EndTimeIdle = endTs
 
     def _detectPhases(self, df: DataFrame):
-        self.engStartups = self.detectEngineStartups(df)
-        for i, engineStartup in enumerate(self.engStartups):
+        self.engineStartupIntervals = detectEngineStartups(df)
+        for i, engineStartup in enumerate(self.engineStartupIntervals):
             print(f'[INFO] engine startup #{i} {engineStartup.start} -> {engineStartup.end}')
         # TODO in case of multiple -> crate subcycles; hell yeah! Master is the first, subs are the consequent ones; detection by NG only
 
@@ -172,6 +202,11 @@ class Processing:
         for i, cruise in enumerate(self.engineCruiseIntervals):
             print(f'[INFO] cruise #{i} {cruise.start} -> {cruise.end}', )
 
+    @staticmethod
+    def _analyseEntireFlightParams(df: DataFrame, cycle):
+        cycle.ITTOpMax = _max(cycle.ITTOpMax, max(df['ITT']))
+        print('X')
+
     def process(self, engineWork: EngineWork):
         print(f'[INFO] Processing flight data for engineId={ew.engineId}; flightId={ew.flightId}; cycleId={ew.cycleId}')
         df = self.frDao.loadDf(engineId=engineWork.engineId, flightId=engineWork.flightId, cycleId=engineWork.cycleId, recType=RecordingType.FILTERED)
@@ -180,7 +215,7 @@ class Processing:
         cycle = self.cyclesDao.getOne(id=ew.cycleId)
 
         for engStartup in self.engineStartupIntervals:
-            self._analyseEngineStartup(df[engStartup.start:engStartup.end], cycle)
+            self._analyseEngineStartup(dfStartup=df[engStartup.start:engStartup.end], dfFull=df, cycle=cycle)
 
         for takeoffInterval in self.takeoffIntervals:
             self._analyseTakeOffInterval(df[takeoffInterval.start:takeoffInterval.end], cycle)
@@ -194,7 +229,9 @@ class Processing:
         for idleInterval in self.engineIdles:
             self._analyseIdleInterval(df[idleInterval.start:idleInterval.end], cycle)
 
-        print('Y')
+        self._analyseEntireFlightParams(df=df, cycle=cycle)
+
+        # TODO uncomment!
         # self.cyclesDao.save()
 
 
