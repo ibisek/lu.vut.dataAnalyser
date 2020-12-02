@@ -301,7 +301,7 @@ CREATE TABLE IF NOT EXISTS users (
 ) charset utf8;
 
 
---DROP TABLE IF EXISTS cycles;
+--DROP TABLE IF EXISTS cycles;	
 CREATE TABLE IF NOT EXISTS cycles (
   id INT PRIMARY KEY auto_increment,
   engine_id INT NOT NULL references engines.id,
@@ -331,9 +331,9 @@ CREATE TABLE IF NOT EXISTS cycles (
   -- take-off mode:
   BeTimeTO INT,
   TimeTO INT,
-  NGRTO FLOAT,
+  NGTO FLOAT,
   NPTO FLOAT,
-  TQ FLOAT,
+  TQTO FLOAT,
   ITTTO FLOAT,
   AltTO FLOAT,
   OilPMinTO FLOAT,
@@ -427,10 +427,14 @@ select id, login, admin from users;
 
 --
 --insert into files (name, raw, hash) values ('log_190323_090817_LKTB.csv', true, '0c4db7ec609361af08af2829713292b3e502ae79060e7861ad4d9b27573d2791');
+--insert into files (name, raw, hash) values ('Engine data FDR-3.txt', true, '19a0fccce9673bf34e58b097f3d06de1466ebc8f829d9d2f83e823c345172b8b');
 select * from files;
 --insert into flights_files (flight_id, file_id) values (1, 1);
+--insert into flights_files (flight_id, file_id) values (2, 2);
 select * from flights_files;
---insert into flights_engines values(1,1);
+--insert into flights_engines values(1,1);	-- PT6
+--insert into flights_engines values(2,2);	-- H80.1
+--insert into flights_engines values(2,3);	-- H80.2
 select * from flights_engines;
 
 select * from flights;
@@ -438,6 +442,8 @@ select * from flights;
 select * from airplanes;
 
 select * from engines;
+
+select * from equipment;
 
 select * from files;
 
