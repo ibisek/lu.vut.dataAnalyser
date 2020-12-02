@@ -319,6 +319,8 @@ def channelSelection(fileFormat: RawDataFileFormat, dataFrame, originalFileName,
         dataFrame.to_csv(fp, sep=';', encoding='utf_8')
 
         # populate missing channels with zeros:
+        if 'GS' not in dataFrame:   # ground speed
+            dataFrame['GS'] = 0
         if 'T0' not in dataFrame:   # OAT outside air temperature
             dataFrame['T0'] = 0
         if 'P0' not in dataFrame:   # ambient pressure
