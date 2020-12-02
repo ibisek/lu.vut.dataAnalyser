@@ -204,7 +204,10 @@ class Processing:
 
     @staticmethod
     def _analyseEntireFlightParams(df: DataFrame, cycle):
+        # max ITT during the whole flight:
         cycle.ITTOpMax = _max(cycle.ITTOpMax, max(df['ITT']))
+        # fire warning
+        cycle.FireWarning = _max(cycle.FireWarning, 1 if max(df['FIRE']) > 0 else 0)
 
     def process(self, engineWork: EngineWork):
         print(f'[INFO] Processing flight data for engineId={ew.engineId}; flightId={ew.flightId}; cycleId={ew.cycleId}')
@@ -229,6 +232,8 @@ class Processing:
             self._analyseIdleInterval(df[idleInterval.start:idleInterval.end], cycle)
 
         self._analyseEntireFlightParams(df=df, cycle=cycle)
+
+        # TODO limits detection
 
         self.cyclesDao.prepareForSave(cycle)
         self.cyclesDao.save()
