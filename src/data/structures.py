@@ -10,6 +10,21 @@ class FileFormat(Enum):
     H80GE = 3
     UNKNOWN = 255
 
+    def __str__(self):
+        return f'#FileFormat: {self.value}'
+
+
+class FlightMode(Enum):
+    TAXI = 'taxi',
+    ENG_IDLE = 'idle',
+    ENG_STARTUP = 'startup',
+    TAKE_OFF = 'take-off',
+    CLIMB = 'climb',
+    CRUISE = 'cruise'
+
+    def __str__(self):
+        return f'#FligthMode: {self.value}'
+
 
 Interval = namedtuple('Interval', ['start', 'end'])
 
