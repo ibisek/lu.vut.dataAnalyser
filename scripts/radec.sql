@@ -312,6 +312,9 @@ CREATE TABLE IF NOT EXISTS cycles (
   NGlimL BOOL,
   NPlimL BOOL,
   ITTlimL BOOL,
+  ITTOpMax FLOAT,
+  ITTSUmax FLOAT,
+  ITTSUgrad FLOAT,
   TQlimL BOOL,
   OilPlimL BOOL,
   FuelPlimL BOOL,
@@ -449,4 +452,10 @@ select * from files;
 
 select * from cycles;
 
---delete from cycles;
+--delete from cycles where id=1;
+--insert into cycles (id, engine_id, flight_id, file_id) values(10,1,1,1);
+--insert into cycles (id, engine_id, flight_id, file_id) values(12,2,2,2);
+--insert into cycles (id, engine_id, flight_id, file_id) values(13,3,2,2);
+--delete from files where id > 2;
+
+
