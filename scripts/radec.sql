@@ -402,6 +402,18 @@ CREATE TABLE IF NOT EXISTS cycles (
 
 select * from cycles;
 
+--DROP TABLE IF EXISTS notifications;
+CREATE TABLE IF NOT EXISTS notifications (
+  id INT PRIMARY KEY auto_increment,
+  type INT NOT NULL,
+  engine_id INT NOT NULL references engines.id,
+  flight_id INT NOT NULL  references flights.id,
+  cycle_id INT NOT NULL  references cycles.id,
+  message VARCHAR(256) NOT NULL,
+  checked bool DEFAULT false
+) charset utf8;
+
+select * from notifications;
 --
 
 
@@ -470,6 +482,6 @@ select * from cycles;
 --insert into cycles (id, engine_id, flight_id, file_id) values(10,1,1,1);
 --insert into cycles (id, engine_id, flight_id, file_id) values(12,2,2,2);
 --insert into cycles (id, engine_id, flight_id, file_id) values(13,3,2,2);
---delete from files where id > 2;
+
 
 
