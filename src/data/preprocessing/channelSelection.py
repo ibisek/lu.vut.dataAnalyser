@@ -7,7 +7,7 @@ from pandas import DataFrame
 
 from ..structures import RawDataFileFormat
 
-from fileUtils import composeFilename, composeFilename2
+from fileUtils import composeFilename2
 
 FILE_SET_1 = ['SN131014_AT.csv', 'SN132014_AT.csv', 'SN132018_AT.csv', 'SN133005_AT.csv', 'SN141015_AT.csv',
               'SN141016_AT.csv', 'SN131014_OH.csv', 'SN132014_OH.csv', 'SN132018_OH.csv', 'SN133005_OH.csv',
@@ -56,7 +56,6 @@ def _processFS1(df: DataFrame) -> pd.DataFrame:
     if not key_t2:
         print("## T2 KEYz:", df.keys()[10:20])
         print("## P2 KEYz:", df.keys()[20:30])
-        pass
 
     ndf = DataFrame(index=df.index)
     ndf = ndf.assign(NG=df['nG (%)'])
@@ -257,7 +256,7 @@ def _processH80GE(df: DataFrame) -> pd.DataFrame:
     ndf1['IAS'] = ndf2['IAS'] = df['IAS']  # [km/h] TODO IAS - neni jak prepocitat
 
     # LEFT engine (#1):
-    ndf1['ITT'] = df['EngLittAux'] * 0.2901 + 0.2707     # + df['CJT']   # [deg.C]
+    ndf1['ITT'] = df['EngLittAux'] * 0.2901 + 0.2707  # + df['CJT']   # [deg.C]
     ndf1['FF'] = -8.207194079247e-7 * np.power(df['EngLFuelFlow'], 3) + 0.00581486577412 * np.power(df['EngLFuelFlow'], 2) - 13.1871100950172 * df[
         'EngLFuelFlow'] + 9668.6259  # [l/h]
     ndf1['NP'] = 295772517.415887 * np.power(df['EngLn1'], -1) - 1.00006952  # [1/n]
@@ -271,7 +270,7 @@ def _processH80GE(df: DataFrame) -> pd.DataFrame:
 
     # RIGHT engine (#2):
     df['EngRittAux'] = df['EngRittAux'].apply(lambda x: x if x >= 0 else x + 4096)  # TODO/TEMP remove after the original data is FIXED(!)
-    ndf2['ITT'] = df['EngRittAux'] * 0.2901 + 0.2707   # + df['CJT']   # [deg.C]
+    ndf2['ITT'] = df['EngRittAux'] * 0.2901 + 0.2707  # + df['CJT']   # [deg.C]
     ndf2['FF'] = -5.895989847309e-7 * np.power(df['EngRFuelFlow'], 3) + 0.00052145591727 * np.power(df['EngRFuelFlow'], 2) + 0.378941513499262 * df[
         'EngRFuelFlow'] + 0.069354256168146  # [l/h]
     ndf2['NP'] = 295772517.415887 * np.power(df['EngRn1'], -1) - 1.00006952  # [1/n]
@@ -319,10 +318,20 @@ def channelSelection(fileFormat: RawDataFileFormat, dataFrame, originalFileName,
         print(f"[INFO] Writing selected channels to '{fn}'")
         dataFrame.to_csv(fp, sep=';', encoding='utf_8')
 
-        # TODO populate missing channels with zeros:
-        if 'FUELP' not in dataFrame:
+        # populate missing channels with zeros:
+        if 'T0' not in dataFrame:   # OAT outside air temperature
+            dataFrame['T0'] = 0
+        if 'P0' not in dataFrame:   # ambient pressure
+            dataFrame['P0'] = 0
+        if 'PT' not in dataFrame:   # turbine pressure
+            dataFrame['PT'] = 0
+        if 'T2' not in dataFrame:
+            dataFrame['T2'] = 0
+        if 'P2' not in dataFrame:
+            dataFrame['P2'] = 0
+        if 'FUELP' not in dataFrame:    # fuel pressure
             dataFrame['FUELP'] = 0
-        if 'FIRE' not in dataFrame:
+        if 'FIRE' not in dataFrame:     # engine on fire indication
             dataFrame['FIRE'] = 0
 
-    return dataFrames
+        return dataFrames
