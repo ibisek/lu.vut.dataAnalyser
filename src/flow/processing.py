@@ -15,22 +15,7 @@ from data.analysis.overLimitsDetection import checkCruiseLimits, checkEngineIdle
 from dao.flightRecordingDao import FlightRecordingDao, RecordingType
 from dao.engineLimits import EngineLimits
 from db.dao.cyclesDao import CyclesDao
-
-
-def _max(a, b):
-    if not a:
-        return b
-    if not b:
-        return a
-    return max(a, b)
-
-
-def _min(a, b):
-    if not a:
-        return b
-    if not b:
-        return a
-    return min(a, b)
+from flow.utils import _min, _max
 
 
 class Processing:
