@@ -17,6 +17,7 @@ class EngineLimits:
     H80['TQLim'] = NOMINAL_DATA['TQ']  # [Nm]
 
     # Cruise-mode limits
+    H80[FlightMode.CRUISE] = defaultdict()
     H80[FlightMode.CRUISE]['ALT'] = 6100  # [m]
     # NP:
     H80[FlightMode.CRUISE]['NGLimCr'] = 97.8  # [%]
