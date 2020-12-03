@@ -408,13 +408,26 @@ CREATE TABLE IF NOT EXISTS notifications (
   id INT PRIMARY KEY auto_increment,
   type INT NOT NULL,
   engine_id INT NOT NULL references engines.id,
-  flight_id INT NOT NULL  references flights.id,
+  flight_id INT NOT NULL references flights.id,
   cycle_id INT NOT NULL  references cycles.id,
-  message VARCHAR(256) NOT NULL,
+  message VARCHAR(255) NOT NULL,
   checked bool DEFAULT false
 ) charset utf8;
 
 select * from notifications;
+
+--DROP TABLE IF EXISTS logbooks;
+CREATE TABLE IF NOT EXISTS logbooks (
+  id INT PRIMARY KEY auto_increment,
+  ts INT NOT NULL,
+  engine_id INT references engines.id,
+  airplane_id INT references cycles.id,
+  component_id INT references components.id,
+  entry VARCHAR(255) NOT NULL
+) charset utf8;
+
+select * from logbooks;
+
 --
 
 
@@ -479,10 +492,10 @@ select * from files;
 
 select * from cycles;
 
+select * from notifications;
+
 --delete from cycles where id=1;
 --insert into cycles (id, engine_id, flight_id, file_id) values(10,1,1,1);
 --insert into cycles (id, engine_id, flight_id, file_id) values(12,2,2,2);
 --insert into cycles (id, engine_id, flight_id, file_id) values(13,3,2,2);
-
-
 
