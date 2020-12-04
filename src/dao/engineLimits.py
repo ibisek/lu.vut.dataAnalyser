@@ -12,7 +12,9 @@ class EngineLimits:
 
     # engine limits:
     H80['CycleHour'] = 3600 * 60 * 60  # [hours] -> [seconds]
-    H80['CYCLElim'] = 50000  # [-]
+    H80['CYCLElim'] = 50000     # [-]
+    H80['EngNumNPExcA'] = 10    # [-]
+    H80['EngNumNPExcB'] = 2     # [-]
 
     H80['TQLim'] = NOMINAL_DATA['TQ']  # [Nm]
 
@@ -27,7 +29,7 @@ class EngineLimits:
     H80[FlightMode.CRUISE]['NPLimCr'] = 2080  # [1/min]
     H80[FlightMode.CRUISE]['NPLimCr2'] = 2200  # [1/min]
     H80[FlightMode.CRUISE]['NPLimCrA'] = 2300  # [1/min]
-    H80[FlightMode.CRUISE]['NPlimCrB'] = 2400  # [1/min]
+    H80[FlightMode.CRUISE]['NPLimCrB'] = 2400  # [1/min]
     # TQ:
     H80[FlightMode.CRUISE]['TQLim'] = NOMINAL_DATA['TQ']  # [Nm]
     H80[FlightMode.CRUISE]['TQLimA'] = 106  # [%]
