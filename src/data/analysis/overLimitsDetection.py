@@ -1,11 +1,13 @@
 """
 All over-limit checks implemented here.
 """
+
 from typing import List
 from pandas import DataFrame, Series
 
 from data.structures import FlightMode, Interval
 from dao.engineLimits import EngineLimits
+from db.dao.enginesDao import EnginesDao
 from db.dao.logbooksDao import Logbook
 from flow.utils import _min, _max
 from flow.notifications import Notifications, NotificationType
@@ -40,50 +42,65 @@ def __findIntervals(s: Series, aboveVal, minDuration: int = 0) -> Interval:
 
 def _checkNP(df: DataFrame, flightMode: FlightMode, cycle):
     maxNP = max(df['NP'])
-    # if maxNP <= 2200:
-    #     return  # we're fine
-    #
-    # cycle.NPlimL |= 1   # NP overspeed detected
+    if maxNP <= EngineLimits.H80[flightMode]['NPLimCr']:    # 2080
+        return  # we're fine
 
-    # TODO propeller overspeeding number?
-    # TODO muze byt logbook i k necemu jinemu nez k motoru?
-    # TODO v jakem formatu zapisovat do vsechno logbooku? Je to textove/nebo strojne zpracovatelne uloziste?
+    cycle.NPlimL = _max(cycle.NPlimL, 1)   # NP overspeed detected
 
-    msgTemplate = f'Propeller overspeed ({maxNP:.0f} rpm for {0} s) detected! Refer to the Propeller Operation Manual.'
+    notifMsgTemplate = "Propeller overspeed ({0:.0f} rpm for {1} s) detected! Refer to the Propeller Operation Manual."
+    logbookMsgTemplate = "Detected propeller overspeed limit ({0} rpm) exceeded by value of {1:.0f} rpm for {2} s!"
     minDuration = 10    # [s]
 
-    if maxNP > 2400:
-        overNpIntervals: List[Interval] = __findIntervals(s=df['NP'], aboveVal=2400, minDuration=minDuration)
+    if maxNP > EngineLimits.H80[flightMode]['NPLimCrB']:  # > 2400
+        overNpIntervals: List[Interval] = __findIntervals(s=df['NP'], aboveVal=EngineLimits.H80[flightMode]['NPLimCrB'], minDuration=minDuration)
         for i in overNpIntervals:
             duration = max([(i.end - i.start).seconds for i in overNpIntervals])
 
-            d = {'channel': 'NP', 'value': maxNP, 'duration': duration}
-            Logbook.add(ts=i[0].timestamp(), entry=d, engineId=cycle.engine_id)
+            msg = logbookMsgTemplate.format(EngineLimits.H80[flightMode]['NPLimCrB'], maxNP, duration)
+            Logbook.add(ts=i[0].timestamp(), entry=msg, engineId=cycle.engine_id)
 
             Notifications.urgent(cycle, f'Propeller overspeed of {maxNP:.0f} rpm detected. Return the engine to overhaul facility for inspection/repair!')
 
-    elif 2300 < maxNP <= 2400:
-        overNpIntervals: List[Interval] = __findIntervals(s=df['NP'], aboveVal=2300, minDuration=minDuration)
-        for i in overNpIntervals:
-            duration = max([(i.end - i.start).seconds for i in overNpIntervals])
+    elif EngineLimits.H80[flightMode]['NPLimCrA'] < maxNP <= EngineLimits.H80[flightMode]['NPLimCrB']:  # 2300-2400 (zone B)
+        overNpIntervals: List[Interval] = __findIntervals(s=df['NP'], aboveVal=EngineLimits.H80[flightMode]['NPLimCrA'], minDuration=minDuration)
+        if len(overNpIntervals) > 0:
+            enginesDao = EnginesDao()
+            engine = enginesDao.getOne(id=cycle.engine_id)
 
-            d = {'channel': 'NP', 'value': maxNP, 'duration': duration}
-            Logbook.add(ts=i[0].timestamp(), entry=d, engineId=cycle.engine_id)
+            for i in overNpIntervals:
+                duration = max([(i.end - i.start).seconds for i in overNpIntervals])
 
-            Notifications.urgent(cycle, msgTemplate.format(duration))
+                msg = logbookMsgTemplate.format(EngineLimits.H80[flightMode]['NPLimCrA'], maxNP, duration)
+                Logbook.add(ts=i[0].timestamp(), entry=msg, engineId=cycle.engine_id)
 
-    elif 2200 < maxNP <= 2300:
-        overNpIntervals: List[Interval] = __findIntervals(s=df['NP'], aboveVal=2200, minDuration=minDuration)
-        for i in overNpIntervals:
-            duration = (i.end - i.start).seconds
+                Notifications.warning(cycle, notifMsgTemplate.format(maxNP, duration))
 
-            d = {'channel': 'NP', 'value': maxNP, 'duration': duration}
-            Logbook.add(ts=i[0].timestamp(), entry=d, engineId=cycle.engine_id)
+                engine.EngNumNPExcB += 1
+                enginesDao.save(engine)
+                if engine.EngNumNPExcB > EngineLimits.H80['EngNumNPExcB']:  # if propeller overspeeding number is greather then the limit
+                    Notifications.urgent(engine, f"Num of NP excesses ({engine.EngNumNPExcB}) over limit ({EngineLimits.H80['EngNumNPExcB']})!")
 
-            if duration < 20:
-                Notifications.warning(cycle, msgTemplate.format(duration))
-            else:  # > 20s
-                Notifications.urgent(cycle, msgTemplate.format(duration))
+    elif EngineLimits.H80[flightMode]['NPLimCr2'] < maxNP <= EngineLimits.H80[flightMode]['NPLimCrA']:  # 2200-2300 (zone A)
+        overNpIntervals: List[Interval] = __findIntervals(s=df['NP'], aboveVal=EngineLimits.H80[flightMode]['NPLimCr2'], minDuration=minDuration)
+        if len(overNpIntervals) > 0:
+            enginesDao = EnginesDao()
+            engine = enginesDao.getOne(id=cycle.engine_id)
+
+            for i in overNpIntervals:
+                duration = (i.end - i.start).seconds
+
+                msg = logbookMsgTemplate.format(EngineLimits.H80[flightMode]['NPLimCr2'], maxNP, duration)
+                Logbook.add(ts=i[0].timestamp(), entry=msg, engineId=cycle.engine_id)
+
+                if duration < 20:
+                    Notifications.warning(cycle, notifMsgTemplate.format(maxNP, duration))
+                else:  # > 20s
+                    Notifications.urgent(cycle, notifMsgTemplate.format(maxNP, duration))
+
+                engine.EngNumNPExcA += 1
+                enginesDao.save(engine)
+                if engine.EngNumNPExcA > EngineLimits.H80['EngNumNPExcA']:  # if propeller overspeeding number is greather then the limit
+                    Notifications.urgent(engine, f"Num of NP excesses ({engine.EngNumNPExcA}) over limit ({EngineLimits.H80['EngNumNPExcA']})!")
 
 
 def _checkITT(df: DataFrame, flightMode: FlightMode, cycle):
@@ -146,8 +163,9 @@ def checkEngineStartupLimits(df: DataFrame, cycle):
     if cycle.ALTSUg > EngineLimits.H80['ALTLimSUg']:
         Notifications.valAboveLim(cycle, f'Altitude during engine startup: {cycle.ALTSUg} m')
 
-    if cycle.OilP < EngineLimits.H80['OilPLim']:
-        Notifications.valBelowLim(cycle, f'Oil pressure before engine startup: {cycle.OilP} Pa')
+    # TODO toto je slozitejsi, je tam nejaka cara a teploty
+    # if cycle.OilP > EngineLimits.H80['OilPLim']:
+    #     Notifications.valBelowLim(cycle, f'Oil pressure before engine startup: {cycle.OilP} Pa')
 
     if cycle.OilTBe < EngineLimits.H80['OilTeLim']:
         Notifications.valBelowLim(cycle, f'Oil temperature before engine startup: {cycle.OilTBe} deg.C')
