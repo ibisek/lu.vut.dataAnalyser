@@ -8,6 +8,7 @@ class NotificationType(Enum):
     INFO = 1,
     VALUE_BELOW_LIMIT = 3,
     VALUE_ABOVE_LIMIT = 4,
+    VALUE_OUT_OF_BOUNDS = 5,
     WARNING = 254,
     URGENT = 255
 
@@ -15,38 +16,52 @@ class NotificationType(Enum):
 class Notifications:
 
     @staticmethod
-    def _create(type: NotificationType, cycle: automap, message: str):
+    def _create(notifType: NotificationType, dbEntity: automap, message: str):
 
         notificationsDao = NotificationsDao()
 
         n = notificationsDao.createNew()
-        n.type = type.value
-        n.engine_id = cycle.engine_id
-        n.flight_id = cycle.flight_id
-        n.cycle_id = cycle.id
+        n.type = notifType.value
         n.message = message
         n.checked = False
+
+        if dbEntity.__class__.__name__ == 'airplanes':
+            n.airplane_id = dbEntity.id
+        elif dbEntity.__class__.__name__ == 'engines':
+            n.engine_id = dbEntity.id
+        elif dbEntity.__class__.__name__ == 'cycles':
+            n.cycle_id = dbEntity.id
+            n.engine_id = dbEntity.engine_id
+            n.flight_id = dbEntity.flight_id
+        elif dbEntity.__class__.__name__ == 'flights':
+            n.flight_id = dbEntity.id
+        else:
+            raise NotImplemented(type(dbEntity))
 
         notificationsDao.save(n)
 
     # convenience methods:
 
     @staticmethod
-    def valAboveLim(cycle: automap, message: str):
-        Notifications._create(NotificationType.VALUE_ABOVE_LIMIT, cycle, message)
+    def valOutOfBounds(dbEntity: automap, message: str):
+        Notifications._create(NotificationType.VALUE_ABOVE_LIMIT, dbEntity, message)
 
     @staticmethod
-    def valBelowLim(cycle: automap, message: str):
-        Notifications._create(NotificationType.VALUE_BELOW_LIMIT, cycle, message)
+    def valAboveLim(dbEntity: automap, message: str):
+        Notifications._create(NotificationType.VALUE_ABOVE_LIMIT, dbEntity, message)
 
     @staticmethod
-    def info(cycle: automap, message: str):
-        Notifications._create(NotificationType.INFO, cycle, message)
+    def valBelowLim(dbEntity: automap, message: str):
+        Notifications._create(NotificationType.VALUE_BELOW_LIMIT, dbEntity, message)
 
     @staticmethod
-    def warning(cycle: automap, message: str):
-        Notifications._create(NotificationType.WARNING, cycle, message)
+    def info(dbEntity: automap, message: str):
+        Notifications._create(NotificationType.INFO, dbEntity, message)
 
     @staticmethod
-    def urgent(cycle: automap, message: str):
-        Notifications._create(NotificationType.URGENT, cycle, message)
+    def warning(dbEntity: automap, message: str):
+        Notifications._create(NotificationType.WARNING, dbEntity, message)
+
+    @staticmethod
+    def urgent(dbEntity: automap, message: str):
+        Notifications._create(NotificationType.URGENT, dbEntity, message)
