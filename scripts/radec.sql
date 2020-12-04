@@ -130,6 +130,8 @@ CREATE TABLE IF NOT EXISTS engines (
   CYCLERep FLOAT default 0,
   EqCyle FLOAT default 0,
   EqCycleSim FLOAT default 0,
+  EngNumNPExcA int default 0,
+  EngNumNPExcB int default 0
   -- components:
   ACD1NoC FLOAT default 0,
   ACD1NoCS FLOAT default 0,
@@ -407,9 +409,10 @@ select * from cycles;
 CREATE TABLE IF NOT EXISTS notifications (
   id INT PRIMARY KEY auto_increment,
   type INT NOT NULL,
-  engine_id INT NOT NULL references engines.id,
-  flight_id INT NOT NULL references flights.id,
-  cycle_id INT NOT NULL  references cycles.id,
+  airplane_id INT references airplanes.id,
+  engine_id INT references engines.id,
+  cycle_id INT references cycles.id,
+  flight_id INT references flights.id,
   message VARCHAR(255) NOT NULL,
   checked bool DEFAULT false
 ) charset utf8;
@@ -498,4 +501,3 @@ select * from notifications;
 --insert into cycles (id, engine_id, flight_id, file_id) values(10,1,1,1);
 --insert into cycles (id, engine_id, flight_id, file_id) values(12,2,2,2);
 --insert into cycles (id, engine_id, flight_id, file_id) values(13,3,2,2);
-
