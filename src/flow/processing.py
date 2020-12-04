@@ -68,9 +68,9 @@ class Processing:
 
         cycle.ITTSUg = _max(cycle.ITTSUg, max(dfStartup['ITT']))
         cycle.ALTSUg = _max(cycle.ALTSUg, max(dfStartup['ALT']))
-        cycle.OilP = dfStartup['OILP'].head(1)[0]
+        cycle.OilP = dfStartup['OILP'].tail(1)[0]   # oil pressure at the end of startup
         cycle.OilTBe = dfStartup['OILT'].head(1)[0]
-        cycle.FuelP = _max(cycle.FuelP, min(dfStartup['FUELP']))  # TODO min/max?
+        cycle.FuelP = dfStartup['FUELP'].tail(1)[0]   # fuel pressure at the end of startup
 
         iasKey = 'IAS' if 'IAS' in dfStartup.keys() else 'TAS'
         cycle.CASmax = _max(cycle.CASmax, max(dfStartup[iasKey]))
