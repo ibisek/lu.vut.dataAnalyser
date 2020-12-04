@@ -15,15 +15,15 @@ class FileFormat(Enum):
 
 
 class FlightMode(Enum):
-    TAXI = 'taxi',
-    ENG_IDLE = 'idle',
-    ENG_STARTUP = 'startup',
-    TAKE_OFF = 'take-off',
-    CLIMB = 'climb',
+    TAXI = 'taxi'
+    ENG_IDLE = 'idle'
+    ENG_STARTUP = 'startup'
+    TAKE_OFF = 'take-off'
+    CLIMB = 'climb'
     CRUISE = 'cruise'
 
     def __str__(self):
-        return f'#FligthMode: {self.value}'
+        return self.value
 
 
 Interval = namedtuple('Interval', ['start', 'end'])
