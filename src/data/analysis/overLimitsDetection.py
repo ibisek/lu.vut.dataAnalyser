@@ -3,6 +3,7 @@ All over-limit checks implemented here.
 """
 
 from typing import List
+import numpy as np
 from pandas import DataFrame, Series
 
 from data.structures import FlightMode, Interval
@@ -48,7 +49,7 @@ def _checkNP(df: DataFrame, flightMode: FlightMode, cycle):
     cycle.NPlimL = _max(cycle.NPlimL, 1)   # NP overspeed detected
 
     notifMsgTemplate = "Propeller overspeed ({0:.0f} rpm for {1} s) detected! Refer to the Propeller Operation Manual."
-    logbookMsgTemplate = "Detected propeller overspeed limit ({0} rpm) exceeded by value of {1:.0f} rpm for {2} s!"
+    logbookMsgTemplate = "Propeller overspeed limit ({0} rpm) exceeded by value of {1:.0f} rpm for {2} s!"
     minDuration = 10    # [s]
 
     if maxNP > EngineLimits.H80[flightMode]['NPLimCrB']:  # > 2400
@@ -114,13 +115,44 @@ def _checkTQ(df: DataFrame, flightMode: FlightMode, cycle):
 
 
 def _checkOILP(df: DataFrame, flightMode: FlightMode, cycle):
-    # TODO
-    pass
+    """
+    @see Appendix 3 – Minimum Oil Pressure
+    :param df:
+    :param flightMode:
+    :param cycle:
+    :return:
+    """
+
+    # calculate actual deltaPoil as it shall be for each particular NG:
+    minOilP: Series = 0.000038 * np.power(df['NG'], 2) - 0.00225 * df['NG'] + 0.12
+
+    deltaOILP: Series = (df['OILP'] * 1e06) - minOilP   # [Pa] -> [MPa]
+    underPressureValues = deltaOILP[deltaOILP < 0]
+    if len(underPressureValues):
+        cycle.OilPlimL = 1  # set the flag
+
+        dt = underPressureValues.index[0].strftime('%Y-%m-%d %H:%M')
+        Notifications.valBelowLim(cycle, f'Low oil pressure during {flightMode.value} on {dt}')
 
 
 def _checkOILT(df: DataFrame, flightMode: FlightMode, cycle):
-    # TODO
-    pass
+
+    if flightMode is FlightMode.ENG_STARTUP:
+        if cycle.OilTBe < EngineLimits.H80['OilTeLim']:
+            Notifications.valBelowLim(cycle, f'Oil temperature before engine startup: {cycle.OilTBe} deg.C')
+
+    elif flightMode is FlightMode.CRUISE:
+        minLimit = EngineLimits.H80[flightMode]['OilTLimMin']
+        maxLimit = EngineLimits.H80[flightMode]['OilTLimMax']
+
+        minValue = np.min(df['OILT'])
+        maxValue = np.max(df['OILT'])
+
+        if minValue < minLimit:
+            Notifications.valBelowLim(cycle, f'Oil temperature below limit ({minLimit} deg.C) during {flightMode.value}: {minValue} deg.C')
+
+        if maxValue > maxLimit:
+            Notifications.valAboveLim(cycle, f'Oil temperature above limit ({maxLimit} deg.C) during {flightMode.value}: {maxValue} deg.C')
 
 
 def _checkFUELP(df: DataFrame, flightMode: FlightMode, cycle):
@@ -163,9 +195,5 @@ def checkEngineStartupLimits(df: DataFrame, cycle):
     if cycle.ALTSUg > EngineLimits.H80['ALTLimSUg']:
         Notifications.valAboveLim(cycle, f'Altitude during engine startup: {cycle.ALTSUg} m')
 
-    # TODO toto je slozitejsi, je tam nejaka cara a teploty
-    # if cycle.OilP > EngineLimits.H80['OilPLim']:
-    #     Notifications.valBelowLim(cycle, f'Oil pressure before engine startup: {cycle.OilP} Pa')
-
-    if cycle.OilTBe < EngineLimits.H80['OilTeLim']:
-        Notifications.valBelowLim(cycle, f'Oil temperature before engine startup: {cycle.OilTBe} deg.C')
+    _checkOILP(df, FlightMode.ENG_STARTUP, cycle)
+    _checkOILT(df, FlightMode.ENG_STARTUP, cycle)
