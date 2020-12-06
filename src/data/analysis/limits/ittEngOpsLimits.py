@@ -8,8 +8,8 @@ from data.analysis.limits.limitsBase import LimitsBase, Zone
 
 class IttEngOpsLimits(LimitsBase):
     FILE_PATH = 'images/ittEngOpsLimits.png'
-    X_RANGE = (0, 90)  # [s]
-    Y_RANGE = (740, 809)  # [%]
+    X_RANGE = (0, 90)       # [s]
+    Y_RANGE = (740, 809)    # [deg.C]
 
     def __init__(self):
         super().__init__()
@@ -18,12 +18,12 @@ class IttEngOpsLimits(LimitsBase):
         """
         :param duration:    duration in seconds
         :param itt:         ITT in deg.C
-        :return:            ZONE.NONE ~ OK, Zone.A ~ warning 1, Zone.B ~ warning 2, Zone.C ~ severe problem detected
+        :return:            Zone.A ~ OK, Zone.B ~ Area A, Zone.C ~ Area B, Zone.D ~ return for overhaul
         """
 
         if itt < 780:
             return Zone.A
-        elif itt >= 809:
+        elif itt >= self.Y_RANGE[1]:
             return Zone.D
         else:
             return self.getZone(xVal=time, yVal=itt)
