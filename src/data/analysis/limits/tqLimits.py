@@ -18,7 +18,7 @@ class TqLimits(LimitsBase):
         """
         :param time:    duration in seconds
         :param torque:  TQ in %
-        :return: ExceedanceLevel
+        :return: Zone.A ~ OK, Zone.B ~ warning, Zone.C ~ severe problem detected
         """
 
         if torque < 100.1:
