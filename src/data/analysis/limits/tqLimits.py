@@ -14,9 +14,9 @@ class TqLimits(LimitsBase):
     def __init__(self):
         super().__init__()
 
-    def check(self, time: int, torque: float) -> Zone:
+    def check(self, duration: int, torque: float) -> Zone:
         """
-        :param time:    duration in seconds
+        :param duration:    duration in seconds
         :param torque:  TQ in %
         :return: Zone.A ~ OK, Zone.B ~ warning, Zone.C ~ severe problem detected
         """
@@ -26,7 +26,7 @@ class TqLimits(LimitsBase):
         elif torque >= 108:
             return Zone.C
         else:
-            return self.getZone(xVal=time, yVal=torque)
+            return self.getZone(xVal=duration, yVal=torque)
 
 
 if __name__ == '__main__':
@@ -34,42 +34,42 @@ if __name__ == '__main__':
 
     time = 300  # [s]    # v zelenem
     tq = 98  # [%]
-    zone = tql.check(time=time, torque=tq)
+    zone = tql.check(duration=time, torque=tq)
     print(time, tq, zone, zone == Zone.A)
 
     # inside the image polygons:
 
     time = 25  # [s]    # v zelenem
     tq = 105  # [%]
-    zone = tql.check(time=time, torque=tq)
+    zone = tql.check(duration=time, torque=tq)
     print(time, tq, zone, zone == Zone.A)
 
     time = 13  # [s]    # na hrane modreho a cerveneho
     tq = 107  # [%]
-    zone = tql.check(time=time, torque=tq)
+    zone = tql.check(duration=time, torque=tq)
     print(time, tq, zone, zone == Zone.C)
 
     time = 12  # [s]    # v modrem
     tq = 107  # [%]
-    zone = tql.check(time=time, torque=tq)
+    zone = tql.check(duration=time, torque=tq)
     print(time, tq, zone, zone == Zone.B)
 
     time = 61  # [s]
     tq = 102  # [%]
-    zone = tql.check(time=time, torque=tq)
+    zone = tql.check(duration=time, torque=tq)
     print(time, tq, zone, zone == Zone.B)
 
     time = 250  # [s]
     tq = 101  # [%]
-    zone = tql.check(time=time, torque=tq)
+    zone = tql.check(duration=time, torque=tq)
     print(time, tq, zone, zone == Zone.B)
 
     time = 30  # [s]
     tq = 107  # [%]
-    zone = tql.check(time=time, torque=tq)
+    zone = tql.check(duration=time, torque=tq)
     print(time, tq, zone, zone == Zone.C)
 
     time = 120  # [s]
     tq = 106  # [%]
-    zone = tql.check(time=time, torque=tq)
+    zone = tql.check(duration=time, torque=tq)
     print(time, tq, zone, zone == Zone.C)
