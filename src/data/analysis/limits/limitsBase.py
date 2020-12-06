@@ -9,9 +9,11 @@ from abc import ABCMeta, abstractmethod
 
 
 class Zone(Enum):
+    NONE = None
     A = [0, 255, 0]  # green
     B = [0, 0, 255]  # blue
     C = [255, 0, 0]  # red
+    D = 'D'
 
 
 class LimitsBase(metaclass=ABCMeta):
