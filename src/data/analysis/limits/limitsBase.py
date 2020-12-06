@@ -1,7 +1,11 @@
+"""
+Base class for all limit-checking classes based on image region recognition.
+"""
+
 import numpy as np
-from itertools import product
 from enum import Enum
 from PIL import Image
+from abc import ABCMeta, abstractmethod
 
 
 class Zone(Enum):
@@ -10,7 +14,7 @@ class Zone(Enum):
     C = [255, 0, 0]  # red
 
 
-class LimitsBase:
+class LimitsBase(metaclass=ABCMeta):
     FILE_PATH = None
     X_RANGE = None
     Y_RANGE = None
@@ -26,13 +30,21 @@ class LimitsBase:
         # image.show()
 
         self.imgArr = np.asarray(image)
-        (rows, cols, depth) = self.imgArr.shape
+        (rows, cols, _) = self.imgArr.shape
         # indexing: [row, col]
         # [0,0] = left upper corner
         self.width = cols
         self.height = rows
 
     def getZone(self, xVal, yVal):
+        """
+        :param xVal:
+        :param yVal:
+        :return: zone code in which the x-y vals are located
+        """
+        if xVal < self.X_RANGE[0] or xVal > self.X_RANGE[1] or yVal < self.Y_RANGE[0] or yVal > self.Y_RANGE[1]:
+            raise ValueError(f'At least one of the values is out of range: xVal: {xVal}, yVal:{yVal}')
+
         xPx = round(xVal / self.X_RANGE[1] * self.width)
         yPx = round((yVal - self.Y_RANGE[0]) / (self.Y_RANGE[1] - self.Y_RANGE[0]) * self.height)
 
@@ -61,7 +73,7 @@ class LimitsBase:
             return Zone.C
 
         idx = LimitsBase._getIndexOfVal(color, max(color))
-        if idx == 0:    # red
+        if idx == 0:  # red
             return Zone.C
         elif idx == 1:  # green
             return Zone.A
@@ -69,3 +81,7 @@ class LimitsBase:
             return Zone.B
         else:
             raise ValueError(f'Can not determine zone for {color}')
+
+    @abstractmethod
+    def check(self, time: int, torque: float) -> Zone:
+        pass
