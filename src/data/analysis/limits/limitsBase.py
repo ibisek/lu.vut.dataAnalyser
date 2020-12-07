@@ -38,7 +38,7 @@ class LimitsBase(metaclass=ABCMeta):
         self.width = cols
         self.height = rows
 
-    def getZone(self, xVal, yVal):
+    def getZone(self, xVal: float, yVal: float):
         """
         :param xVal:
         :param yVal:
