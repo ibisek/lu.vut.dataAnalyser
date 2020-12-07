@@ -30,46 +30,26 @@ class NgLimits(LimitsBase):
 
 
 if __name__ == '__main__':
-    tql = NgLimits()
+    ngl = NgLimits()
 
-    time = 300  # [s]    # v zelenem
-    tq = 98  # [%]
-    zone = tql.check(duration=time, torque=tq)
-    print(time, tq, zone, zone == Zone.A)
+    oat = 0     # [deg.C]    # v zelenem
+    ng = 90    # [%]
+    zone = ngl.check(oat=oat, ng=ng)
+    print(oat, ng, zone, zone == Zone.A)
 
     # inside the image polygons:
 
-    time = 25  # [s]    # v zelenem
-    tq = 105  # [%]
-    zone = tql.check(duration=time, torque=tq)
-    print(time, tq, zone, zone == Zone.A)
+    oat = 0  # [deg.C]    # v zelenem
+    ng = 100  # [%]
+    zone = ngl.check(oat=oat, ng=ng)
+    print(oat, ng, zone, zone == Zone.A)
 
-    time = 13  # [s]    # na hrane modreho a cerveneho
-    tq = 107  # [%]
-    zone = tql.check(duration=time, torque=tq)
-    print(time, tq, zone, zone == Zone.C)
+    oat = 0  # [deg.C]    # nad
+    ng = 102  # [%]
+    zone = ngl.check(oat=oat, ng=ng)
+    print(oat, ng, zone, zone == Zone.B)
 
-    time = 12  # [s]    # v modrem
-    tq = 107  # [%]
-    zone = tql.check(duration=time, torque=tq)
-    print(time, tq, zone, zone == Zone.B)
-
-    time = 61  # [s]
-    tq = 102  # [%]
-    zone = tql.check(duration=time, torque=tq)
-    print(time, tq, zone, zone == Zone.B)
-
-    time = 250  # [s]
-    tq = 101  # [%]
-    zone = tql.check(duration=time, torque=tq)
-    print(time, tq, zone, zone == Zone.B)
-
-    time = 30  # [s]
-    tq = 107  # [%]
-    zone = tql.check(duration=time, torque=tq)
-    print(time, tq, zone, zone == Zone.C)
-
-    time = 120  # [s]
-    tq = 106  # [%]
-    zone = tql.check(duration=time, torque=tq)
-    print(time, tq, zone, zone == Zone.C)
+    oat = -50  # [deg.C]    # nad
+    ng = 99  # [%]
+    zone = ngl.check(oat=oat, ng=ng)
+    print(oat, ng, zone, zone == Zone.B)
