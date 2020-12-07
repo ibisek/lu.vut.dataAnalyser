@@ -16,6 +16,9 @@ class Logbook:
         if not engineId and not airplaneId and not componentId:
             raise ValueError('At least one of the IDs needs to be defined!')
 
+        if type(ts) is float:
+            ts = int(ts)
+
         dao = LogbookDao()
 
         rec = dao.createNew()
