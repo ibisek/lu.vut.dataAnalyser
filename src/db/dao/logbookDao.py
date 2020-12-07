@@ -2,11 +2,11 @@ import json
 from db.dao.alchemy import Alchemy
 
 
-class LogbooksDao(Alchemy):
+class LogbookDao(Alchemy):
 
     def __init__(self):
-        super(LogbooksDao, self).__init__()
-        self.table = self.base.classes.logbooks
+        super(LogbookDao, self).__init__()
+        self.table = self.base.classes.logbook
 
 
 class Logbook:
@@ -16,7 +16,7 @@ class Logbook:
         if not engineId and not airplaneId and not componentId:
             raise ValueError('At least one of the IDs needs to be defined!')
 
-        dao = LogbooksDao()
+        dao = LogbookDao()
 
         rec = dao.createNew()
         rec.ts = ts
