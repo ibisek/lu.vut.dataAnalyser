@@ -9,14 +9,36 @@ from pandas import DataFrame, Series
 from data.structures import FlightMode, Interval
 from dao.engineLimits import EngineLimits
 from db.dao.enginesDao import EnginesDao
-from db.dao.logbooksDao import Logbook
+from db.dao.logbookDao import Logbook
 from flow.utils import _min, _max
 from flow.notifications import Notifications, NotificationType
+from data.analysis.limits.limitsBase import Zone
+from data.analysis.limits.ngLimits import NgLimits
 
 
 def _checkNG(df: DataFrame, flightMode: FlightMode, cycle):
-    # TODO
-    pass
+    df = df.copy()
+
+    ngl = NgLimits()
+    df['ZONE'] = df.apply(lambda x: ngl.check(oat=x.T0, ng=x.NG), axis=1)
+    if len(df.loc[df['ZONE'] != Zone.A]) == 0:  # no data above limit
+        return  # all OK
+
+    # flag above limit data points:
+    df['lim'] = df['ZONE'].apply(lambda x: 0 if x == Zone.A else 1)
+    intervals: List[Interval] = __findIntervals(df['lim'], 0, 1)
+
+    for interval in intervals:
+        maxNG = max(df['NG'].loc[interval.start: interval.end])
+
+        duration = (interval.end - interval.start).seconds
+        engine = EnginesDao().getOne(id=cycle.engine_id)
+        Notifications.valAboveLim(dbEntity=engine, message=f'NG above limits with max value of {maxNG:.1f}% for {duration} seconds.')
+
+        startT = interval.end.strftime('%Y-%m-%d %H:%M')
+        endT = interval.start.strftime('%Y-%m-%d %H:%M')
+        msg = f'NG above limits with max value of {maxNG:.1f}% between {startT} and {endT}'
+        Logbook.add(ts=interval.start.timestamp(), entry=msg, engineId=cycle.engine_id)
 
 
 def __findIntervals(s: Series, aboveVal, minDuration: int = 0) -> Interval:
