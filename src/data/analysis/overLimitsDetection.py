@@ -136,33 +136,26 @@ def _checkITT(df: DataFrame, flightMode: FlightMode, cycle):
 
 
 def _checkTQ(df: DataFrame, flightMode: FlightMode, cycle):
-    df = df.copy()
-    # TODO TEMP remove!!
-    df['TQ'] = df['TQ'] * 1.2
-
     if max(df['TQ']) < EngineLimits.H80['TQLim']:
         return
 
     cycle.TQlimL = _max(cycle.TQlimL, 1)  # set flag on cycle
     zone = None
 
+    df = df.copy()
     df['TQpct'] = df['TQ'] / NOMINAL_DATA['TQ'] * 100
     overTqValueMax = max(df['TQpct'])
 
-    # if max(df['TQpct']) > 108:
-    #     zone = Zone.C
-    # else:
-    if True:    # TODO remove!!
+    if max(df['TQpct']) > 108:
+        zone = Zone.C
+    else:
         overTqInterval = None
         overTqValueAvg = None
         intervals = __findIntervals(df['TQpct'], 100, 1)
         for interval in intervals:
-            zone = None
-            # df['TQpct'].loc[interval.start:interval.end].plot()     # TODO remove
-
             tql = TqLimits()
 
-            # one-percent-step approach:
+            # one-percent-step algorithm:
             for i in range(0, 8):   # 100-101-102-103-104-105-106-107-108
                 tqs: Series = df['TQpct'].loc[interval.start:interval.end].loc[df['TQpct'] > 100+i].loc[df['TQpct'] <= 101+i]
                 numSamples = len(tqs)   # assuming dt=1s -> numSamples ~ duration
