@@ -129,13 +129,13 @@ def detectClimbs(df: DataFrame) -> List[Interval]:
             climbs.append(interval)
 
             # plot the takeoff section:
-            # x = x[:tsTakeOffIndexEnd]
+            # x = x[:tsClimbIndexStart]
             # x['dIAS'] = df[iasKey].diff() * 10
             # x['TO_dIAS'] = x['dIAS'].apply(lambda x: 1 if x > TO_START_IAS_DELTA else 0)
             # x['ALTx'] = x['ALT'] / 10
             # x['dALT'] = x['ALT'].diff() * 10
             # x['TO'] = x[iasKey].apply(lambda x: 100 if x > 0 else 0)
-            # x[[iasKey, 'TO', 'NG', 'ALTx', 'dALT', 'dIAS', 'TQx']].plot()
+            # x[[iasKey, 'TO', 'NG', 'ALTx', 'dALT', 'dIAS']].plot()
             # plt.show()
 
             tsLanding = _findLandingAfter(x, tsClimbIndexEnd)  # start searching from this ts again
