@@ -6,6 +6,7 @@ from typing import List
 import numpy as np
 from pandas import DataFrame, Series
 
+from configuration import NOMINAL_DATA
 from data.structures import FlightMode, Interval
 from dao.engineLimits import EngineLimits
 from db.dao.enginesDao import EnginesDao
@@ -14,6 +15,7 @@ from flow.utils import _min, _max
 from flow.notifications import Notifications, NotificationType
 from data.analysis.limits.limitsBase import Zone
 from data.analysis.limits.ngLimits import NgLimits
+from data.analysis.limits.tqLimits import TqLimits
 
 
 def _checkNG(df: DataFrame, flightMode: FlightMode, cycle):
@@ -23,6 +25,8 @@ def _checkNG(df: DataFrame, flightMode: FlightMode, cycle):
     df['ZONE'] = df.apply(lambda x: ngl.check(oat=x.T0, ng=x.NG), axis=1)
     if len(df.loc[df['ZONE'] != Zone.A]) == 0:  # no data above limit
         return  # all OK
+
+    cycle.NGlimL = _max(cycle.NGlimL, 1)    # set flag on cycle
 
     # flag above limit data points:
     df['lim'] = df['ZONE'].apply(lambda x: 0 if x == Zone.A else 1)
@@ -132,8 +136,70 @@ def _checkITT(df: DataFrame, flightMode: FlightMode, cycle):
 
 
 def _checkTQ(df: DataFrame, flightMode: FlightMode, cycle):
-    # TODO
-    pass
+    df = df.copy()
+    # TODO TEMP remove!!
+    df['TQ'] = df['TQ'] * 1.23
+
+    if max(df['TQ']) < EngineLimits.H80['TQLim']:
+        return
+
+    cycle.TQlimL = _max(cycle.TQlimL, 1)  # set flag on cycle
+    zone = None
+
+    df['TQpct'] = df['TQ'] / NOMINAL_DATA['TQ'] * 100
+    if max(df['TQpct']) > 108:
+        zone = Zone.C
+
+    else:
+        tql = TqLimits()
+
+        intervals = __findIntervals(df['TQpct'], 100, 1)
+        for interval in intervals:
+            zone = None
+            df['TQpct'].loc[interval.start:interval.end].plot()     # TODO remove
+
+            # TQ over 106.6:
+            int1066 = __findIntervals(s=df['TQpct'].loc[interval.start:interval.end], aboveVal=106.6, minDuration=1)
+            if len(int1066) > 0:
+                dur1066 = sum([(i.end - i.start).seconds for i in int1066])
+                if dur1066 > EngineLimits.H80[FlightMode.CRUISE]['TQLimTotTime']:
+                    zone = Zone.C
+                else:
+                    zone = Zone.B
+
+            # TQ between 106-106.6:
+            if not zone:
+                int106 = __findIntervals(s=df['TQpct'].loc[interval.start:interval.end], aboveVal=106.0, minDuration=1)
+                if len(int106) > 0:
+                    dur106 = sum([(i.end - i.start).seconds for i in int106])
+                    x = df.loc[interval.start:interval.end].loc[df['TQpct'] > 106].loc[df['TQpct'] <= 106.6]
+                    zone = tql.check(duration=dur106, torque=np.mean(x['TQpct']))
+
+            # TQ between 100 and 106:
+            if not zone:
+                # int106 = __findIntervals(s=df['TQpct'].loc[interval.start:interval.end], aboveVal=106.0, minDuration=1)
+                s: Series = df.loc[interval.start:interval.end].loc[df['TQpct'] > 100].loc[df['TQpct'] < 106]['TQpct']
+                zone = tql.check(duration=len(s), torque=np.average(s))
+
+            print(666)
+
+    # TODO mame zonu, tak ted neco s tim udelat
+
+    # # flag above limit data points:
+    # df['lim'] = df['ZONE'].apply(lambda x: 0 if x == Zone.A else 1)
+    # intervals: List[Interval] = __findIntervals(df['lim'], 0, 1)
+    #
+    # for interval in intervals:
+    #     maxNG = max(df['NG'].loc[interval.start: interval.end])
+    #
+    #     duration = (interval.end - interval.start).seconds
+    #     engine = EnginesDao().getOne(id=cycle.engine_id)
+    #     Notifications.valAboveLim(dbEntity=engine, message=f'NG above limits with max value of {maxNG:.1f}% for {duration} seconds.')
+    #
+    #     startT = interval.end.strftime('%Y-%m-%d %H:%M')
+    #     endT = interval.start.strftime('%Y-%m-%d %H:%M')
+    #     msg = f'NG above limits with max value of {maxNG:.1f}% between {startT} and {endT}'
+    #     Logbook.add(ts=interval.start.timestamp(), entry=msg, engineId=cycle.engine_id)
 
 
 def _checkOILP(df: DataFrame, flightMode: FlightMode, cycle):
