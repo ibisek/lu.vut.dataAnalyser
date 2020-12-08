@@ -26,7 +26,7 @@ class IttEngOpsLimits(LimitsBase):
         elif itt >= self.Y_RANGE[1]:
             return Zone.D
         else:
-            return self.getZone(xVal=time, yVal=itt)
+            return self.getZone(xVal=duration, yVal=itt)
 
 
 if __name__ == '__main__':
