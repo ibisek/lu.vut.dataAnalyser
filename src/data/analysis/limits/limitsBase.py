@@ -15,6 +15,23 @@ class Zone(Enum):
     C = [255, 0, 0]  # red
     D = 'D'
 
+    def ge(self, otherZone) -> bool:
+        """
+        Compares THIS zone to another zone.
+        :param otherZone:
+        :return: True if THIS zone is grater or equal (B>=A, C>=B ..)
+        """
+        if self.name == 'A' and (not otherZone or otherZone.name == 'NONE' or otherZone.name == 'A'):
+            return True
+        if self.name == 'B' and (otherZone.name == 'A' or otherZone.name == 'B'):
+            return True
+        if self.name == 'C' and (otherZone.name == 'B' or otherZone.name == 'C'):
+            return True
+        if self.name == 'D' and (otherZone.name == 'C' or otherZone.name == 'D'):
+            return True
+
+        return False
+
 
 class LimitsBase(metaclass=ABCMeta):
     FILE_PATH = None
@@ -47,8 +64,8 @@ class LimitsBase(metaclass=ABCMeta):
         if xVal < self.X_RANGE[0] or xVal > self.X_RANGE[1] or yVal < self.Y_RANGE[0] or yVal > self.Y_RANGE[1]:
             raise ValueError(f'At least one of the values is out of range: xVal: {xVal}, yVal:{yVal}')
 
-        xPx = round(xVal / self.X_RANGE[1] * self.width)
-        yPx = round((yVal - self.Y_RANGE[0]) / (self.Y_RANGE[1] - self.Y_RANGE[0]) * self.height)
+        xPx = int(round(xVal / self.X_RANGE[1] * self.width))
+        yPx = int(round((yVal - self.Y_RANGE[0]) / (self.Y_RANGE[1] - self.Y_RANGE[0]) * self.height))
 
         row = self.height - yPx
         col = xPx
