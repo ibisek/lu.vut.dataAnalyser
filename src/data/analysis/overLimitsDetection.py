@@ -37,10 +37,10 @@ def _checkNG(df: DataFrame, flightMode: FlightMode, cycle):
 
         duration = (interval.end - interval.start).seconds
         engine = EnginesDao().getOne(id=cycle.engine_id)
-        Notifications.valAboveLim(dbEntity=engine, message=f'NG above limits with max value of {maxNG:.1f}% for {duration} seconds.')
+        Notifications.valAboveLim(dbEntity=cycle, message=f'NG above limits with max value of {maxNG:.1f}% for {duration} seconds.')
 
-        startT = interval.end.strftime('%Y-%m-%d %H:%M')
-        endT = interval.start.strftime('%Y-%m-%d %H:%M')
+        startT = interval.start.strftime('%Y-%m-%d %H:%M:%S')
+        endT = interval.end.strftime('%Y-%m-%d %H:%M:%S')
         msg = f'NG above limits with max value of {maxNG:.1f}% between {startT} and {endT}'
         Logbook.add(ts=interval.start.timestamp(), entry=msg, engineId=cycle.engine_id)
 
@@ -138,7 +138,7 @@ def _checkITT(df: DataFrame, flightMode: FlightMode, cycle):
 def _checkTQ(df: DataFrame, flightMode: FlightMode, cycle):
     df = df.copy()
     # TODO TEMP remove!!
-    df['TQ'] = df['TQ'] * 1.23
+    df['TQ'] = df['TQ'] * 1.2
 
     if max(df['TQ']) < EngineLimits.H80['TQLim']:
         return
@@ -147,59 +147,50 @@ def _checkTQ(df: DataFrame, flightMode: FlightMode, cycle):
     zone = None
 
     df['TQpct'] = df['TQ'] / NOMINAL_DATA['TQ'] * 100
-    if max(df['TQpct']) > 108:
-        zone = Zone.C
+    overTqValueMax = max(df['TQpct'])
 
-    else:
-        tql = TqLimits()
-
+    # if max(df['TQpct']) > 108:
+    #     zone = Zone.C
+    # else:
+    if True:    # TODO remove!!
+        overTqInterval = None
+        overTqValueAvg = None
         intervals = __findIntervals(df['TQpct'], 100, 1)
         for interval in intervals:
             zone = None
-            df['TQpct'].loc[interval.start:interval.end].plot()     # TODO remove
+            # df['TQpct'].loc[interval.start:interval.end].plot()     # TODO remove
 
-            # TQ over 106.6:
-            int1066 = __findIntervals(s=df['TQpct'].loc[interval.start:interval.end], aboveVal=106.6, minDuration=1)
-            if len(int1066) > 0:
-                dur1066 = sum([(i.end - i.start).seconds for i in int1066])
-                if dur1066 > EngineLimits.H80[FlightMode.CRUISE]['TQLimTotTime']:
-                    zone = Zone.C
-                else:
-                    zone = Zone.B
+            tql = TqLimits()
 
-            # TQ between 106-106.6:
-            if not zone:
-                int106 = __findIntervals(s=df['TQpct'].loc[interval.start:interval.end], aboveVal=106.0, minDuration=1)
-                if len(int106) > 0:
-                    dur106 = sum([(i.end - i.start).seconds for i in int106])
-                    x = df.loc[interval.start:interval.end].loc[df['TQpct'] > 106].loc[df['TQpct'] <= 106.6]
-                    zone = tql.check(duration=dur106, torque=np.mean(x['TQpct']))
+            # one-percent-step approach:
+            for i in range(0, 8):   # 100-101-102-103-104-105-106-107-108
+                tqs: Series = df['TQpct'].loc[interval.start:interval.end].loc[df['TQpct'] > 100+i].loc[df['TQpct'] <= 101+i]
+                numSamples = len(tqs)   # assuming dt=1s -> numSamples ~ duration
+                if numSamples > 0:
+                    avgTQ = np.average(tqs)
+                    tmpZone: Zone = tql.check(duration=numSamples, torque=avgTQ)
+                    print(f'[INFO] TQ range ({i + 100}-{i + 100 + 1}%) check - time: {numSamples}; zone: {tmpZone.name}')
+                    if tmpZone.ge(zone):
+                        zone = tmpZone
+                        overTqInterval = interval
+                        overTqValueAvg = avgTQ
 
-            # TQ between 100 and 106:
-            if not zone:
-                # int106 = __findIntervals(s=df['TQpct'].loc[interval.start:interval.end], aboveVal=106.0, minDuration=1)
-                s: Series = df.loc[interval.start:interval.end].loc[df['TQpct'] > 100].loc[df['TQpct'] < 106]['TQpct']
-                zone = tql.check(duration=len(s), torque=np.average(s))
+    assert zone is not None
+    # create notification & logbook entry based on zone:
+    if zone and zone is not Zone.A:
+        engine = EnginesDao().getOne(id=cycle.engine_id)
+        startT = interval.start.strftime('%Y-%m-%d %H:%M:%S')
+        endT = interval.end.strftime('%Y-%m-%d %H:%M:%S')
 
-            print(666)
+        msg = f'TQ above limits with max value of {overTqValueMax:.1f}% between {startT} and {endT}.'
+        if zone == Zone.C:
+            msg2 = ' RETURN THE ENGINE TO AN OVERHAUL FACILITY FOR INSPECTION/REPAIR!'
+            Notifications.urgent(dbEntity=cycle, message=msg + msg2)
+        else:   # Zone.B
+            msg2 = ' Determine the cause and rectify the failure.'
+            Notifications.valAboveLim(dbEntity=cycle, message=msg)
 
-    # TODO mame zonu, tak ted neco s tim udelat
-
-    # # flag above limit data points:
-    # df['lim'] = df['ZONE'].apply(lambda x: 0 if x == Zone.A else 1)
-    # intervals: List[Interval] = __findIntervals(df['lim'], 0, 1)
-    #
-    # for interval in intervals:
-    #     maxNG = max(df['NG'].loc[interval.start: interval.end])
-    #
-    #     duration = (interval.end - interval.start).seconds
-    #     engine = EnginesDao().getOne(id=cycle.engine_id)
-    #     Notifications.valAboveLim(dbEntity=engine, message=f'NG above limits with max value of {maxNG:.1f}% for {duration} seconds.')
-    #
-    #     startT = interval.end.strftime('%Y-%m-%d %H:%M')
-    #     endT = interval.start.strftime('%Y-%m-%d %H:%M')
-    #     msg = f'NG above limits with max value of {maxNG:.1f}% between {startT} and {endT}'
-    #     Logbook.add(ts=interval.start.timestamp(), entry=msg, engineId=cycle.engine_id)
+        Logbook.add(ts=interval.start.timestamp(), entry=msg+msg2, engineId=cycle.engine_id)
 
 
 def _checkOILP(df: DataFrame, flightMode: FlightMode, cycle):
@@ -219,7 +210,7 @@ def _checkOILP(df: DataFrame, flightMode: FlightMode, cycle):
     if len(underPressureValues):
         cycle.OilPlimL = 1  # set the flag
 
-        dt = underPressureValues.index[0].strftime('%Y-%m-%d %H:%M')
+        dt = underPressureValues.index[0].strftime('%Y-%m-%d %H:%M:%S')
         Notifications.valBelowLim(cycle, f'Low oil pressure during {flightMode.value} on {dt}')
 
 
@@ -283,5 +274,16 @@ def checkEngineStartupLimits(df: DataFrame, cycle):
     if cycle.ALTSUg > EngineLimits.H80['ALTLimSUg']:
         Notifications.valAboveLim(cycle, f'Altitude during engine startup: {cycle.ALTSUg} m')
 
+    _checkTQ(df, FlightMode.CRUISE, cycle)
     _checkOILP(df, FlightMode.ENG_STARTUP, cycle)
     _checkOILT(df, FlightMode.ENG_STARTUP, cycle)
+
+
+def checkEngineTakeoffLimits(df: DataFrame, cycle):
+    # TODO ..
+    _checkTQ(df, FlightMode.TAKE_OFF, cycle)
+
+
+def checkEngineClimbLimits(df: DataFrame, cycle):
+    # TODO ..
+    _checkTQ(df, FlightMode.CLIMB, cycle)
