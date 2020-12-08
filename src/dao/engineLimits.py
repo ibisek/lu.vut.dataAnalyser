@@ -31,7 +31,7 @@ class EngineLimits:
     H80[FlightMode.CRUISE]['NPLimCrA'] = 2300  # [1/min]
     H80[FlightMode.CRUISE]['NPLimCrB'] = 2400  # [1/min]
     # TQ:
-    H80[FlightMode.CRUISE]['TQLim'] = NOMINAL_DATA['TQ']  # [Nm]
+    H80[FlightMode.CRUISE]['TQLim'] = 100   # [%]
     H80[FlightMode.CRUISE]['TQLimA'] = 106  # [%]
     H80[FlightMode.CRUISE]['TQLimATime'] = 30  # [s]
     H80[FlightMode.CRUISE]['TQLimA0'] = 60  # [s]
