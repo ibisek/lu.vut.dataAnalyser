@@ -419,8 +419,8 @@ CREATE TABLE IF NOT EXISTS notifications (
 
 select * from notifications;
 
---DROP TABLE IF EXISTS logbooks;
-CREATE TABLE IF NOT EXISTS logbooks (
+--DROP TABLE IF EXISTS logbook;
+CREATE TABLE IF NOT EXISTS logbook (
   id INT PRIMARY KEY auto_increment,
   ts INT NOT NULL,
   engine_id INT references engines.id,
@@ -429,7 +429,7 @@ CREATE TABLE IF NOT EXISTS logbooks (
   entry VARCHAR(255) NOT NULL
 ) charset utf8;
 
-select * from logbooks;
+select * from logbook;
 
 --
 
