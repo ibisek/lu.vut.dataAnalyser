@@ -25,9 +25,9 @@ class Zone(Enum):
             return True
         if self.name == 'B' and (otherZone.name == 'A' or otherZone.name == 'B'):
             return True
-        if self.name == 'C' and (otherZone.name == 'B' or otherZone.name == 'C'):
+        if self.name == 'C' and (otherZone.name == 'A' or otherZone.name == 'B' or otherZone.name == 'C' ):
             return True
-        if self.name == 'D' and (otherZone.name == 'C' or otherZone.name == 'D'):
+        if self.name == 'D' and (otherZone.name == 'A' or otherZone.name == 'B' or otherZone.name == 'C' or otherZone.name == 'D'):
             return True
 
         return False
