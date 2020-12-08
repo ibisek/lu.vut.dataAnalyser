@@ -11,7 +11,8 @@ from pandas import DataFrame
 from data.structures import EngineWork, Interval
 from data.analysis.flightModesDetection import detectTakeOffs, detectClimbs, detectRepeatedTakeOffs, \
     detectTaxi, detectEngineStartups, detectEngineIdles, detectEngineCruises
-from data.analysis.overLimitsDetection import checkCruiseLimits, checkEngineIdleLimits, checkEngineStartupLimits
+from data.analysis.overLimitsDetection import checkCruiseLimits, checkEngineIdleLimits, checkEngineStartupLimits, \
+    checkEngineTakeoffLimits, checkEngineClimbLimits
 from dao.flightRecordingDao import FlightRecordingDao, RecordingType
 from dao.engineLimits import EngineLimits
 from db.dao.cyclesDao import CyclesDao
@@ -212,12 +213,14 @@ class Processing:
             checkEngineStartupLimits(df=startupDf, cycle=cycle)
 
         for takeoffInterval in self.takeoffIntervals:
-            self._analyseTakeOffInterval(df[takeoffInterval.start:takeoffInterval.end], cycle)
-            # TODO check over-limits
+            takeoffDf = df[takeoffInterval.start:takeoffInterval.end]
+            self._analyseTakeOffInterval(takeoffDf, cycle)
+            checkEngineTakeoffLimits(df=takeoffDf, cycle=cycle)
 
         for climbInterval in self.climbIntervals:
-            self._analyseClimbInterval(df[climbInterval.start:climbInterval.end], cycle)
-            # TODO check over-limits
+            climbDf = df[climbInterval.start:climbInterval.end]
+            self._analyseClimbInterval(climbDf, cycle)
+            checkEngineClimbLimits(df=climbDf, cycle=cycle)
 
         for engCruiseInterval in self.engineCruiseIntervals:
             cruiseDf = df[engCruiseInterval.start:engCruiseInterval.end]
