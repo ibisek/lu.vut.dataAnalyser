@@ -132,6 +132,8 @@ CREATE TABLE IF NOT EXISTS engines (
   EqCycleSim FLOAT default 0,
   EngNumNPExcA int default 0,
   EngNumNPExcB int default 0
+  EngITTExcA INT default 0,
+  EngITTExcB INT default 0,
   -- components:
   ACD1NoC FLOAT default 0,
   ACD1NoCS FLOAT default 0,
@@ -495,9 +497,12 @@ select * from files;
 
 select * from cycles;
 
-select * from notifications;
+select * from notifications order by id desc;
+
+select * from logbook order by id desc;
 
 --delete from cycles where id=1;
 --insert into cycles (id, engine_id, flight_id, file_id) values(10,1,1,1);
 --insert into cycles (id, engine_id, flight_id, file_id) values(12,2,2,2);
 --insert into cycles (id, engine_id, flight_id, file_id) values(13,3,2,2);
+
