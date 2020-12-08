@@ -9,7 +9,7 @@ from data.analysis.limits.limitsBase import LimitsBase, Zone
 class TqLimits(LimitsBase):
     FILE_PATH = 'images/tqLimits.png'
     X_RANGE = (0, 300)  # [s]
-    Y_RANGE = (100.1, 108)  # [%]
+    Y_RANGE = (100, 108)  # [%]
 
     def __init__(self):
         super().__init__()
@@ -18,7 +18,7 @@ class TqLimits(LimitsBase):
         """
         :param duration:    duration in seconds
         :param torque:  TQ in %
-        :return: Zone.A ~ OK, Zone.B ~ warning, Zone.C ~ severe problem detected
+        :return: Zone.A ~ OK, Zone.B ~ "Area A", Zone.C ~ severe problem detected
         """
 
         if torque < 100.1:
