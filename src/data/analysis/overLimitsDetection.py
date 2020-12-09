@@ -133,27 +133,18 @@ def _checkNP(df: DataFrame, flightMode: FlightMode, cycle):
 
 
 def __checkITT_cruise(df: DataFrame, flightMode: FlightMode, cycle):
-    # TODO uncomment
-    # if max(df['ITT']) <= EngineLimits.H80[flightMode]['ITTLim']:   # [deg.C]
-    #     return
+    if max(df['ITT']) <= EngineLimits.H80[flightMode]['ITTLim']:   # [deg.C]
+        return
 
     cycle.ITTlimL = _max(cycle.ITTlimL, 1)  # set flag on cycle
     zone = None
     overIttValueMax = max(df['ITT'])
-
-    # TODO delete
-    df = df.copy()
-    df['ITT'] = df['ITT']*1.28
-    # df['ITT'].plot()
-    # df['ITT'].loc[interval.start:interval.end].plot()
+    overIttInterval = None
 
     bottomChartITT = 780    # see Appendig 9
-    # if max(df['ITT']) > EngineLimits.H80[flightMode]['ITTLimTot']:
-    #     zone = Zone.D
-    # else:
-    if True:
-        overIttInterval = None
-        overIttValueAvg = None
+    if max(df['ITT']) > EngineLimits.H80[flightMode]['ITTLimTot']:
+        zone = Zone.D
+    else:
         intervals = __findIntervals(df['ITT'], bottomChartITT, 1)
         for interval in intervals:
             ittl = IttEngOpsLimits()
@@ -165,46 +156,94 @@ def __checkITT_cruise(df: DataFrame, flightMode: FlightMode, cycle):
                 if numSamples > 0:
                     avgITT = np.average(itts)
                     tmpZone: Zone = ittl.check(duration=numSamples, itt=avgITT)
-                    print(f'[INFO] ITT range ({i}-{i+5}%) check - time: {numSamples}; zone: {tmpZone.name}')
+                    print(f'[INFO] ITT range ({i}-{i+5}%) at engine {flightMode} check - time: {numSamples}; zone: {tmpZone.name}')
                     if tmpZone.ge(zone):
                         zone = tmpZone
                         overIttInterval = interval
-                        overIttValueAvg = avgITT
 
-        assert zone is not None
-        # create notification & logbook entry based on zone:
-        if zone is not Zone.A:
-            engine = EnginesDao().getOne(id=cycle.engine_id)
-            startT = interval.start.strftime('%Y-%m-%d %H:%M:%S')
-            endT = interval.end.strftime('%Y-%m-%d %H:%M:%S')
+    assert zone is not None
+    # create notification & logbook entry based on zone:
+    if zone is not Zone.A:
+        engine = EnginesDao().getOne(id=cycle.engine_id)
+        startT = interval.start.strftime('%Y-%m-%d %H:%M:%S')
+        endT = interval.end.strftime('%Y-%m-%d %H:%M:%S')
 
-            msg = f'ITT above limits with max value of {overIttValueMax:.1f}% between {startT} and {endT}.'
-            if zone == Zone.D:
-                msg2 = ' RETURN THE ENGINE TO AN OVERHAUL FACILITY FOR INSPECTION/REPAIR!'
-                Notifications.urgent(dbEntity=cycle, message=msg + msg2)
-            else:
-                area = 'A' if zone == Zone.B else 'B'
-                msg2 = f' Find out the fault and rectify the cause of over-temperature. Refer to over-ITT limits chart, area "{area}".'
-                Notifications.valAboveLim(dbEntity=cycle, message=msg + msg2)
+        msg = f'ITT above limits during engine {flightMode} with max value of {overIttValueMax:.1f} deg.C between {startT} and {endT}.'
+        if zone == Zone.D:
+            msg2 = ' RETURN THE ENGINE TO AN OVERHAUL FACILITY FOR INSPECTION/REPAIR!'
+            Notifications.urgent(dbEntity=cycle, message=msg + msg2)
+        else:
+            area = 'A' if zone == Zone.B else 'B'
+            msg2 = f' Find out the fault and rectify the cause of over-temperature. Refer to over-ITT limits for engine {flightMode} chart, area "{area}".'
+            Notifications.valAboveLim(dbEntity=cycle, message=msg + msg2)
 
-                if zone == Zone.C:  # chart area "B"
-                    engine.EngITTExcB += (overIttInterval.end - overIttInterval.start).seconds
-                else:  # Zone.B, chart area "A"
-                    engine.EngITTExcA += (overIttInterval.end - overIttInterval.start).seconds
+            if zone == Zone.C:  # chart area "B"
+                engine.EngITTExcB += (overIttInterval.end - overIttInterval.start).seconds
+            else:  # Zone.B, chart area "A"
+                engine.EngITTExcA += (overIttInterval.end - overIttInterval.start).seconds
 
-                EnginesDao().save(engine)
+            EnginesDao().save(engine)
 
-            Logbook.add(ts=interval.start.timestamp(), entry=msg + msg2, engineId=cycle.engine_id)
+        Logbook.add(ts=interval.start.timestamp(), entry=msg + msg2, engineId=cycle.engine_id)
+
+
+def __checkITT_startup(df: DataFrame, flightMode: FlightMode, cycle):
+    # TODO uncomment
+    # if max(df['ITT']) <= EngineLimits.H80H80['ITTLimSUg']:   # [deg.C]
+    #     return
+
+    cycle.ITTlimL = _max(cycle.ITTlimL, 1)  # set flag on cycle
+    zone = None
+    overIttValueMax = max(df['ITT'])
+
+    # TODO delete
+    df = df.copy()
+    df['ITT'] = df['ITT']*1.4
+    # df['ITT'].plot()
+    # df['ITT'].loc[interval.start:interval.end].plot()
+
+    bottomChartITT = EngineLimits.H80['ITTLimSUg']    # see Appendix 7
+    # if max(df['ITT']) > 780:  # [deg.C]
+    #     zone = Zone.C
+    # else:
+    if True:
+        intervals = __findIntervals(df['ITT'], bottomChartITT, 1)
+        for interval in intervals:
+            ittl = IttEngStartLimits()
+
+            # five-deg-step algorithm:
+            for i in range(bottomChartITT, 780, 5):  # 730-35-40-45-50-55-40-65-70-75-780
+                itts: Series = df['ITT'].loc[interval.start:interval.end].loc[df['ITT'] > i].loc[df['ITT'] <= i+5]
+                numSamples = len(itts)  # assuming dt=1s -> numSamples ~ duration
+                if numSamples > 0:
+                    avgITT = np.average(itts)
+                    tmpZone: Zone = ittl.check(duration=numSamples, itt=avgITT)
+                    print(f'[INFO] ITT range ({i}-{i+5} deg.C) at engine {flightMode} check - time: {numSamples}; zone: {tmpZone.name}')
+                    if tmpZone.ge(zone):
+                        zone = tmpZone
+
+    # create notification & logbook entry based on zone:
+    if zone:
+        startT = interval.start.strftime('%Y-%m-%d %H:%M:%S')
+        endT = interval.end.strftime('%Y-%m-%d %H:%M:%S')
+
+        msg = f'ITT above limits during engine {flightMode} with max value of {overIttValueMax:.1f} deg.C between {startT} and {endT}.'
+        if zone == Zone.C:
+            msg2 = ' RETURN THE ENGINE TO AN OVERHAUL FACILITY FOR INSPECTION/REPAIR!'
+            Notifications.urgent(dbEntity=cycle, message=msg + msg2)
+        else:
+            area = 'A' if zone == Zone.B else 'B'
+            msg2 = f' Find out the fault and rectify the cause of over-temperature. Refer to over-ITT limits for engine {flightMode} chart, area "{area}".'
+            Notifications.valAboveLim(dbEntity=cycle, message=msg + msg2)
+
+        Logbook.add(ts=interval.start.timestamp(), entry=msg + msg2, engineId=cycle.engine_id)
 
 
 def _checkITT(df: DataFrame, flightMode: FlightMode, cycle):
     if flightMode == FlightMode.ENG_STARTUP:
-        # TODO not implemented; cruise only
-        return
-
+        __checkITT_startup(df, flightMode, cycle)
     elif flightMode == FlightMode.CRUISE:
         __checkITT_cruise(df, flightMode, cycle)
-
     else:
         raise NotImplementedError(f'Unsupported flight mode for ITT check: {flightMode}')
 
@@ -340,7 +379,8 @@ def checkEngineStartupLimits(df: DataFrame, cycle):
     if cycle.ALTSUg > EngineLimits.H80['ALTLimSUg']:
         Notifications.valAboveLim(cycle, f'Altitude during engine startup: {cycle.ALTSUg} m')
 
-    _checkTQ(df, FlightMode.CRUISE, cycle)
+    _checkITT(df, FlightMode.ENG_STARTUP, cycle)
+    _checkTQ(df, FlightMode.ENG_STARTUP, cycle)
     _checkOILP(df, FlightMode.ENG_STARTUP, cycle)
     _checkOILT(df, FlightMode.ENG_STARTUP, cycle)
 
