@@ -188,25 +188,14 @@ def __checkITT_cruise(df: DataFrame, flightMode: FlightMode, cycle):
 
 
 def __checkITT_startup(df: DataFrame, flightMode: FlightMode, cycle):
-    # TODO uncomment
-    # if max(df['ITT']) <= EngineLimits.H80H80['ITTLimSUg']:   # [deg.C]
-    #     return
-
     cycle.ITTlimL = _max(cycle.ITTlimL, 1)  # set flag on cycle
     zone = None
     overIttValueMax = max(df['ITT'])
 
-    # TODO delete
-    df = df.copy()
-    df['ITT'] = df['ITT']*1.4
-    # df['ITT'].plot()
-    # df['ITT'].loc[interval.start:interval.end].plot()
-
     bottomChartITT = EngineLimits.H80['ITTLimSUg']    # see Appendix 7
-    # if max(df['ITT']) > 780:  # [deg.C]
-    #     zone = Zone.C
-    # else:
-    if True:
+    if max(df['ITT']) > 780:  # [deg.C]
+        zone = Zone.C
+    else:
         intervals = __findIntervals(df['ITT'], bottomChartITT, 1)
         for interval in intervals:
             ittl = IttEngStartLimits()
