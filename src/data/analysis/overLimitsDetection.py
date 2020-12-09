@@ -12,7 +12,7 @@ from dao.engineLimits import EngineLimits
 from db.dao.enginesDao import EnginesDao
 from db.dao.logbookDao import Logbook
 from flow.utils import _min, _max
-from flow.notifications import Notifications, NotificationType
+from flow.notifications import Notifications
 from data.analysis.limits.limitsBase import Zone
 from data.analysis.limits.ngLimits import NgLimits
 from data.analysis.limits.tqLimits import TqLimits
@@ -38,12 +38,11 @@ def _checkNG(df: DataFrame, flightMode: FlightMode, cycle):
         maxNG = max(df['NG'].loc[interval.start: interval.end])
 
         duration = (interval.end - interval.start).seconds
-        engine = EnginesDao().getOne(id=cycle.engine_id)
-        Notifications.valAboveLim(dbEntity=cycle, message=f'NG above limits with max value of {maxNG:.1f}% for {duration} seconds.')
+        Notifications.valAboveLim(dbEntity=cycle, message=f'NG above limits during {flightMode} with max value of {maxNG:.1f}% for {duration} seconds.')
 
         startT = interval.start.strftime('%Y-%m-%d %H:%M:%S')
         endT = interval.end.strftime('%Y-%m-%d %H:%M:%S')
-        msg = f'NG above limits with max value of {maxNG:.1f}% between {startT} and {endT}'
+        msg = f'NG above limits during {flightMode} with max value of {maxNG:.1f}% between {startT} and {endT}'
         Logbook.add(ts=interval.start.timestamp(), entry=msg, engineId=cycle.engine_id)
 
 
@@ -140,6 +139,7 @@ def __checkITT_cruise(df: DataFrame, flightMode: FlightMode, cycle):
     zone = None
     overIttValueMax = max(df['ITT'])
     overIttInterval = None
+    interval = None
 
     bottomChartITT = 780    # see Appendig 9
     if max(df['ITT']) > EngineLimits.H80[flightMode]['ITTLimTot']:
@@ -191,6 +191,7 @@ def __checkITT_startup(df: DataFrame, flightMode: FlightMode, cycle):
     cycle.ITTlimL = _max(cycle.ITTlimL, 1)  # set flag on cycle
     zone = None
     overIttValueMax = max(df['ITT'])
+    interval = None
 
     bottomChartITT = EngineLimits.H80['ITTLimSUg']    # see Appendix 7
     if max(df['ITT']) > 780:  # [deg.C]
@@ -247,12 +248,13 @@ def _checkTQ(df: DataFrame, flightMode: FlightMode, cycle):
     df = df.copy()
     df['TQpct'] = df['TQ'] / NOMINAL_DATA['TQ'] * 100
     overTqValueMax = max(df['TQpct'])
+    overTqInterval = None
+    overTqValueAvg = None
+    interval = None
 
     if max(df['TQpct']) > 108:
         zone = Zone.C
     else:
-        overTqInterval = None
-        overTqValueAvg = None
         intervals = __findIntervals(df['TQpct'], 100, 1)
         for interval in intervals:
             tql = TqLimits()
@@ -273,11 +275,12 @@ def _checkTQ(df: DataFrame, flightMode: FlightMode, cycle):
     assert zone is not None
     # create notification & logbook entry based on zone:
     if zone is not Zone.A:
-        engine = EnginesDao().getOne(id=cycle.engine_id)
         startT = interval.start.strftime('%Y-%m-%d %H:%M:%S')
         endT = interval.end.strftime('%Y-%m-%d %H:%M:%S')
 
-        msg = f'TQ above limits with max value of {overTqValueMax:.1f}% between {startT} and {endT}.'
+        duration = (overTqInterval.end - overTqInterval.start).seconds
+        msg = f'TQ above limits - peak: {overTqValueMax:.1f}%, avg: {overTqValueAvg}% ' \
+              f'between {startT} and {endT} in total duration of {duration}s.'
         if zone == Zone.C:
             msg2 = ' RETURN THE ENGINE TO AN OVERHAUL FACILITY FOR INSPECTION/REPAIR!'
             Notifications.urgent(dbEntity=cycle, message=msg + msg2)
@@ -329,7 +332,7 @@ def _checkOILT(df: DataFrame, flightMode: FlightMode, cycle):
 
 
 def _checkFUELP(df: DataFrame, flightMode: FlightMode, cycle):
-    # TODO perhaps one sunny day..
+    # TODO perhaps on one nice and sunny day..
     pass
 
 
