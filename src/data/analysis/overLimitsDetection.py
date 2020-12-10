@@ -188,6 +188,9 @@ def __checkITT_cruise(df: DataFrame, flightMode: FlightMode, cycle):
 
 
 def __checkITT_startup(df: DataFrame, flightMode: FlightMode, cycle):
+    if max(df['ITT']) <= EngineLimits.H80['ITTLimSUg']:   # [deg.C]
+        return
+
     cycle.ITTlimL = _max(cycle.ITTlimL, 1)  # set flag on cycle
     zone = None
     overIttValueMax = max(df['ITT'])
@@ -345,6 +348,10 @@ def checkCruiseLimits(df: DataFrame, cycle):
     _checkOILT(df, FlightMode.CRUISE, cycle)
     _checkFUELP(df, FlightMode.CRUISE, cycle)
 
+    maxAlt = max(df['ALT'])
+    if maxAlt > EngineLimits.H80[FlightMode.CRUISE]['ALT']:
+        Notifications.valAboveLim(cycle, f'ALT during cruise: {maxAlt:.0f} m')
+
 
 def checkEngineIdleLimits(df: DataFrame, cycle):
     cycle.NGlimL = _max(cycle.NGlimL, 1 if max(df['NG']) > EngineLimits.H80['NGLimIdle'] else 0)
@@ -370,6 +377,12 @@ def checkEngineStartupLimits(df: DataFrame, cycle):
 
     if cycle.ALTSUg > EngineLimits.H80['ALTLimSUg']:
         Notifications.valAboveLim(cycle, f'Altitude during engine startup: {cycle.ALTSUg} m')
+
+    if cycle.OilPLim > EngineLimits.H80['OilPLim']:
+        Notifications.valAboveLim(cycle, f'Oil pressure during engine startup: {cycle.OilPLim/1e06:.2f} MPa')
+
+    if cycle.OilPLim < EngineLimits.H80['OilTeLim']:
+        Notifications.valBelowLim(cycle, f'Oil temperature during engine startup: {cycle.OilPLim:.2f} deg.C')
 
     _checkITT(df, FlightMode.ENG_STARTUP, cycle)
     _checkTQ(df, FlightMode.ENG_STARTUP, cycle)
