@@ -378,11 +378,11 @@ def checkEngineStartupLimits(df: DataFrame, cycle):
     if cycle.ALTSUg > EngineLimits.H80['ALTLimSUg']:
         Notifications.valAboveLim(cycle, f'Altitude during engine startup: {cycle.ALTSUg} m')
 
-    if cycle.OilPLim > EngineLimits.H80['OilPLim']:
-        Notifications.valAboveLim(cycle, f'Oil pressure during engine startup: {cycle.OilPLim/1e06:.2f} MPa')
+    if cycle.OilP > EngineLimits.H80['OilPLim']:
+        Notifications.valAboveLim(cycle, f'Oil pressure during engine startup: {cycle.OilP/1e06:.2f} MPa')
 
-    if cycle.OilPLim < EngineLimits.H80['OilTeLim']:
-        Notifications.valBelowLim(cycle, f'Oil temperature during engine startup: {cycle.OilPLim:.2f} deg.C')
+    if cycle.OilTBe < EngineLimits.H80['OilTeLim']:
+        Notifications.valBelowLim(cycle, f'Oil temperature during engine startup: {cycle.OilTBe:.2f} deg.C')
 
     _checkITT(df, FlightMode.ENG_STARTUP, cycle)
     _checkTQ(df, FlightMode.ENG_STARTUP, cycle)
