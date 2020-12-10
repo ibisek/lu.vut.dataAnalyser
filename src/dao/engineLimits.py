@@ -8,7 +8,6 @@ class EngineLimits:
     limits = defaultdict()
 
     H80 = defaultdict()
-    H80['CycleHour'] = 3600 * 60 * 60  # [hours] -> [seconds]
 
     # engine limits:
     H80['CycleHour'] = 3600 * 60 * 60  # [hours] -> [seconds]
