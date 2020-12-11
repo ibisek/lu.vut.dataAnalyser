@@ -36,5 +36,6 @@ class Interval:
     def __str__(self):
         return f'Interval {self.start} -> {self.end}'
 
+
 # engine-flight-cycle work to be further done after initial preprocessing
 EngineWork = namedtuple('EngineWork', ['engineId', 'flightId', 'flightIdx', 'cycleId', 'cycleIdx'])
