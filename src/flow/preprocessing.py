@@ -119,9 +119,9 @@ def preprocess(file: File) -> List[EngineWork]:
 
         # store flight recordings into influx:
         frDao = FlightRecordingDao()
-        frDao.storeDf(engineId=engineId, flightId=flightId, cycleId=cycle.id, df=rawDataFrame, recType=RecordingType.RAW)
-        frDao.storeDf(engineId=engineId, flightId=flightId, cycleId=cycle.id, df=filteredDataFrame, recType=RecordingType.FILTERED)
-        frDao.storeDf(engineId=engineId, flightId=flightId, cycleId=cycle.id, df=standardisedDataFrame, recType=RecordingType.STANDARDIZED)
+        frDao.storeDf(engineId=engineId, flightId=flightId, flightIdx=0, cycleId=cycle.id, cycleIdx=0, df=rawDataFrame, recType=RecordingType.RAW)
+        frDao.storeDf(engineId=engineId, flightId=flightId, flightIdx=0, cycleId=cycle.id, cycleIdx=0, df=filteredDataFrame, recType=RecordingType.FILTERED)
+        frDao.storeDf(engineId=engineId, flightId=flightId, flightIdx=0, cycleId=cycle.id, cycleIdx=0, df=standardisedDataFrame, recType=RecordingType.STANDARDIZED)
 
         engineWorks.append(EngineWork(engineId=engineId, flightId=flightId, cycleId=cycle.id))
 

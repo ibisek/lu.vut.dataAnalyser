@@ -25,19 +25,19 @@ class FlightRecordingDao(object):
         self.influx = InfluxDbThread(dbName=INFLUX_DB_NAME, host=INFLUX_DB_HOST)
         self.influx.start()
 
-    def storeDf(self, engineId: int, flightId: int, cycleId: int, df: DataFrame, recType: RecordingType):
+    def storeDf(self, engineId: int, flightId: int, flightIdx: int, cycleId: int, cycleIdx: int, df: DataFrame, recType: RecordingType):
         keys = df.keys().tolist()
         if 'ts' in keys:
             keys.remove('ts')
         keys = sorted(keys)
 
         for row in df.iterrows():
-            ts = int(row[0].timestamp()*1000)
+            ts = int(row[0].timestamp() * 1000)
 
             rowSeries = row[1]
             kv = ",".join([f"{k}={rowSeries[k]}" for k in keys])
 
-            s = f"flights,type={recType.value},flight_id={flightId},engine_id={engineId},cycle_id={cycleId} {kv} {ts}000000"
+            s = f"flights,type={recType.value},flight_id={flightId},flight_idx={flightIdx},engine_id={engineId},cycle_id={cycleId},cycle_idx={cycleIdx} {kv} {ts}000000"
 
             self.influx.addStatement(s)
 
@@ -45,9 +45,14 @@ class FlightRecordingDao(object):
         self.influx.stop()
 
     @staticmethod
-    def loadDf(engineId: int, flightId: int, cycleId: int, recType: RecordingType) -> DataFrame:
+    def loadDf(engineId: int, flightId: int, flightIdx: int, cycleId: int, cycleIdx: int, recType: RecordingType) -> DataFrame:
 
-        q = f"SELECT * FROM flights WHERE type='{recType.value}' AND engine_id='{engineId}' AND flight_id='{flightId}' AND cycle_id='{cycleId}'"
+        if flightIdx == 0 or cycleIdx == 0:
+            q = f"SELECT * FROM flights WHERE type='{recType.value}' AND engine_id='{engineId}' AND flight_id='{flightId}' AND cycle_id='{cycleId}'"
+        else:
+            q = f"SELECT * FROM flights WHERE type='{recType.value}' AND engine_id='{engineId}' " \
+                f"AND flight_id='{flightId}' AND flight_idx='{flightIdx}' " \
+                f"AND cycle_id='{cycleId}' AND cycle_idx='{cycleIdx}'"
 
         c = DataFrameClient(host=INFLUX_DB_HOST, port=8086, database=INFLUX_DB_NAME)
         res = c.query(query=q)
