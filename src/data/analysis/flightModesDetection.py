@@ -36,7 +36,6 @@ def detectFlights(df: DataFrame) -> List[Interval]:
         for flight in flights:
             flight.start = df[:flight.start].loc[df['NG'] < 60].tail(1).index[0]    # 60%
             flight.end += timedelta(10)
-            df[[iasKey, 'NG']].loc[flight.start:flight.end].plot()
 
     return flights
 
