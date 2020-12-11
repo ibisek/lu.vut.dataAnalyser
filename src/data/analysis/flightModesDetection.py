@@ -30,11 +30,11 @@ def detectFlights(df: DataFrame) -> List[Interval]:
     FLIGHT_MIN_DURATION = 60  # [s]
     iasKey = 'IAS' if 'IAS' in df.keys() else 'TAS'
 
-    flights: List[Interval] = findIntervals(df[iasKey], 50, FLIGHT_MIN_DURATION)  # 50km/h, min 10s
+    flights: List[Interval] = findIntervals(df[iasKey], 60, FLIGHT_MIN_DURATION)    # 60 km/h, min 10s
 
     if len(flights) > 0:
         for flight in flights:
-            flight.start = df[:flight.start].loc[df['NG'] < 60].tail(1).index[0]
+            flight.start = df[:flight.start].loc[df['NG'] < 60].tail(1).index[0]    # 60%
             flight.end += timedelta(10)
             df[[iasKey, 'NG']].loc[flight.start:flight.end].plot()
 
