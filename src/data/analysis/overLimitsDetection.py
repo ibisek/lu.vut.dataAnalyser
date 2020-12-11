@@ -390,6 +390,11 @@ def checkEngineStartupLimits(df: DataFrame, cycle):
     _checkOILT(df, FlightMode.ENG_STARTUP, cycle)
 
 
+def checkEngineShutdownLimits(df: DataFrame, cycle):
+    # TODO ..
+    raise NotImplementedError()
+
+
 def checkEngineTakeoffLimits(df: DataFrame, cycle):
     # TODO ..
     _checkTQ(df, FlightMode.TAKE_OFF, cycle)

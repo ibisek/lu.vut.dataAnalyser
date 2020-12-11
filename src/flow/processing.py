@@ -10,9 +10,9 @@ from pandas import DataFrame
 
 from data.structures import EngineWork, Interval
 from data.analysis.flightModesDetection import detectTakeOffs, detectClimbs, detectRepeatedTakeOffs, \
-    detectTaxi, detectEngineStartups, detectEngineIdles, detectEngineCruises
+    detectTaxi, detectEngineStartups, detectEngineIdles, detectEngineCruises, detectEngineShutdowns
 from data.analysis.overLimitsDetection import checkCruiseLimits, checkEngineIdleLimits, checkEngineStartupLimits, \
-    checkEngineTakeoffLimits, checkEngineClimbLimits
+    checkEngineTakeoffLimits, checkEngineClimbLimits, checkEngineShutdownLimits
 from dao.flightRecordingDao import FlightRecordingDao, RecordingType
 from dao.engineLimits import EngineLimits
 from db.dao.cyclesDao import CyclesDao
@@ -159,6 +159,16 @@ class Processing:
         cycle.FuelPMaxIdle = _max(cycle.FuelPMaxIdle, max(df['FUELP']))
         cycle.EndTimeIdle = endTs
 
+    @staticmethod
+    def _analyseEngineShutdownInterval(df: DataFrame, cycle):
+        startTs = df.head(1)['ts'][0]
+        endTs = df.tail(1)['ts'][0]
+
+        cycle.BeTimeSD = startTs
+        # cycle.TimeEnCool  TODO once we have the data available
+        # cycle.TimeNGSD    TODO once we have the data available
+        cycle.EndTimeSD = endTs
+
     def _detectPhases(self, df: DataFrame):
         self.engineStartupIntervals = detectEngineStartups(df)
         for i, engineStartup in enumerate(self.engineStartupIntervals):
@@ -189,6 +199,10 @@ class Processing:
         self.engineCruiseIntervals = detectEngineCruises(df)
         for i, cruise in enumerate(self.engineCruiseIntervals):
             print(f'[INFO] cruise #{i} {cruise.start} -> {cruise.end}', )
+
+        self.engineShutdownIntervals = detectEngineShutdowns(df)
+        for i, shutdown in enumerate(self.engineShutdownIntervals):
+            print(f'[INFO] engine shutdown {i} {shutdown.start} -> {shutdown.end}', )
 
     lim = EngineLimits()
 
@@ -231,6 +245,11 @@ class Processing:
             idleDf = df[idleInterval.start:idleInterval.end]
             self._analyseIdleInterval(df=idleDf, cycle=cycle)
             checkEngineIdleLimits(df=idleDf, cycle=cycle)
+
+        for sdInterval in self.engineShutdownIntervals:
+            sdDf = df[sdInterval.start: sdInterval.end]
+            self._analyseEngineShutdownInterval(df=sdDf, cycle=cycle)
+            checkEngineShutdownLimits(df=sdDf, cycle=cycle)
 
         self._analyseEntireFlightParams(df=df, cycle=cycle)
 
