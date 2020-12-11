@@ -6,6 +6,7 @@ TODO az na to budou data:
 TODO (4) opakovane spousteni:  NG < 40% a pak zase NG na 60%; L410: NG=57% && NP <240-480> (pro PT6 neresit)
 """
 
+import math
 from datetime import timedelta
 from pandas import DataFrame, Series, Timestamp
 
@@ -29,7 +30,15 @@ def detectFlights(df: DataFrame) -> List[Interval]:
     FLIGHT_MIN_DURATION = 60  # [s]
     iasKey = 'IAS' if 'IAS' in df.keys() else 'TAS'
 
-    return findIntervals(df[iasKey], 100, FLIGHT_MIN_DURATION)   # 100km/h, min 10s
+    flights: List[Interval] = findIntervals(df[iasKey], 50, FLIGHT_MIN_DURATION)  # 50km/h, min 10s
+
+    if len(flights) > 0:
+        for flight in flights:
+            flight.start = df[:flight.start].loc[df['NG'] < 60].tail(1).index[0]
+            flight.end += timedelta(10)
+            df[[iasKey, 'NG']].loc[flight.start:flight.end].plot()
+
+    return flights
 
 
 def _findLandingAfter(df: DataFrame, afterIndexTs: Timestamp):
@@ -281,7 +290,7 @@ def detectEngineStartups(df: DataFrame) -> List[Interval]:
         startIndex = df.loc[df['NG'] > NG_LOW_THR].index[0]  # first index above low thr
         df = df[startIndex:]
         dNG = df['NG'].diff().rolling(5, center=True).mean()
-        endIndex = dNG[dNG < 0].head(1).index[0]   # until first derivation is < 0 (non-rising value)
+        endIndex = dNG[dNG < 0].head(1).index[0]  # until first derivation is < 0 (non-rising value)
 
         interval = Interval(start=startIndex, end=endIndex)
         startups.append(interval)
@@ -341,7 +350,7 @@ def detectEngineCruises(df: DataFrame) -> List[Interval]:
     :param df:
     :return:
     """
-    NG_THR_MIN = 60    # [%]
+    NG_THR_MIN = 60  # [%]
     NG_THR_MAX = 97.8  # [%]
     MIN_DURATION = 10  # [s]
 
@@ -382,7 +391,7 @@ def detectEngineShutdowns(df: DataFrame) -> List[Interval]:
     df = df[engUpIndex:]
     # df['NG'].plot()
     while True:
-        x = df.loc[df['NG'] < NG_HIGH_THR]     # find data below high thr
+        x = df.loc[df['NG'] < NG_HIGH_THR]  # find data below high thr
         if x.empty:
             return shutdowns
 
@@ -406,12 +415,13 @@ if __name__ == '__main__':
 
     frDao = FlightRecordingDao()
 
-    # ew = EngineWork(engineId=1, flightId=1, cycleId=20)  # PT6
-    ew = EngineWork(engineId=2, flightId=2, cycleId=21)  # H80 AI.1
-    # ew = EngineWork(engineId=2, flightId=2, cycleId=22)  # H80 AI.2
-    # ew = Engine(engineId=X, flightId=2, cycleId=X)      # H80 GE
+    # ew = EngineWork(engineId=1, flightId=1, flightIdx=0, cycleId=20, cycleIdx=0)  # PT6
+    ew = EngineWork(engineId=2, flightId=2, flightIdx=0, cycleId=21, cycleIdx=0)  # H80 AI.1
+    # ew = EngineWork(engineId=2, flightId=2, flightIdx=0, cycleId=22, cycleIdx=0)  # H80 AI.2
+    # ew = Engine(engineId=X, flightId=2, flightIdx=0, cycleId=X, cycleIdx=0)      # H80 GE
 
-    df = frDao.loadDf(engineId=ew.engineId, flightId=ew.flightId, cycleId=ew.cycleId, recType=RecordingType.FILTERED)
+    df = frDao.loadDf(engineId=ew.engineId, flightId=ew.flightId, flightIdx=ew.flightIdx, cycleId=ew.cycleId, cycleIdx=ew.cycleIdx,
+                      recType=RecordingType.FILTERED)
 
     flightIntervals = detectFlights(df)
     for i, flight in enumerate(flightIntervals):
