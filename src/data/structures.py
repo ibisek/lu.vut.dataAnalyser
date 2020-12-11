@@ -26,7 +26,15 @@ class FlightMode(Enum):
         return self.value
 
 
-Interval = namedtuple('Interval', ['start', 'end'])
+# Interval = namedtuple('Interval', ['start', 'end'])
+class Interval:
+
+    def __init__(self, start, end):
+        self.start = start
+        self.end = end
+
+    def __str__(self):
+        return f'Interval {self.start} -> {self.end}'
 
 # engine-flight-cycle work to be further done after initial preprocessing
-EngineWork = namedtuple('EngineWork', ['engineId', 'flightId', 'cycleId'])
+EngineWork = namedtuple('EngineWork', ['engineId', 'flightId', 'flightIdx', 'cycleId', 'cycleIdx'])
