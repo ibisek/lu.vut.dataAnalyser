@@ -10,11 +10,12 @@ from pandas import DataFrame
 
 from data.structures import EngineWork, Interval
 from data.analysis.flightModesDetection import detectTakeOffs, detectClimbs, detectRepeatedTakeOffs, \
-    detectTaxi, detectEngineStartups, detectEngineIdles, detectEngineCruises, detectEngineShutdowns
+    detectTaxi, detectEngineStartups, detectEngineIdles, detectEngineCruises, detectEngineShutdowns, detectFlights
 from data.analysis.overLimitsDetection import checkCruiseLimits, checkEngineIdleLimits, checkEngineStartupLimits, \
     checkEngineTakeoffLimits, checkEngineClimbLimits, checkEngineShutdownLimits
 from dao.flightRecordingDao import FlightRecordingDao, RecordingType
 from dao.engineLimits import EngineLimits
+from db.dao.flightsDao import FlightsDao
 from db.dao.cyclesDao import CyclesDao
 from flow.utils import _min, _max
 
@@ -69,9 +70,9 @@ class Processing:
 
         cycle.ITTSUg = _max(cycle.ITTSUg, max(dfStartup['ITT']))
         cycle.ALTSUg = _max(cycle.ALTSUg, max(dfStartup['ALT']))
-        cycle.OilP = dfStartup['OILP'].tail(1)[0]   # oil pressure at the end of startup
+        cycle.OilP = dfStartup['OILP'].tail(1)[0]  # oil pressure at the end of startup
         cycle.OilTBe = dfStartup['OILT'].head(1)[0]
-        cycle.FuelP = dfStartup['FUELP'].tail(1)[0]   # fuel pressure at the end of startup
+        cycle.FuelP = dfStartup['FUELP'].tail(1)[0]  # fuel pressure at the end of startup
 
         iasKey = 'IAS' if 'IAS' in dfStartup.keys() else 'TAS'
         cycle.CASmax = _max(cycle.CASmax, max(dfStartup[iasKey]))
@@ -175,6 +176,11 @@ class Processing:
             print(f'[INFO] engine startup #{i} {engineStartup.start} -> {engineStartup.end}')
         # TODO in case of multiple -> crate subcycles; hell yeah! Master is the first, subs are the consequent ones; detection by NG only
 
+        self.flightIntervals = detectFlights(df)
+        for i, flightInterval in enumerate(self.flightIntervals):
+            print(f'[INFO] flight #{i} {flightInterval.start} -> {flightInterval.end}')
+        # TODO in case of mutitude -> create subflights.. (but why, really?)
+
         self.takeoffIntervals = detectTakeOffs(df)
         for i, takeoff in enumerate(self.takeoffIntervals):
             print(f'[INFO] takeoff #{i} {takeoff.start} -> {takeoff.end}')
@@ -214,12 +220,19 @@ class Processing:
         # fire warning
         cycle.FireWarning = _max(cycle.FireWarning, 1 if max(df['FIRE']) > 0 else 0)
 
-    def process(self, engineWork: EngineWork):
-        print(f'[INFO] Processing flight data for engineId={ew.engineId}; flightId={ew.flightId}; cycleId={ew.cycleId}')
-        df = self.frDao.loadDf(engineId=engineWork.engineId, flightId=engineWork.flightId, cycleId=engineWork.cycleId, recType=RecordingType.FILTERED)
+    def _processFlight(self, engineWork: EngineWork):
+        """
+        Core of (sub)flight processing.
+        :param engineWork:
+        :return:
+        """
+        print(f'[INFO] Processing flight data for engineId={ew.engineId}; flightId={ew.flightId}; flightIdx={ew.flightIdx}; cycleId={ew.cycleId}; cycleIdx={ew.cycleIdx}')
+        df = self.frDao.loadDf(engineId=engineWork.engineId, flightId=engineWork.flightId, flightIdx=engineWork.flightIdx,
+                               cycleId=engineWork.cycleId, cycleIdx=engineWork.cycleIdx, recType=RecordingType.FILTERED)
+
         self._detectPhases(df)
 
-        cycle = self.cyclesDao.getOne(id=ew.cycleId)
+        cycle = self.cyclesDao.getOne(id=ew.cycleId, idx=ew.cycleIdx)
 
         for engStartup in self.engineStartupIntervals:
             startupDf = df[engStartup.start:engStartup.end]
@@ -254,14 +267,48 @@ class Processing:
         self._analyseEntireFlightParams(df=df, cycle=cycle)
 
         self.cyclesDao.prepareForSave(cycle)
-        self.cyclesDao.save()
+        self.cyclesDao.save(cycle)
+
+    def process(self, engineWork: EngineWork):
+        """
+        Processes raw flights - with cycle- and flight-idx == 0.
+        :param engineWork:
+        :return:
+        """
+
+        self._processFlight(engineWork=engineWork)
+
+        # print(f'[INFO] Processing initial flight data for engineId={ew.engineId}; flightId={ew.flightId}; cycleId={ew.cycleId}')
+        # df = self.frDao.loadDf(engineId=engineWork.engineId, flightId=engineWork.flightId, flightIdx=engineWork.flightIdx,
+        #                        cycleId=engineWork.cycleId, cycleIdx=engineWork.cycleIdx, recType=RecordingType.FILTERED)
+        #
+        # # split flight-records to separate (sub)flights if needed:
+        # flightIntervals = detectFlights(df)
+        #
+        # works = []
+        # if len(flightIntervals) == 1:
+        #     works.append(engineWork)
+        #
+        # else:  # split the flight into subfligts (and subcycles):
+        #     for i, flightInterval in enumerate(flightIntervals):
+        #         print(f'[INFO] sub-flight #{i + 1} {flightInterval.start} -> {flightInterval.end}')
+        #
+        #         # create new sub-flight:
+        #         flightsDao = FlightsDao()
+        #         subFlight = flightsDao.createNew()
+        #         subFlight.master_id = engineWork.flightId
+        #         subFlight.idx = i + 1   # idx starts from 1
+        #         subFlight.cycle_id = engineWork.cycleId
+        #         flightsDao.save(subFlight)
+        #
+        #         subDf = df[flightInterval.start: flightInterval.end]
 
 
 if __name__ == '__main__':
-    # ew = EngineWork(engineId=1, flightId=1, cycleId=20)     # PT6
-    ew = EngineWork(engineId=2, flightId=2, cycleId=21)     # H80 AI.1
-    # ew = EngineWork(engineId=3, flightId=2, cycleId=22)     # H80 AI.2
-    # ew = Engine(engineId=3, flightId=2, cycleId=X)          # H80 GE
+    # ew = EngineWork(engineId=1, flightId=1, flightIdx=0, cycleId=20, cycleIdx=0)     # PT6
+    ew = EngineWork(engineId=2, flightId=2, flightIdx=0, cycleId=21, cycleIdx=0)  # H80 AI.1
+    # ew = EngineWork(engineId=3, flightId=2, flightIdx=0, cycleId=22, cycleIdx=0)     # H80 AI.2
+    # ew = Engine(engineId=3, flightId=2, flightIdx=0, cycleId=X, cycleIdx=0)          # H80 GE
 
     p = Processing()
     p.process(ew)
