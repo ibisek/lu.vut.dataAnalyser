@@ -202,6 +202,7 @@ INSERT INTO airplanes_engines (airplane_id, engine_id) VALUES (1, 1);
 --DROP TABLE IF EXISTS flights;
 CREATE TABLE IF NOT EXISTS flights (
   id INT PRIMARY KEY auto_increment,
+  root_id INT DEFAULT NULL references flights.id,
   idx INT DEFAULT 0,
   airplane_id INT NOT NULL references airplanes.id,
   takeoff_ts INT NULL,
@@ -321,6 +322,7 @@ CREATE TABLE IF NOT EXISTS users (
 --DROP TABLE IF EXISTS cycles;	
 CREATE TABLE IF NOT EXISTS cycles (
   id INT PRIMARY KEY auto_increment,
+  root_id INT DEFAULT NULL references cycles.id,
   idx INT NOT NULL DEFAULT 0,
   engine_id INT NOT NULL references engines.id,
   flight_id INT NOT NULL references flights.id,
@@ -502,7 +504,7 @@ select * from notifications order by id desc;
 select * from logbook order by id desc;
 
 --delete from cycles where id=1;
---insert into cycles (id, engine_id, flight_id, file_id) values(10,1,1,1);
---insert into cycles (id, engine_id, flight_id, file_id) values(12,2,2,2);
---insert into cycles (id, engine_id, flight_id, file_id) values(13,3,2,2);
+--insert into cycles (id, engine_id, flight_id, file_id) values(20,1,1,1);
+--insert into cycles (id, engine_id, flight_id, file_id) values(21,2,2,2);
+--insert into cycles (id, engine_id, flight_id, file_id) values(22,3,2,2);
 
