@@ -12,9 +12,24 @@ from pandas import DataFrame, Series, Timestamp
 import matplotlib.pyplot as plt
 from typing import List
 
+from data.analysis.utils import findIntervals
 from data.structures import Interval, EngineWork
 from dao.flightRecordingDao import FlightRecordingDao, RecordingType
 from dao.engineLimits import EngineLimits
+
+
+def detectFlights(df: DataFrame) -> List[Interval]:
+    """
+    Takeoff and climb intervals cannot be reliably used for flights separation
+    due to its unrealistically set conditions. Hence this workaround.
+    :param df:
+    :return:
+    """
+
+    FLIGHT_MIN_DURATION = 60  # [s]
+    iasKey = 'IAS' if 'IAS' in df.keys() else 'TAS'
+
+    return findIntervals(df[iasKey], 100, FLIGHT_MIN_DURATION)   # 100km/h, min 10s
 
 
 def _findLandingAfter(df: DataFrame, afterIndexTs: Timestamp):
@@ -391,12 +406,16 @@ if __name__ == '__main__':
 
     frDao = FlightRecordingDao()
 
-    ew = EngineWork(engineId=1, flightId=1, cycleId=20)  # PT6
-    # ew = EngineWork(engineId=2, flightId=2, cycleId=21)  # H80 AI.1
+    # ew = EngineWork(engineId=1, flightId=1, cycleId=20)  # PT6
+    ew = EngineWork(engineId=2, flightId=2, cycleId=21)  # H80 AI.1
     # ew = EngineWork(engineId=2, flightId=2, cycleId=22)  # H80 AI.2
     # ew = Engine(engineId=X, flightId=2, cycleId=X)      # H80 GE
 
     df = frDao.loadDf(engineId=ew.engineId, flightId=ew.flightId, cycleId=ew.cycleId, recType=RecordingType.FILTERED)
+
+    flightIntervals = detectFlights(df)
+    for i, flight in enumerate(flightIntervals):
+        print(f'[INFO] flight #{i} {flight.start} -> {flight.end}')
 
     engineStartups = detectEngineStartups(df)
     for i, engineStartup in enumerate(engineStartups):
