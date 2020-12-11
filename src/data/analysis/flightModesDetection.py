@@ -12,8 +12,9 @@ from pandas import DataFrame, Series, Timestamp
 import matplotlib.pyplot as plt
 from typing import List
 
-from dao.flightRecordingDao import FlightRecordingDao, RecordingType
 from data.structures import Interval, EngineWork
+from dao.flightRecordingDao import FlightRecordingDao, RecordingType
+from dao.engineLimits import EngineLimits
 
 
 def _findLandingAfter(df: DataFrame, afterIndexTs: Timestamp):
@@ -347,13 +348,52 @@ def detectEngineCruises(df: DataFrame) -> List[Interval]:
     return intervals
 
 
+def detectEngineShutdowns(df: DataFrame) -> List[Interval]:
+    """
+    Detection of engine shutdown.
+    start: NG < 57% with stable decrease all the way till
+    end: NG ~ 10% or 0% on ground
+
+    :param df:
+    :return: list of intervals
+    """
+    NG_HIGH_THR = 57  # [%]
+    NG_LOW_THR = 10  # [%]
+
+    df = df.copy(deep=True)
+    shutdowns = []
+
+    engUpIndex = df.loc[df['NG'] >= EngineLimits.H80['NGLimIdle']].index[0]  # first index where the engine was above idle
+    df = df[engUpIndex:]
+    # df['NG'].plot()
+    while True:
+        x = df.loc[df['NG'] < NG_HIGH_THR]     # find data below high thr
+        if x.empty:
+            return shutdowns
+
+        sdStartIndex = df.loc[df['NG'] < NG_HIGH_THR].index[0]
+        df = df[sdStartIndex:]
+
+        x = df.loc[df['NG'] < NG_LOW_THR]  # find data below low thr
+        if x.empty:
+            return shutdowns
+
+        endIndex = df.loc[df['NG'] < NG_LOW_THR].index[0]  # first index below low thr
+        x = df[:endIndex]
+
+        # TODO.. perhaps one nice sunny day
+        raise NotImplementedError('[FATAL] NO DATA WAS AVAILABLE FOR ENGINE SHUTDOWN DETECTION IMPLEMENTATION!')
+
+    return shutdowns
+
+
 if __name__ == '__main__':
 
     frDao = FlightRecordingDao()
 
-    # ew = EngineWork(engineId=1, flightId=1, cycleId=1)  # PT6
-    ew = EngineWork(engineId=2, flightId=2, cycleId=12)  # H80 AI.1
-    # ew = EngineWork(engineId=2, flightId=2, cycleId=13)  # H80 AI.2
+    ew = EngineWork(engineId=1, flightId=1, cycleId=20)  # PT6
+    # ew = EngineWork(engineId=2, flightId=2, cycleId=21)  # H80 AI.1
+    # ew = EngineWork(engineId=2, flightId=2, cycleId=22)  # H80 AI.2
     # ew = Engine(engineId=X, flightId=2, cycleId=X)      # H80 GE
 
     df = frDao.loadDf(engineId=ew.engineId, flightId=ew.flightId, cycleId=ew.cycleId, recType=RecordingType.FILTERED)
@@ -380,12 +420,16 @@ if __name__ == '__main__':
         print(f"[INFO] taxi {interval.start} -> {interval.end}; dur: {dur}s")
 
     engineIdles = detectEngineIdles(df)
-    for idle in engineIdles:
-        print(f'[INFO] engine idle {idle.start} -> {idle.end}', )
+    for i, idle in enumerate(engineIdles):
+        print(f'[INFO] engine idle #{i} {idle.start} -> {idle.end}', )
 
     engineCruiseIntervals = detectEngineCruises(df)
     for i, cruise in enumerate(engineCruiseIntervals):
         print(f'[INFO] cruise {i} {cruise.start} -> {cruise.end}', )
+
+    engineShutdownIntervals = detectEngineShutdowns(df)
+    for i, shutdown in enumerate(engineShutdownIntervals):
+        print(f'[INFO] engine shutdown {i} {shutdown.start} -> {shutdown.end}', )
 
     frDao.influx.stop()
 
