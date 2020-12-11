@@ -52,6 +52,10 @@ class FlightRecordingDao(object):
         c = DataFrameClient(host=INFLUX_DB_HOST, port=8086, database=INFLUX_DB_NAME)
         res = c.query(query=q)
 
+        if len(res) == 0:
+            print(f'[WARN] loadDf(): no data in result set for {recType.value} engine: {engineId}; flight: {flightId}; cycle: {cycle_id}')
+            return DataFrame()
+
         df = res['flights']
 
         # re-create the 'ts' channel/column:
