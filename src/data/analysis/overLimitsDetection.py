@@ -13,6 +13,7 @@ from db.dao.enginesDao import EnginesDao
 from db.dao.logbookDao import Logbook
 from flow.utils import _min, _max
 from flow.notifications import Notifications
+from data.analysis.utils import findIntervals
 from data.analysis.limits.limitsBase import Zone
 from data.analysis.limits.ngLimits import NgLimits
 from data.analysis.limits.tqLimits import TqLimits
@@ -32,7 +33,7 @@ def _checkNG(df: DataFrame, flightMode: FlightMode, cycle):
 
     # flag above limit data points:
     df['lim'] = df['ZONE'].apply(lambda x: 0 if x == Zone.A else 1)
-    intervals: List[Interval] = __findIntervals(df['lim'], 0, 1)
+    intervals: List[Interval] = findIntervals(df['lim'], 0, 1)
 
     for interval in intervals:
         maxNG = max(df['NG'].loc[interval.start: interval.end])
@@ -44,28 +45,6 @@ def _checkNG(df: DataFrame, flightMode: FlightMode, cycle):
         endT = interval.end.strftime('%Y-%m-%d %H:%M:%S')
         msg = f'NG above limits during {flightMode} with max value of {maxNG:.1f}% between {startT} and {endT}'
         Logbook.add(ts=interval.start.timestamp(), entry=msg, engineId=cycle.engine_id)
-
-
-def __findIntervals(s: Series, aboveVal, minDuration: int = 0) -> Interval:
-    intervals = []
-    startTs = endTs = None
-    for i in range(len(s)):
-        if not startTs and s.iloc[i] > aboveVal:
-            startTs = s.index[i]
-
-        if startTs and s.iloc[i] < aboveVal:
-            endTs = s.index[i]
-            duration = (endTs - startTs).seconds
-            if duration > minDuration:
-                intervals.append(Interval(start=startTs, end=endTs))
-
-            startTs = endTs = None
-
-    if startTs and not endTs:
-        endTs = s.tail(1).index[0]
-        intervals.append(Interval(start=startTs, end=endTs))
-
-    return intervals
 
 
 def _checkNP(df: DataFrame, flightMode: FlightMode, cycle):
@@ -80,7 +59,7 @@ def _checkNP(df: DataFrame, flightMode: FlightMode, cycle):
     minDuration = 10  # [s]
 
     if maxNP > EngineLimits.H80[flightMode]['NPLimCrB']:  # > 2400
-        overNpIntervals: List[Interval] = __findIntervals(s=df['NP'], aboveVal=EngineLimits.H80[flightMode]['NPLimCrB'], minDuration=minDuration)
+        overNpIntervals: List[Interval] = findIntervals(s=df['NP'], aboveVal=EngineLimits.H80[flightMode]['NPLimCrB'], minDuration=minDuration)
         for i in overNpIntervals:
             duration = max([(i.end - i.start).seconds for i in overNpIntervals])
 
@@ -90,7 +69,7 @@ def _checkNP(df: DataFrame, flightMode: FlightMode, cycle):
             Notifications.urgent(cycle, f'Propeller overspeed of {maxNP:.0f} rpm detected. Return the engine to overhaul facility for inspection/repair!')
 
     elif EngineLimits.H80[flightMode]['NPLimCrA'] < maxNP <= EngineLimits.H80[flightMode]['NPLimCrB']:  # 2300-2400 (zone B)
-        overNpIntervals: List[Interval] = __findIntervals(s=df['NP'], aboveVal=EngineLimits.H80[flightMode]['NPLimCrA'], minDuration=minDuration)
+        overNpIntervals: List[Interval] = findIntervals(s=df['NP'], aboveVal=EngineLimits.H80[flightMode]['NPLimCrA'], minDuration=minDuration)
         if len(overNpIntervals) > 0:
             enginesDao = EnginesDao()
             engine = enginesDao.getOne(id=cycle.engine_id)
@@ -109,7 +88,7 @@ def _checkNP(df: DataFrame, flightMode: FlightMode, cycle):
                     Notifications.urgent(engine, f"Num of NP excesses ({engine.EngNumNPExcB}) over limit ({EngineLimits.H80['EngNumNPExcB']})!")
 
     elif EngineLimits.H80[flightMode]['NPLimCr2'] < maxNP <= EngineLimits.H80[flightMode]['NPLimCrA']:  # 2200-2300 (zone A)
-        overNpIntervals: List[Interval] = __findIntervals(s=df['NP'], aboveVal=EngineLimits.H80[flightMode]['NPLimCr2'], minDuration=minDuration)
+        overNpIntervals: List[Interval] = findIntervals(s=df['NP'], aboveVal=EngineLimits.H80[flightMode]['NPLimCr2'], minDuration=minDuration)
         if len(overNpIntervals) > 0:
             enginesDao = EnginesDao()
             engine = enginesDao.getOne(id=cycle.engine_id)
@@ -145,7 +124,7 @@ def __checkITT_cruise(df: DataFrame, flightMode: FlightMode, cycle):
     if max(df['ITT']) > EngineLimits.H80[flightMode]['ITTLimTot']:
         zone = Zone.D
     else:
-        intervals = __findIntervals(df['ITT'], bottomChartITT, 1)
+        intervals = findIntervals(df['ITT'], bottomChartITT, 1)
         for interval in intervals:
             ittl = IttEngOpsLimits()
 
@@ -200,7 +179,7 @@ def __checkITT_startup(df: DataFrame, flightMode: FlightMode, cycle):
     if max(df['ITT']) > 780:  # [deg.C]
         zone = Zone.C
     else:
-        intervals = __findIntervals(df['ITT'], bottomChartITT, 1)
+        intervals = findIntervals(df['ITT'], bottomChartITT, 1)
         for interval in intervals:
             ittl = IttEngStartLimits()
 
@@ -258,7 +237,7 @@ def _checkTQ(df: DataFrame, flightMode: FlightMode, cycle):
     if max(df['TQpct']) > 108:
         zone = Zone.C
     else:
-        intervals = __findIntervals(df['TQpct'], 100, 1)
+        intervals = findIntervals(df['TQpct'], 100, 1)
         for interval in intervals:
             tql = TqLimits()
 
