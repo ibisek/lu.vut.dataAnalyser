@@ -104,6 +104,8 @@ CREATE TABLE IF NOT EXISTS engines (
   archived BOOL default false,
   status VARCHAR(16),
   -- eng.counters:
+  cycle_hours INT default 0,
+  takeoff_hours INT default 0,
   CYCLENo INT default 0,
   CYCLENoTO FLOAT default 0,
   CYCLERep FLOAT default 0,
