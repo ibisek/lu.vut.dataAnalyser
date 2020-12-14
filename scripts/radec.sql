@@ -67,27 +67,6 @@ CREATE TABLE IF NOT EXISTS equipment_properties (
 select * from equipment_properties;
 select * from equipment;
 
-
---DROP TABLE IF EXISTS fleets;
-CREATE TABLE IF NOT EXISTS fleets (
-  id INT PRIMARY KEY auto_increment,
-  owner_org_id INT NOT NULL REFERENCES organisations.id,
-  label VARCHAR(32) NOT NULL
-) charset utf8;
-
-INSERT INTO fleets (owner_org_id, label) VALUES (1, 'LU Virtual Fleet');
-INSERT INTO fleets (owner_org_id, label) VALUES (2, 'GEAC Virtual Fleet');
-
-select * from fleets;
-
-
---DROP TABLE IF EXISTS fleets_organisations;
-CREATE TABLE IF NOT EXISTS fleets_organisations (
-  fleet_id INT NOT NULL REFERENCES fleets.id,
-  organisation_id INT NOT NULL REFERENCES organisations.id
-) charset utf8;
-
-
 --DROP TABLE IF EXISTS airplanes;
 CREATE TABLE IF NOT EXISTS airplanes (
   id INT PRIMARY KEY auto_increment,
@@ -285,39 +264,6 @@ CREATE TABLE IF NOT EXISTS files_flights (
   file_id INT references files.id,
   flight_id INT references flights.id
 ) charset utf8;
-
---DROP TABLE IF EXISTS organisations;
-CREATE TABLE IF NOT EXISTS organisations (
-  id INT PRIMARY KEY auto_increment,
-  name VARCHAR(64) NOT NULL,
-  vat VARCHAR(16) NULL,
-  address VARCHAR(255) NULL,
-  super TINYINT(1) NOT NULL,
-  enabled TINYINT(1) NOT NULL,
-  url VARCHAR(255)
-) charset utf8;
-
-alter table organisations ADD COLUMN url VARCHAR(255);
-
-INSERT INTO organisations (name, vat, address, super, enabled) VALUES 
-	('LU.VUT', 'CZ00216305', 'Letecký ústav, Technická 2896/2, 616 69 Brno, CZ', true, true, 'https://lu.fme.vutbr.cz/');
-select * from organisations;
-
-
---DROP TABLE IF EXISTS users;
-CREATE TABLE IF NOT EXISTS users (
-  id INT PRIMARY KEY auto_increment,
-  login VARCHAR(32) NOT NULL,
-  password VARCHAR(256) NOT NULL,
-  salt VARCHAR(255) BINARY NOT NULL,
-  name VARCHAR(32) NOT NULL,
-  surname VARCHAR(32) NOT NULL,
-  email VARCHAR(128) NOT NULL,
-  enabled TINYINT(1) NULL,
-  admin TINYINT(1) NOT NULL DEFAULT 0,
-  organisation_id INT NOT NULL REFERENCES organisations.id
-) charset utf8;
-
 
 --DROP TABLE IF EXISTS cycles;	
 CREATE TABLE IF NOT EXISTS cycles (
