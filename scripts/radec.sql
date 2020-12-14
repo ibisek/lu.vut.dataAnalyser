@@ -197,7 +197,7 @@ CREATE TABLE IF NOT EXISTS flights (
   flight_time INT NOT NULL DEFAULT 0,
   operation_time INT NOT NULL DEFAULT 0,
   LNDCount INT default 0,
-  LNDHeavy FLOAT,
+  LNDHeavy FLOAT default false,
   NoSUL INT default 0,
   NoSUR INT default 0,
   NoTOAll INT default 0,
@@ -400,8 +400,6 @@ SELECT count(*) FROM files WHERE source = true AND status=1;
 
 select * from files where status = 1;
 select * from files where status > 10;
-update files set status = 1 where status = 2;
-update files set status = 1 where id=681;
 
 select count(*) from regression_results;
 select * from regression_results;
@@ -419,8 +417,6 @@ select * from regression_results where ts != 0 and file_id is not null and engin
 select * from regression_results where ts = 0 and file_id is null and engine_id=1;
 
 select * from configuration;
-
-select id, login, admin from users;
 
 --
 --insert into files (name, raw, hash) values ('log_190323_090817_LKTB.csv', true, '0c4db7ec609361af08af2829713292b3e502ae79060e7861ad4d9b27573d2791');
@@ -456,3 +452,4 @@ select * from logbook order by id desc;
 --insert into cycles (id, engine_id, flight_id, file_id) values(21,2,2,2);
 --insert into cycles (id, engine_id, flight_id, file_id) values(22,3,2,2);
 
+--delete from flights where root_id=2
