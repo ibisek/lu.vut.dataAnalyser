@@ -25,6 +25,7 @@ class Processing:
     def __init__(self):
         self.frDao = FlightRecordingDao()
         self.cyclesDao = CyclesDao()
+        self.flightsDao = FlightsDao()
 
     def __del__(self):
         self.frDao.influx.stop()
@@ -237,6 +238,8 @@ class Processing:
         self._detectPhases(df)
 
         cycle = self.cyclesDao.getOne(id=ew.cycleId, idx=ew.cycleIdx)
+        flight = self.flightsDao.getOne(id=ew.flightId, idx=engineWork.flightIdx)
+        assert cycle and flight     # both must already exist
 
         for engStartup in self.engineStartupIntervals:
             startupDf = df[engStartup.start:engStartup.end]
@@ -270,14 +273,24 @@ class Processing:
 
         self._analyseEntireFlightParams(df=df, cycle=cycle)
 
+        toTs = self.flightIntervals[0].start.timestamp()
+        laTs = self.flightIntervals[len(self.flightIntervals)-1].end.timestamp()
+        self.__populateFlightFields(flight=flight, df=df, takeoffTs=toTs, landingTs=laTs)
+        flight.LNDCount = len(self.flightIntervals)
+        flight.NoTOAll = len(self.flightIntervals)
+        self.flightsDao.save(flight)
+
         self.cyclesDao.prepareForSave(cycle)
         self.cyclesDao.save(cycle)
 
-    def __populateFlightFields(self, flight, df: DataFrame, takeoffTs: int, landingTs:int):
+    @staticmethod
+    def __populateFlightFields(flight, df: DataFrame, takeoffTs: int, landingTs:int):
         flight.takeoff_ts = takeoffTs
         flight.landing_ts = landingTs
         flight.flight_time = (flight.landing_ts - flight.takeoff_ts)
         flight.LNDCount = 1
+        flight.NoTOAll = 1
+        flight.NoTORep = 0  # TODO once we can detect such state
 
         if 'lat' in df.keys() and 'lon' in df.keys():
             flight.takeoff_lat = df['lat'].head(1)[0]
