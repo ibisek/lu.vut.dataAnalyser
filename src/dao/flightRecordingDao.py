@@ -63,6 +63,13 @@ class FlightRecordingDao(object):
 
         df = res['flights']
 
+        # drop columns that are tags; we want to proceed with fields only:
+        df = df.drop(columns=['cycle_id', 'engine_id', 'flight_id', 'type'])
+        if 'flight_idx' in df.keys():
+            df.drop(columns=['flight_idx'])
+        if 'cycle_idx' in df.keys():
+            df.drop(columns=['cycle_idx'])
+
         # re-create the 'ts' channel/column:
         df['ts'] = df.index
         df['ts'] = df['ts'].apply(lambda x: x.timestamp())
