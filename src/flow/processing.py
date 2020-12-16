@@ -283,10 +283,15 @@ class Processing:
         self.cyclesDao.prepareForSave(cycle)
         self.cyclesDao.save(cycle)
 
+        # TODO calculate equivalent flight-cycles
+
     def __populateFlightFields(self, flight, df: DataFrame, takeoffTs: int, landingTs:int):
+        taxiingSeconds = sum([(x.end - x.start).seconds for x in self.taxiIntervals])
+
         flight.takeoff_ts = takeoffTs
         flight.landing_ts = landingTs
-        flight.flight_time = (flight.landing_ts - flight.takeoff_ts)
+        flight.operation_time = (flight.landing_ts - flight.takeoff_ts)     # time in the air
+        flight.flight_time = taxiingSeconds + flight.operation_time         # time in the air and moving on the ground - toto vymyslela nejaka urednicka <|>
         flight.LNDCount = 1
         flight.NoSUL = flight.NoSUR = len(self.engineStartupIntervals)
         flight.NoTOAll = 1
@@ -388,6 +393,11 @@ class Processing:
         works: List[EngineWork] = self._splitIntoSubflights(df=df, engineWork=engineWork)
         for work in works:
             self._processFlight(engineWork=work)
+            self._processCycle(engineWork=work)
+
+    def _processCycle(self, engineWork: EngineWork):
+        # TODO..
+        pass
 
 
 if __name__ == '__main__':
