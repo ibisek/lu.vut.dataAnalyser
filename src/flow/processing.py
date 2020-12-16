@@ -5,6 +5,7 @@ Step #2:
 """
 
 from typing import List
+from copy import deepcopy
 
 from pandas import DataFrame
 
@@ -26,6 +27,7 @@ class Processing:
         self.frDao = FlightRecordingDao()
         self.cyclesDao = CyclesDao()
         self.flightsDao = FlightsDao()
+        self.frDao = FlightRecordingDao()
 
     def __del__(self):
         self.frDao.influx.stop()
@@ -235,11 +237,11 @@ class Processing:
             df = self.frDao.loadDf(engineId=engineWork.engineId, flightId=engineWork.flightId, flightIdx=engineWork.flightIdx,
                                    cycleId=engineWork.cycleId, cycleIdx=engineWork.cycleIdx, recType=RecordingType.FILTERED)
 
-        self._detectPhases(df)
-
         cycle = self.cyclesDao.getOne(id=ew.cycleId, idx=ew.cycleIdx)
         flight = self.flightsDao.getOne(id=ew.flightId, idx=engineWork.flightIdx)
         assert cycle and flight     # both must already exist
+
+        self._detectPhases(df)
 
         for engStartup in self.engineStartupIntervals:
             startupDf = df[engStartup.start:engStartup.end]
@@ -274,21 +276,20 @@ class Processing:
         self._analyseEntireFlightParams(df=df, cycle=cycle)
 
         toTs = self.flightIntervals[0].start.timestamp()
-        laTs = self.flightIntervals[len(self.flightIntervals)-1].end.timestamp()
+        laTs = self.flightIntervals[len(self.flightIntervals) - 1].end.timestamp()
         self.__populateFlightFields(flight=flight, df=df, takeoffTs=toTs, landingTs=laTs)
-        flight.LNDCount = len(self.flightIntervals)
-        flight.NoTOAll = len(self.flightIntervals)
+
         self.flightsDao.save(flight)
 
         self.cyclesDao.prepareForSave(cycle)
         self.cyclesDao.save(cycle)
 
-    @staticmethod
-    def __populateFlightFields(flight, df: DataFrame, takeoffTs: int, landingTs:int):
+    def __populateFlightFields(self, flight, df: DataFrame, takeoffTs: int, landingTs:int):
         flight.takeoff_ts = takeoffTs
         flight.landing_ts = landingTs
         flight.flight_time = (flight.landing_ts - flight.takeoff_ts)
         flight.LNDCount = 1
+        flight.NoSUL = flight.NoSUR = len(self.engineStartupIntervals)
         flight.NoTOAll = 1
         flight.NoTORep = 0  # TODO once we can detect such state
 
@@ -300,39 +301,54 @@ class Processing:
             flight.landing_lon = df['lon'].tail(1)[0]
             # flight.landing_icao = 'xxx'    # TODO location lookup
 
-    def _extractSubFlights(self, df: DataFrame, rootFlightId: int):
+    def _splitIntoSubflights(self, df: DataFrame, engineWork: EngineWork):
         """
-        Extracts flight sections into sub-flights.
+        Splits one record into multiple flights (if there are many)
         :param df:
-        :param rootFlightId
-        :return:
+        :param engineWork:
+        :return: list of EngineWorks representing each sub-flight
         """
-        if len(self.flightIntervals) > 1:
-            flightsDao = FlightsDao()
-            frDao = FlightRecordingDao()
+        if len(self.flightIntervals) == 1:
+            return [engineWork]
 
-            for idx, flightInterval in enumerate(self.flightIntervals, start=1):    # idx starts from 1
-                print(f'[INFO] extracting sub-flight #{idx} {flightInterval.start} -> {flightInterval.end}')
-                subDf = df[flightInterval.start: flightInterval.end]
+        works = []
+        numIntervals = len(self.flightIntervals)
+        for i in range(numIntervals):
+            flightInterval = self.flightIntervals[i]
+            print(f'[INFO] extracting sub-flight #{i+1} {flightInterval.start} -> {flightInterval.end}')
 
-                subFlight = flightsDao.getOne(root_id=ew.flightId, idx=idx)  # check for existence
-                if not subFlight:
-                    rootFlight = flightsDao.getOne(id=ew.flightId, idx=0)
-                    assert rootFlight
+            # get the right df-slice for the interval:
+            if i == 0:                              # for first flight take de data..
+                subDf = df[:flightInterval.end]     # from the very beginning of the record till the end of the actual flight as detected
+            elif i == numIntervals-1:               # for last flight..
+                subDf = df[self.flightIntervals[i-1].end:]   # take everything from the previous interval end till end of the df
+            else:
+                subDf = df[self.flightIntervals[i-1].end: flightInterval.end]   # from the previous interval end (incl.taxiing)
 
-                    subFlight = flightsDao.createNew()
-                    subFlight.root_id = rootFlightId
-                    subFlight.idx = idx
-                    subFlight.airplane_id = rootFlight.airplane_id
+            subFlight = self.flightsDao.getOne(root_id=ew.flightId, idx=i+1)  # check for existence (idx)
+            if not subFlight:
+                rootFlight = self.flightsDao.getOne(id=ew.flightId, idx=0)
+                assert rootFlight
 
-                    toTs = int(flightInterval.start.timestamp())
-                    laTs = int(flightInterval.end.timestamp())
-                    self.__populateFlightFields(subFlight, subDf, takeoffTs=toTs, landingTs=laTs)
-                    flightsDao.save(subFlight)
+                subFlight = self.flightsDao.createNew()
+                subFlight.root_id = engineWork.flightId
+                subFlight.idx = i + 1  # idx starts from 1
+                subFlight.airplane_id = rootFlight.airplane_id
 
-                    frDao.storeDf(engineId=ew.engineId, flightId=subFlight.id, flightIdx=subFlight.idx,
-                                  cycleId=ew.cycleId, cycleIdx=ew.cycleIdx,
-                                  df=subDf, recType=RecordingType.FILTERED)
+                toTs = int(flightInterval.start.timestamp())
+                laTs = int(flightInterval.end.timestamp())
+                self.__populateFlightFields(subFlight, subDf, takeoffTs=toTs, landingTs=laTs)
+                self.flightsDao.save(subFlight)
+
+                self.frDao.storeDf(engineId=ew.engineId, flightId=subFlight.id, flightIdx=subFlight.idx,
+                                   cycleId=ew.cycleId, cycleIdx=ew.cycleIdx,
+                                   df=subDf, recType=RecordingType.FILTERED)
+
+            newEw = deepcopy(engineWork)
+            newEw.flightIdx = subFlight.idx
+            works.append(newEw)
+
+        return works
 
     def process(self, engineWork: EngineWork):
         """
@@ -347,11 +363,11 @@ class Processing:
         df = self.frDao.loadDf(engineId=engineWork.engineId, flightId=engineWork.flightId, flightIdx=engineWork.flightIdx,
                                cycleId=engineWork.cycleId, cycleIdx=engineWork.cycleIdx, recType=RecordingType.FILTERED)
 
-        # analyse the entire record as one flight:
-        self._processFlight(engineWork=engineWork)
+        self._detectPhases(df)  # on the entire dataset
 
-        # extract separate sub-flights (if any):
-        self._extractSubFlights(df=df, rootFlightId=engineWork.flightId)
+        works: List[EngineWork] = self._splitIntoSubflights(df=df, engineWork=engineWork)
+        for work in works:
+            self._processFlight(engineWork=engineWork)
 
 
 if __name__ == '__main__':
