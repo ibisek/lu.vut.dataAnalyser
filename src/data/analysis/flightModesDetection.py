@@ -284,8 +284,12 @@ def detectEngineStartups(df: DataFrame) -> List[Interval]:
     """
     NG_LOW_THR = 0  # [%]
 
-    df = df.copy(deep=True)
     startups = []
+
+    if len(df.loc[df['NG'] < 30]) == 0:     # the engine was not down
+        return startups
+
+    df = df.copy(deep=True)
 
     while True:
         startIndex = df.loc[df['NG'] > NG_LOW_THR].index[0]  # first index above low thr
