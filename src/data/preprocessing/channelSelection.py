@@ -344,6 +344,6 @@ def _populateMissingChannels(dataFrame: DataFrame) -> DataFrame:
     if 'FUELP' not in dataFrame:  # fuel pressure
         dataFrame['FUELP'] = 0
     if 'FIRE' not in dataFrame:  # engine on fire indication
-        dataFrame['FIRE'] = 0
+        dataFrame['FIRE'] = int(0)
 
     return dataFrame
