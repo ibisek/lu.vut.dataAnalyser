@@ -37,4 +37,14 @@ class Interval:
 
 
 # engine-flight-cycle work to be further done after initial preprocessing
-EngineWork = namedtuple('EngineWork', ['engineId', 'flightId', 'flightIdx', 'cycleId', 'cycleIdx'])
+# EngineWork = namedtuple('EngineWork', ['engineId', 'flightId', 'flightIdx', 'cycleId', 'cycleIdx'])
+class EngineWork:
+    def __init__(self, engineId: int, flightId: int, flightIdx: int, cycleId: int, cycleIdx: int):
+        self.engineId = engineId
+        self.flightId = flightId
+        self.flightIdx = flightIdx
+        self.cycleId = cycleId
+        self.cycleIdx = cycleIdx
+
+    def __str__(self):
+        return str(vars(self))
