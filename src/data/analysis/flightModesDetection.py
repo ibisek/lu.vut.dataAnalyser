@@ -246,12 +246,16 @@ def detectTaxi(df: DataFrame) -> List[Interval]:
 
     x = df.copy(deep=True)
 
-    TAXI_LOW_SPEED_THR = 2  # [km/h]
+    TAXI_LOW_SPEED_THR = 10  # [km/h]
     TAXI_HIGH_SPEED_THR = 50  # [km/h]
     TAXI_MIN_DURATION = 20  # [s]
 
-    x['TAXI_flag'] = x['GS'].apply(lambda x: 1 if TAXI_LOW_SPEED_THR < x < TAXI_HIGH_SPEED_THR else 0)
-    x['TAXI_state_change'] = x['TAXI_flag'].diff()  # mark where taxiing changes (stopped 2 taxiing | taxiing to stop)
+    gsKey = 'GS'
+    if 'GS' not in df.keys():   # some buggers don't have GS in the data
+        gsKey = 'IAS' if 'IAS' in df.keys() else 'TAS'
+
+    x['TAXI_flag'] = x[gsKey].apply(lambda x: 1 if TAXI_LOW_SPEED_THR < x < TAXI_HIGH_SPEED_THR else 0)
+    x['TAXI_state_change'] = x['TAXI_flag'].diff()  # mark where taxiing changes (stopped -> taxiing | taxiing -> stop)
     changesInGS: Series = x.loc[x['TAXI_state_change'] != 0]['TAXI_state_change']  # select only rows with changes
     changesInGS = changesInGS.dropna()
 
