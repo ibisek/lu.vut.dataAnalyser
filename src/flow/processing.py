@@ -327,10 +327,11 @@ class Processing:
             else:
                 subDf = df[self.flightIntervals[i-1].end: flightInterval.end]   # from the previous interval end (incl.taxiing)
 
-            subCycle = None
-
-            subFlight = self.flightsDao.getOne(root_id=ew.flightId, idx=i + 1)  # check for existence (idx)
+            # check for existence (idx) - it might have been created by the other engine's data record:
+            newSubFlight = False
+            subFlight = self.flightsDao.getOne(root_id=ew.flightId, idx=i + 1)
             if not subFlight:
+                newSubFlight = True
                 print(f'[INFO] extracting sub-flight #{i + 1} {flightInterval.start} -> {flightInterval.end}')
                 rootFlight = self.flightsDao.getOne(id=ew.flightId, idx=0)
                 assert rootFlight
@@ -346,18 +347,22 @@ class Processing:
                 self.flightsDao.save(subFlight)
                 print(f'[INFO] created new sub-flight id={subFlight.id}')
 
-                # check if this sub-range is eligible for a sub-cycle:
-                if len(subDf.loc[subDf['NP'] > 240].loc[subDf['NP'] < 830].loc[subDf['NG'] > 57]):  # propeller in feathering position
-                    # create new sub-cycle related to the sub-flight:
-                    subCycle = self.cyclesDao.createNew()
-                    subCycle.root_id = engineWork.cycleId
-                    subCycle.idx = subFlight.idx    # same as related flight idx
-                    subCycle.engine_id = ew.engineId
-                    subCycle.flight_id = subFlight.id
+            newSubCycle = False
+            subCycle = self.flightsDao.getOne(root_id=ew.cycleId, idx=i + 1)
+            # check if this sub-range is eligible for a sub-cycle:
+            if not subCycle and len(subDf.loc[subDf['NP'] > 240].loc[subDf['NP'] < 830].loc[subDf['NG'] > 57]):  # propeller in feathering position
+                newSubCycle = True
+                # create new sub-cycle related to the sub-flight:
+                subCycle = self.cyclesDao.createNew()
+                subCycle.root_id = engineWork.cycleId
+                subCycle.idx = subFlight.idx    # same as related flight idx
+                subCycle.engine_id = ew.engineId
+                subCycle.flight_id = subFlight.id
 
-                    self.flightsDao.save(subCycle)
-                    print(f'[INFO] created new sub-cycle id={subCycle.id}')
+                self.cyclesDao.save(subCycle)
+                print(f'[INFO] created new sub-cycle id={subCycle.id}')
 
+            if newSubFlight or newSubCycle:    # create new series entry only for a new sub-flight
                 if subCycle:
                     self.frDao.storeDf(engineId=ew.engineId, flightId=subFlight.id, flightIdx=subFlight.idx,
                                        cycleId=subCycle.id, cycleIdx=subCycle.idx,
@@ -367,8 +372,7 @@ class Processing:
                                        cycleId=ew.cycleId, cycleIdx=ew.cycleIdx,
                                        df=subDf, recType=RecordingType.FILTERED)
 
-            if not subCycle:    # ensure we have related sub-cycle at hand
-                subCycle = self.cyclesDao.getOne(flight_id=subFlight.id)
+            assert subFlight and subCycle
 
             newEw = EngineWork(engineId=engineWork.engineId, flightId=subFlight.id, flightIdx=subFlight.idx, cycleId=subCycle.id, cycleIdx=subCycle.idx)
             works.append(newEw)
@@ -402,8 +406,8 @@ class Processing:
 
 if __name__ == '__main__':
     # ew = EngineWork(engineId=1, flightId=1, flightIdx=0, cycleId=20, cycleIdx=0)     # PT6
-    ew = EngineWork(engineId=2, flightId=2, flightIdx=0, cycleId=21, cycleIdx=0)  # H80 AI.1
-    # ew = EngineWork(engineId=3, flightId=2, flightIdx=0, cycleId=22, cycleIdx=0)     # H80 AI.2
+    # ew = EngineWork(engineId=2, flightId=2, flightIdx=0, cycleId=21, cycleIdx=0)  # H80 AI.1
+    ew = EngineWork(engineId=3, flightId=2, flightIdx=0, cycleId=22, cycleIdx=0)     # H80 AI.2
     # ew = Engine(engineId=3, flightId=2, flightIdx=0, cycleId=X, cycleIdx=0)          # H80 GE
 
     p = Processing()
