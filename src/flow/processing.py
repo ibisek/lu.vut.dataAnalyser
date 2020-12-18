@@ -10,7 +10,7 @@ from pandas import DataFrame
 
 from data.structures import EngineWork, Interval
 from data.analysis.flightModesDetection import detectTakeOffs, detectClimbs, detectRepeatedTakeOffs, \
-    detectTaxi, detectEngineStartups, detectEngineIdles, detectEngineCruises, detectEngineShutdowns, detectFlights
+    detectTaxi, detectEngineStartups, detectEngineIdles, detectEngineCruises, detectEngineShutdowns, detectFlights, detectPropellerFeatheringIntervals
 from data.analysis.overLimitsDetection import checkCruiseLimits, checkEngineIdleLimits, checkEngineStartupLimits, \
     checkEngineTakeoffLimits, checkEngineClimbLimits, checkEngineShutdownLimits
 from dao.flightRecordingDao import FlightRecordingDao, RecordingType
@@ -207,11 +207,13 @@ class Processing:
         for i, cruise in enumerate(self.engineCruiseIntervals):
             print(f'[INFO] cruise #{i} {cruise.start} -> {cruise.end}', )
 
+        self.propInFeatherPosIntervals = detectPropellerFeatheringIntervals(df)
+        for i, feather in enumerate(self.propInFeatherPosIntervals):
+            print(f'[INFO] prop. feather #{i} {feather.start} -> {feather.end}', )
+
         self.engineShutdownIntervals = detectEngineShutdowns(df)
         for i, shutdown in enumerate(self.engineShutdownIntervals):
             print(f'[INFO] engine shutdown {i} {shutdown.start} -> {shutdown.end}', )
-
-    lim = EngineLimits()
 
     @staticmethod
     def _analyseEntireFlightParams(df: DataFrame, cycle):
@@ -282,8 +284,6 @@ class Processing:
 
         self.cyclesDao.prepareForSave(cycle)
         self.cyclesDao.save(cycle)
-
-        # TODO calculate equivalent flight-cycles
 
     def __populateFlightFields(self, flight, df: DataFrame, takeoffTs: int, landingTs:int):
         taxiingSeconds = sum([(x.end - x.start).seconds for x in self.taxiIntervals])
@@ -379,6 +379,28 @@ class Processing:
 
         return works
 
+    def _processCycle(self, engineWork: EngineWork):
+        cycle = self.cyclesDao.getOne(id=engineWork.cycleId, idx=engineWork.cycleIdx)
+
+        # The flight phases for this particular engineWork are detected at this moment..
+
+        # NOTE: climb(after TO) intervals are ('incorrectly') used instead of takeoffs as the definition of TO is useless and there are hardly any TOs.
+        # flags:
+        engStartup = True if len(self.engineStartupIntervals) > 0 else False
+        takeoff = True if len(self.climbIntervals) > 0 else False
+        engStartupFollowedByTO = True if engStartup and takeoff and self.engineStartupIntervals[0].before(self.takeoffIntervals[0]) else False
+
+        propFeather = True if len(self.propInFeatherPosIntervals) > 0 else False
+        propFeatherBeforeTO = False
+        if propFeather and self.propInFeatherPosIntervals[0].before(self.climbIntervals[0]):
+            propFeatherBeforeTO = True
+
+        cycle.TOflag = 1 if takeoff else 0
+        cycle.NoSU = 1 if engStartupFollowedByTO else 0
+        cycle.RTOflag = 1 if propFeatherBeforeTO and not engStartup else 0  # repeated-TO has no prior engine start-up(!)
+
+        self.cyclesDao.save(cycle)
+
     def process(self, engineWork: EngineWork):
         """
         Processes raw flights - with cycle- and flight-idx == 0.
@@ -398,16 +420,13 @@ class Processing:
         for work in works:
             self._processFlight(engineWork=work)
             self._processCycle(engineWork=work)
-
-    def _processCycle(self, engineWork: EngineWork):
-        # TODO..
-        pass
+            # TODO calculate equivalent flight-cycles
 
 
 if __name__ == '__main__':
     # ew = EngineWork(engineId=1, flightId=1, flightIdx=0, cycleId=20, cycleIdx=0)     # PT6
-    # ew = EngineWork(engineId=2, flightId=2, flightIdx=0, cycleId=21, cycleIdx=0)  # H80 AI.1
-    ew = EngineWork(engineId=3, flightId=2, flightIdx=0, cycleId=22, cycleIdx=0)     # H80 AI.2
+    ew = EngineWork(engineId=2, flightId=2, flightIdx=0, cycleId=21, cycleIdx=0)  # H80 AI.1
+    # ew = EngineWork(engineId=3, flightId=2, flightIdx=0, cycleId=22, cycleIdx=0)     # H80 AI.2
     # ew = Engine(engineId=3, flightId=2, flightIdx=0, cycleId=X, cycleIdx=0)          # H80 GE
 
     p = Processing()
