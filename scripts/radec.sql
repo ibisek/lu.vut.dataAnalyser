@@ -276,6 +276,10 @@ CREATE TABLE IF NOT EXISTS cycles (
   flight_id INT NOT NULL references flights.id,
   file_id INT references files.id,
   type VARCHAR(1),
+  -- equivalent cycles flags:
+  NoSU INT DEFAULT 0,
+  TOflag INT DEFAULT 0,
+  RTOflag INT DEFAULT 0,
   -- over limit flags:
   NGlimL BOOL,
   NPlimL BOOL,
@@ -452,4 +456,6 @@ select * from logbook order by id desc;
 --insert into cycles (id, engine_id, flight_id, file_id) values(21,2,2,2);
 --insert into cycles (id, engine_id, flight_id, file_id) values(22,3,2,2);
 
---delete from flights where root_id=2
+--delete from flights where root_id=2;
+--delete from cycles where root_id=22;
+
