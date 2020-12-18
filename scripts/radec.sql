@@ -58,10 +58,10 @@ select * from components;
 --DROP TABLE IF EXISTS equipment_properties;
 CREATE TABLE IF NOT EXISTS equipment_properties (
   id INT PRIMARY KEY auto_increment,
-  equipment_type_id INT NOT NULL REFERENCES equipment.id,
+  equipment_id INT NOT NULL REFERENCES equipment.id,
   k VARCHAR(16) NOT NULL,
   v VARCHAR(32) NOT NULL,
-  units VARCHAR(8)
+  unit VARCHAR(8)
 ) charset utf8;
 
 --INSERT INTO equipment_properties (equipment_type_id, k, v) VALUES (10, 'ELC_LIMIT', '10450');
@@ -453,6 +453,12 @@ select * from notifications order by id desc;
 
 select * from logbook order by id desc;
 
+select * from components;
+
+select * from equipment;
+
+
+
 --delete from cycles where id=1;
 --insert into cycles (id, engine_id, flight_id, file_id) values(20,1,1,1);
 --insert into cycles (id, engine_id, flight_id, file_id) values(21,2,2,2);
@@ -461,3 +467,39 @@ select * from logbook order by id desc;
 --delete from flights where root_id=2;
 --delete from cycles where root_id=21;
 
+
+select * from components;
+select * from equipment;
+
+select * from equipment_properties;
+select k, v, units from equipment_properties where equipment_id = 8 and k='eq_cycles_limit';
+
+-- rear shaft:
+12 M601-3156.5	0.32 0.32 1.06 10450
+13 M601-3156.9 0.32 0.32 1.06 10450
+
+-- free turbine disc:
+11 M601-3220.5	0.66 0.94 1.28 8820
+
+-- free turbine shaft:
+9  M601-4004.5 0.37 0.88 1.46 11100
+10 M601-4004.7 0.37 0.88 1.46 11100
+
+-- propeller shaft:
+7 M601-6081.2 12k hod
+8 M601-6081.5 12k hod
+
+
+select * from equipment_properties;
+--delete from equipment_properties;
+
+insert into equipment_properties (equipment_id, k, v, unit) values (7, 'n', 12000*60*60, 's');
+insert into equipment_properties (equipment_id, k, v, unit) values (8, 'n', 12000*60*60, 's');
+
+insert into equipment_properties (equipment_id, k, v, unit) values (9, 'n', 11100, null);
+insert into equipment_properties (equipment_id, k, v, unit) values (10, 'n', 11100, null);
+
+insert into equipment_properties (equipment_id, k, v, unit) values (11, 'n', 8820, null);
+
+insert into equipment_properties (equipment_id, k, v, unit) values (12, 'n', 10450, null);
+insert into equipment_properties (equipment_id, k, v, unit) values (13, 'n', 10450, null);
