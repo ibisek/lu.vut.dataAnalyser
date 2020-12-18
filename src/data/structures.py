@@ -35,6 +35,16 @@ class Interval:
     def __str__(self):
         return f'Interval {self.start} -> {self.end}'
 
+    def before(self, other):
+        """
+        :param other:
+        :return: True if this interval is before the other interval
+        """
+        if self.end < other.start:
+            return True
+        else:
+            return False
+
 
 # engine-flight-cycle work to be further done after initial preprocessing
 # EngineWork = namedtuple('EngineWork', ['engineId', 'flightId', 'flightIdx', 'cycleId', 'cycleIdx'])
