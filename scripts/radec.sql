@@ -41,8 +41,10 @@ CREATE TABLE IF NOT EXISTS components (
   id INT PRIMARY KEY auto_increment,
   engine_id INT NULL REFERENCES engines.id,
   equipment_id INT NOT NULL REFERENCES equipment.id,
-  serial_no VARCHAR(32) NULL,
-  archived BOOL
+  serial_no VARCHAR(32) DEFAULT NULL,
+  archived BOOL DEFAULT false,
+  eq_cycles FLOAT DEFAULT 0,
+  eq_cycles_sim FLOAT DEFAULT 0
 ) charset utf8;
 
 INSERT INTO components (engine_id, equipment_id, serial_no, archived) VALUES (2, 6, 'sn_1234', false);
@@ -109,7 +111,7 @@ CREATE TABLE IF NOT EXISTS engines (
   CYCLENo INT default 0,
   CYCLENoTO FLOAT default 0,
   CYCLERep FLOAT default 0,
-  EqCyle FLOAT default 0,
+  EqCycle FLOAT default 0,
   EqCycleSim FLOAT default 0,
   EngNumNPExcA int default 0,
   EngNumNPExcB int default 0
@@ -267,7 +269,7 @@ CREATE TABLE IF NOT EXISTS files_flights (
   flight_id INT references flights.id
 ) charset utf8;
 
---DROP TABLE IF EXISTS cycles;	
+DROP TABLE IF EXISTS cycles;	
 CREATE TABLE IF NOT EXISTS cycles (
   id INT PRIMARY KEY auto_increment,
   root_id INT DEFAULT NULL references cycles.id,
@@ -457,5 +459,5 @@ select * from logbook order by id desc;
 --insert into cycles (id, engine_id, flight_id, file_id) values(22,3,2,2);
 
 --delete from flights where root_id=2;
---delete from cycles where root_id=22;
+--delete from cycles where root_id=21;
 
