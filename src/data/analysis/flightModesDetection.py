@@ -124,7 +124,7 @@ def detectTakeOffs(df: DataFrame, ngStart=100.1, ngEnd=100.1) -> List[Interval]:
 
 def detectClimbs(df: DataFrame) -> List[Interval]:
     """
-    Detection of CLIMB window/interval.
+    Detection of CLIMB (after take-off) window/interval.
     start: IAS (TAS) > 10 km/h
     end: NG = 0.98NG_max
 
@@ -420,6 +420,33 @@ def detectEngineShutdowns(df: DataFrame) -> List[Interval]:
     return shutdowns
 
 
+def detectPropellerFeatheringIntervals(df: DataFrame):
+    """
+    Detection of propeller in feathering position.
+    240rpm < NP < 830rpm
+    NG > 57%
+    :param df:
+    :return:
+    """
+    intervals = list()
+    df = df[['NP', 'NG']].copy()
+
+    df['feather'] = df['NP'].apply(lambda x: 1 if 240 < x < 830 else 0) & df['NG'].apply(lambda x: 1 if x > 57 else 0)
+
+    intervalStart = None
+    for index, row in df.iterrows():
+        if not intervalStart and row['feather'] == 1:
+            intervalStart = index
+
+        if intervalStart and row['feather'] == 0:
+            intervalEnd = index
+            intervals.append(Interval(start=intervalStart, end=intervalEnd))
+
+            intervalStart = None
+
+    return intervals
+
+
 if __name__ == '__main__':
 
     frDao = FlightRecordingDao()
@@ -463,11 +490,15 @@ if __name__ == '__main__':
 
     engineCruiseIntervals = detectEngineCruises(df)
     for i, cruise in enumerate(engineCruiseIntervals):
-        print(f'[INFO] cruise {i} {cruise.start} -> {cruise.end}', )
+        print(f'[INFO] cruise #{i} {cruise.start} -> {cruise.end}', )
+
+    propInFeatherPosIntervals = detectPropellerFeatheringIntervals(df)
+    for i, feather in enumerate(propInFeatherPosIntervals):
+        print(f'[INFO] prop. feather #{i} {feather.start} -> {feather.end}', )
 
     engineShutdownIntervals = detectEngineShutdowns(df)
     for i, shutdown in enumerate(engineShutdownIntervals):
-        print(f'[INFO] engine shutdown {i} {shutdown.start} -> {shutdown.end}', )
+        print(f'[INFO] engine shutdown #{i} {shutdown.start} -> {shutdown.end}', )
 
     frDao.influx.stop()
 
