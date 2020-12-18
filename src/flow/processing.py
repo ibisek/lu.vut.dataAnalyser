@@ -17,6 +17,8 @@ from dao.flightRecordingDao import FlightRecordingDao, RecordingType
 from dao.engineLimits import EngineLimits
 from db.dao.flightsDao import FlightsDao
 from db.dao.cyclesDao import CyclesDao
+from db.dao.enginesDao import EnginesDao
+from db.dao.componentsDao import ComponentsDao
 from flow.utils import _min, _max
 
 
@@ -27,6 +29,8 @@ class Processing:
         self.cyclesDao = CyclesDao()
         self.flightsDao = FlightsDao()
         self.frDao = FlightRecordingDao()
+        self.enginesDao = EnginesDao()
+        self.componentsDao = ComponentsDao()
 
     def __del__(self):
         self.frDao.influx.stop()
@@ -223,7 +227,7 @@ class Processing:
         # fire warning
         cycle.FireWarning = _max(cycle.FireWarning, 1 if max(df['FIRE']) > 0 else 0)
 
-    def _processFlight(self, engineWork: EngineWork, df: DataFrame = None):
+    def _processFlight(self, engineWork: EngineWork, df: DataFrame):
         """
         Core of (sub)flight processing.
         :param engineWork:
@@ -233,10 +237,6 @@ class Processing:
         print(f'[INFO] Processing flight data for\n\tengineId={ew.engineId}'
               f'\n\tflight id={engineWork.flightId}; idx={engineWork.flightIdx} '
               f'\n\tcycle id={engineWork.cycleId}; idx={engineWork.cycleIdx}')
-
-        if not df:
-            df = self.frDao.loadDf(engineId=engineWork.engineId, flightId=engineWork.flightId, flightIdx=engineWork.flightIdx,
-                                   cycleId=engineWork.cycleId, cycleIdx=engineWork.cycleIdx, recType=RecordingType.FILTERED)
 
         cycle = self.cyclesDao.getOne(id=engineWork.cycleId, idx=engineWork.cycleIdx)
         flight = self.flightsDao.getOne(id=engineWork.flightId, idx=engineWork.flightIdx)
@@ -329,11 +329,11 @@ class Processing:
 
             # check for existence (idx) - it might have been created by the other engine's data record:
             newSubFlight = False
-            subFlight = self.flightsDao.getOne(root_id=ew.flightId, idx=i + 1)
+            subFlight = self.flightsDao.getOne(root_id=engineWork.flightId, idx=i + 1)
             if not subFlight:
                 newSubFlight = True
                 print(f'[INFO] extracting sub-flight #{i + 1} {flightInterval.start} -> {flightInterval.end}')
-                rootFlight = self.flightsDao.getOne(id=ew.flightId, idx=0)
+                rootFlight = self.flightsDao.getOne(id=engineWork.flightId, idx=0)
                 assert rootFlight
 
                 subFlight = self.flightsDao.createNew()
@@ -348,7 +348,7 @@ class Processing:
                 print(f'[INFO] created new sub-flight id={subFlight.id}')
 
             newSubCycle = False
-            subCycle = self.flightsDao.getOne(root_id=ew.cycleId, idx=i + 1)
+            subCycle = self.cyclesDao.getOne(root_id=engineWork.cycleId, idx=i + 1)
             # check if this sub-range is eligible for a sub-cycle:
             if not subCycle and len(subDf.loc[subDf['NP'] > 240].loc[subDf['NP'] < 830].loc[subDf['NG'] > 57]):  # propeller in feathering position
                 newSubCycle = True
@@ -356,7 +356,7 @@ class Processing:
                 subCycle = self.cyclesDao.createNew()
                 subCycle.root_id = engineWork.cycleId
                 subCycle.idx = subFlight.idx    # same as related flight idx
-                subCycle.engine_id = ew.engineId
+                subCycle.engine_id = engineWork.engineId
                 subCycle.flight_id = subFlight.id
 
                 self.cyclesDao.save(subCycle)
@@ -364,12 +364,12 @@ class Processing:
 
             if newSubFlight or newSubCycle:    # create new series entry only for a new sub-flight
                 if subCycle:
-                    self.frDao.storeDf(engineId=ew.engineId, flightId=subFlight.id, flightIdx=subFlight.idx,
+                    self.frDao.storeDf(engineId=engineWork.engineId, flightId=subFlight.id, flightIdx=subFlight.idx,
                                        cycleId=subCycle.id, cycleIdx=subCycle.idx,
                                        df=subDf, recType=RecordingType.FILTERED)
                 else:
-                    self.frDao.storeDf(engineId=ew.engineId, flightId=subFlight.id, flightIdx=subFlight.idx,
-                                       cycleId=ew.cycleId, cycleIdx=ew.cycleIdx,
+                    self.frDao.storeDf(engineId=engineWork.engineId, flightId=subFlight.id, flightIdx=subFlight.idx,
+                                       cycleId=engineWork.cycleId, cycleIdx=engineWork.cycleIdx,
                                        df=subDf, recType=RecordingType.FILTERED)
 
             assert subFlight and subCycle
@@ -379,12 +379,18 @@ class Processing:
 
         return works
 
-    def _processCycle(self, engineWork: EngineWork):
+    def _processCycle(self, engineWork: EngineWork, df: DataFrame):
+        """
+        Needs to be called in the same loop-step as the _processFlight() method!
+        It uses the same flight phases for this particular engineWork are detected for the fligth.
+        :param engineWork:
+        :param df
+        :return:
+        """
         cycle = self.cyclesDao.getOne(id=engineWork.cycleId, idx=engineWork.cycleIdx)
 
-        # The flight phases for this particular engineWork are detected at this moment..
-
-        # NOTE: climb(after TO) intervals are ('incorrectly') used instead of takeoffs as the definition of TO is useless and there are hardly any TOs.
+        # NOTE: climb (after TO (take-off)) intervals are ('incorrectly') used instead of takeoffs
+        # as the definition of TO is useless and there are hardly any TO intervals..
         # flags:
         engStartup = True if len(self.engineStartupIntervals) > 0 else False
         takeoff = True if len(self.climbIntervals) > 0 else False
@@ -401,6 +407,49 @@ class Processing:
 
         self.cyclesDao.save(cycle)
 
+        # Calculate ENGINE indicators:
+        engine = self.enginesDao.getOne(id=cycle.engine_id)
+
+        #  time counter when the engine was up and running (even idling); NG>20%;:
+        engine.cycle_hours += len(df['NG'].loc[df['NG'] > 20])  # assuming sampling perios 1s. This will NOT work if there is change in sampling period(!)
+
+        for takeoffInterval in self.takeoffIntervals:
+            engine.takeoff_hours += (takeoffInterval.end - takeoffInterval.start).seconds
+        if engStartupFollowedByTO:
+            engine.CYCLENo += 1
+        if cycle.TOflag:
+            engine.CYCLENoTO += 1
+        if cycle.RTOflag:
+            engine.CYCLERep += 1
+        self.enginesDao.save(engine)
+
+    def _calcEquivalentFlightCycles(self, engineWork: EngineWork):
+        """
+        Calculates simplifed & full number of equivalent flight cycles for engine's components
+        according to section 3 from the specs document.
+        :param engineWork: master record for flights+cycles
+        :return:
+        """
+
+        masterCycle = self.cyclesDao.getOne(id=engineWork.cycleId)
+        subCycles = [c for c in self.cyclesDao.get(root_id=masterCycle.id)]
+
+        if len(subCycles) == 0:
+            Ns = masterCycle.NoSU       # number of engine starts followed by take-off
+            Np = masterCycle.RTOflag    # number of repeated take-offs with prior prop. feathering
+            Nv = masterCycle.TOflag     # number of all take-offs
+        else:
+            Ns = sum([cycle.NoSU for cycle in subCycles])       # number of engine starts followed by take-off
+            Np = sum([cycle.RTOflag for cycle in subCycles])    # number of repeated take-offs with prior prop. feathering
+            Nv = sum([cycle.TOflag for cycle in subCycles])     # number of all take-offs
+
+        print(f'[INFO] EQ cycle values for cycle id {masterCycle.id}: Ns={Ns}; Nv={Nv}; Np={Np};')
+
+        components = [c for c in self.componentsDao.get(engine_id=engineWork.engineId)]
+        # TODO for each component calculate equivalent cycle value:
+
+        print(555)
+
     def process(self, engineWork: EngineWork):
         """
         Processes raw flights - with cycle- and flight-idx == 0.
@@ -408,9 +457,9 @@ class Processing:
         :return:
         """
 
-        print(f'[INFO] Processing initial flight data for\n\tengineId={ew.engineId}'
-              f'\n\tflight id={ew.flightId}; idx={ew.flightIdx} '
-              f'\n\tcycle id={ew.cycleId}; idx={ew.cycleIdx}')
+        print(f'[INFO] Processing initial flight data for\n\tengineId={engineWork.engineId}'
+              f'\n\tflight id={engineWork.flightId}; idx={engineWork.flightIdx} '
+              f'\n\tcycle id={engineWork.cycleId}; idx={engineWork.cycleIdx}')
         df = self.frDao.loadDf(engineId=engineWork.engineId, flightId=engineWork.flightId, flightIdx=engineWork.flightIdx,
                                cycleId=engineWork.cycleId, cycleIdx=engineWork.cycleIdx, recType=RecordingType.FILTERED)
 
@@ -418,9 +467,14 @@ class Processing:
 
         works: List[EngineWork] = self._splitIntoSubflights(df=df, engineWork=engineWork)
         for work in works:
-            self._processFlight(engineWork=work)
-            self._processCycle(engineWork=work)
-            # TODO calculate equivalent flight-cycles
+            workDf = self.frDao.loadDf(engineId=work.engineId, flightId=work.flightId, flightIdx=work.flightIdx,
+                                       cycleId=work.cycleId, cycleIdx=work.cycleIdx, recType=RecordingType.FILTERED)
+
+            self._processFlight(engineWork=work, df=workDf)    # these two need to be executed in this exact order!
+            self._processCycle(engineWork=work, df=workDf)     # these two need to be executed in this exact order!
+
+        # calculate equivalent flight-cycles for engine components affected by the 'great' (not partials) engineWork:
+        self._calcEquivalentFlightCycles(engineWork)
 
 
 if __name__ == '__main__':
