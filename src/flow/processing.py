@@ -15,6 +15,7 @@ from data.analysis.overLimitsDetection import checkCruiseLimits, checkEngineIdle
     checkEngineTakeoffLimits, checkEngineClimbLimits, checkEngineShutdownLimits
 from dao.flightRecordingDao import FlightRecordingDao, RecordingType
 from dao.engineLimits import EngineLimits
+from dao.componentLimits import ComponentLimits, ComponentLimit
 from db.dao.flightsDao import FlightsDao
 from db.dao.cyclesDao import CyclesDao
 from db.dao.enginesDao import EnginesDao
@@ -445,10 +446,19 @@ class Processing:
 
         print(f'[INFO] EQ cycle values for cycle id {masterCycle.id}: Ns={Ns}; Nv={Nv}; Np={Np};')
 
+        # TODO urcit typ motoru H80/H85/jiny?
+        cLimits = ComponentLimits.H80
         components = [c for c in self.componentsDao.get(engine_id=engineWork.engineId)]
-        # TODO for each component calculate equivalent cycle value:
+        for component in components:
+            equipment = self.equipmentDao.getOne(id=component.equipment_id)
+            lim: ComponentLimit = cLimits[equipment.part_no]
 
-        print(555)
+            # TODO for each component calculate equivalent cycle value:
+
+            component.eq_cycles += 000
+            component.eq_cucles_sim += 000
+            # self.componentsDao.save(component)
+            print(555)
 
     def process(self, engineWork: EngineWork):
         """
