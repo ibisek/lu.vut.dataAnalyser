@@ -19,6 +19,7 @@ from dao.componentLimits import ComponentLimits, ComponentLimit
 from db.dao.flightsDao import FlightsDao
 from db.dao.cyclesDao import CyclesDao
 from db.dao.enginesDao import EnginesDao
+from db.dao.equipmentDao import EquipmentDao
 from db.dao.componentsDao import ComponentsDao
 from flow.utils import _min, _max
 
@@ -32,6 +33,7 @@ class Processing:
         self.frDao = FlightRecordingDao()
         self.enginesDao = EnginesDao()
         self.componentsDao = ComponentsDao()
+        self.equipmentDao = EquipmentDao()
 
     def __del__(self):
         self.frDao.influx.stop()
@@ -411,8 +413,9 @@ class Processing:
         # Calculate ENGINE indicators:
         engine = self.enginesDao.getOne(id=cycle.engine_id)
 
-        #  time counter when the engine was up and running (even idling); NG>20%;:
-        engine.cycle_hours += len(df['NG'].loc[df['NG'] > 20])  # assuming sampling perios 1s. This will NOT work if there is change in sampling period(!)
+        #  time counter when the engine was up and running (even idling); NG>20%:
+        hrs = len(df['NG'].loc[df['NG'] > 20])/3600  # assuming sampling perios 1s. This will NOT work if there is change in sampling period(!)
+        engine.cycle_hours += hrs
 
         for takeoffInterval in self.takeoffIntervals:
             engine.takeoff_hours += (takeoffInterval.end - takeoffInterval.start).seconds
@@ -423,6 +426,12 @@ class Processing:
         if cycle.RTOflag:
             engine.CYCLERep += 1
         self.enginesDao.save(engine)
+
+        # set components' cycle hours:
+        components = self.componentsDao.list(engine.id)
+        for component in components:
+            component.cycle_hrs += hrs
+        self.componentsDao.save()
 
     def _calcEquivalentFlightCycles(self, engineWork: EngineWork):
         """
@@ -446,19 +455,24 @@ class Processing:
 
         print(f'[INFO] EQ cycle values for cycle id {masterCycle.id}: Ns={Ns}; Nv={Nv}; Np={Np};')
 
-        # TODO urcit typ motoru H80/H85/jiny?
-        cLimits = ComponentLimits.H80
-        components = [c for c in self.componentsDao.get(engine_id=engineWork.engineId)]
+        # determine engine type and lookup its components limits:
+        engine = self.enginesDao.getOne(id=engineWork.engineId)
+        engineType, _ = self.enginesDao.getProperty(engine=engine, key='type')
+        if not engineType: engineType = 'H80'  # better something than nothing, right? ;P
+        cLimits = getattr(ComponentLimits, engineType)
+
+        components = self.componentsDao.list(engineId=engineWork.engineId)
         for component in components:
             equipment = self.equipmentDao.getOne(id=component.equipment_id)
             lim: ComponentLimit = cLimits[equipment.part_no]
 
-            # TODO for each component calculate equivalent cycle value:
+            if type(lim) is ComponentLimit:     # calculate equivalent cycle value:
+                eqCycleSim = (Ns + lim.Ap * (Nv - Ns)) * lim.L
+                eqCycleFull = (Ns + lim.Av * (Nv - Ns - Np) + lim.Ap * Np) * lim.L
+                component.eq_cycles_sim += eqCycleSim
+                component.eq_cycles += eqCycleFull
 
-            component.eq_cycles += 000
-            component.eq_cucles_sim += 000
-            # self.componentsDao.save(component)
-            print(555)
+        self.componentsDao.save()
 
     def process(self, engineWork: EngineWork):
         """
@@ -482,6 +496,7 @@ class Processing:
 
             self._processFlight(engineWork=work, df=workDf)    # these two need to be executed in this exact order!
             self._processCycle(engineWork=work, df=workDf)     # these two need to be executed in this exact order!
+            # TODO check limiting values and raise alerts
 
         # calculate equivalent flight-cycles for engine components affected by the 'great' (not partials) engineWork:
         self._calcEquivalentFlightCycles(engineWork)
