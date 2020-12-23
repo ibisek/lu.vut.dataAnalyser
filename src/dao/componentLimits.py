@@ -18,7 +18,7 @@ class ComponentLimits:
     H80['XM601-1023.3'] = ComponentLimit(Av=0.39, Ap=0.39, L=1.14, N=18300)
     H80['XM601-1023.31'] = ComponentLimit(Av=0.39, Ap=0.39, L=1.14, N=18300)
     # main shaft:
-    H80['XM601-1017.75'] = ComponentLimit(Av=0.32, Ap=0.32, L=1.21, N=16000)
+    H80['M601-1017.75'] = ComponentLimit(Av=0.32, Ap=0.32, L=1.21, N=16000)
     # fuel spray ring:
     H80['M601-2058.5'] = ComponentLimit(Av=0.42, Ap=0.42, L=1.07, N=22600)
     H80['M601-2068.5'] = ComponentLimit(Av=0.42, Ap=0.42, L=1.07, N=22600)
