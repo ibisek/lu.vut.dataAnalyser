@@ -29,6 +29,24 @@ class EnginesDao(Alchemy):
 
         return ids
 
+    @staticmethod
+    def getProperty(engine, key):
+        """
+        :param engine:
+        :param key:
+        :return: (value, unit)
+        """
+        with DbSource(dbConnectionInfo).getConnection() as c:
+            strSql = f"select v, unit from equipment_properties " \
+                     f"where equipment_id = {engine.equipment_id} and k='{key}';"
+            c.execute(strSql)
+
+            row = c.fetchone()
+            if row:
+                return row[0], row[1]
+
+        return None, None
+
 
 if __name__ == '__main__':
     ud = EnginesDao()
