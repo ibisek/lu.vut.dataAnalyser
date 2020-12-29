@@ -22,6 +22,7 @@ from db.dao.enginesDao import EnginesDao
 from db.dao.equipmentDao import EquipmentDao
 from db.dao.componentsDao import ComponentsDao
 from flow.utils import _min, _max
+from flow.notifications import Notifications
 
 
 class Processing:
@@ -414,8 +415,8 @@ class Processing:
         engine = self.enginesDao.getOne(id=cycle.engine_id)
 
         #  time counter when the engine was up and running (even idling); NG>20%:
-        hrs = len(df['NG'].loc[df['NG'] > 20])/3600  # assuming sampling perios 1s. This will NOT work if there is change in sampling period(!)
-        engine.cycle_hours += hrs
+        secs = len(df['NG'].loc[df['NG'] > 20])  # assuming sampling perios 1s. This will NOT work if there is change in sampling period(!)
+        engine.cycle_hours += secs
 
         for takeoffInterval in self.takeoffIntervals:
             engine.takeoff_hours += (takeoffInterval.end - takeoffInterval.start).seconds
@@ -430,7 +431,7 @@ class Processing:
         # set components' cycle hours:
         components = self.componentsDao.list(engine.id)
         for component in components:
-            component.cycle_hrs += hrs
+            component.cycle_hrs += secs
         self.componentsDao.save()
 
     def _calcEquivalentFlightCycles(self, engineWork: EngineWork):
@@ -474,6 +475,43 @@ class Processing:
 
         self.componentsDao.save()
 
+    def _checkLimits(self, engineWork: EngineWork):
+        """
+        Compare engine/component limits and raise notification when remaining below 10%.
+        """
+        LIMITING_THR = 0.9  # above remaining 10% of the limits
+
+        engine = self.enginesDao.getOne(id=engineWork.engineId)
+        # check engine's remaining cycle hours:
+        engCycleHours = engine.cycle_hours / 3600   # [s] -> [h]
+        engCycleHoursLim = EngineLimits.H80['CycleHour']
+        if engCycleHours >= engCycleHoursLim * LIMITING_THR:  # exceeds X% of the limit
+            Notifications.valAboveLim(engine, f'Engine cycle hours above {LIMITING_THR*100:.0f}% of its limit ({engCycleHoursLim} h): {engCycleHours:.1f} h.')
+
+        # check engine remaining cycles:
+        nCycles = engine.CYCLENo + engine.CYCLENoTO
+        if nCycles >= EngineLimits.H80['CYCLElim'] * LIMITING_THR:       # exceeds X% of the limit
+            Notifications.valAboveLim(engine, f"Engine cycles count above {LIMITING_THR*100:.0f}% of its limit ({EngineLimits.H80['CYCLElim']}): {nCycles:1f}.")
+
+        # check engine's remaining take-off hours:
+        takeoffHrs = engine.takeoff_hours / 3600    # [s] -> [h]
+        if takeoffHrs >= engCycleHoursLim * LIMITING_THR * 0.025:  # exceeds X% which is max 2.5% of the total hours
+            Notifications.valAboveLim(engine, f'Engine take-off hours above {LIMITING_THR * 100:.0f}% of its 2.5% limit ({(engCycleHoursLim*0.025):.0f} h) : {takeoffHrs:.1f} h.')
+
+        # check all engine's components:
+        engineType, _ = self.enginesDao.getProperty(engine=engine, key='type')
+        if not engineType: engineType = 'H80'  # better something than nothing, right? ;P
+        cLimits = getattr(ComponentLimits, engineType)
+        components = self.componentsDao.list(engineId=engineWork.engineId)
+        for c in components:
+            equipment = self.equipmentDao.getOne(id=c.equipment_id)
+            limitVal = cLimits.get(equipment.part_no, None)
+            if type(limitVal) is ComponentLimit:    # ..is an object type, not a number
+                limitVal = limitVal.N
+            if c.eq_cycles >= limitVal * LIMITING_THR or c.eq_cycles_sim >= limitVal * LIMITING_THR:
+                Notifications.valAboveLim(c, f"Component's equivalent cycles above {LIMITING_THR*100:.0f}% of its limit ({limitVal}): {c.eq_cycles:.1f}.")
+            print(555)
+
     def process(self, engineWork: EngineWork):
         """
         Processes raw flights - with cycle- and flight-idx == 0.
@@ -496,7 +534,7 @@ class Processing:
 
             self._processFlight(engineWork=work, df=workDf)    # these two need to be executed in this exact order!
             self._processCycle(engineWork=work, df=workDf)     # these two need to be executed in this exact order!
-            # TODO check limiting values and raise alerts
+            self._checkLimits(engineWork=work)
 
         # calculate equivalent flight-cycles for engine components affected by the 'great' (not partials) engineWork:
         self._calcEquivalentFlightCycles(engineWork)
