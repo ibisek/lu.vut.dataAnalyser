@@ -1,4 +1,4 @@
-
+from time import sleep
 from typing import List
 
 from data.structures import EngineWork
@@ -13,9 +13,9 @@ if __name__ == '__main__':
         file: File = checkForWork()
 
         if not file:
-            break
+            sleep(30)
 
-        if file and prepare(file):
+        elif prepare(file):
             try:
                 FileDao.setFileStatus(file=file, status=FileStatus.UNDER_ANALYSIS)
 

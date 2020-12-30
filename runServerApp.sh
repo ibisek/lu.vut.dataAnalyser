@@ -11,7 +11,7 @@ cd src
 while true
 do
   python3 serverApp.py
-  sleep 4
+  sleep 10
 done
 
 deactivate
