@@ -39,10 +39,9 @@ from db.dao.cyclesDao import CyclesDao
 from db.dao.flightsDao import FlightsDao
 
 
-c = getConfiguration()
-FILE_INGESTION_ROOT = c['FILE_INGESTION_ROOT']
-FILE_STORAGE_ROOT = c['FILE_STORAGE_ROOT']
-# TODO z databaze
+dbConfiguration = getConfiguration()
+FILE_INGESTION_ROOT = dbConfiguration['FILE_INGESTION_ROOT']
+FILE_STORAGE_ROOT = dbConfiguration['FILE_STORAGE_ROOT']
 print("[INFO] FILE_INGESTION_ROOT:", FILE_INGESTION_ROOT)
 print("[INFO] FILE_STORAGE_ROOT:", FILE_STORAGE_ROOT)
 
