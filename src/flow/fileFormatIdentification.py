@@ -11,10 +11,7 @@ from db.dao.filesDao import FilesDao, FileStatus
 
 class FileFormatDetector:
     filesDao = FilesDao()
-
-    def __init__(self):
-        dbConfiguration = getConfiguration()
-        self.FILE_STORAGE_ROOT = dbConfiguration['FILE_STORAGE_ROOT']
+    FILE_STORAGE_ROOT = getConfiguration()['FILE_STORAGE_ROOT']
 
     def processFilesInDb(self):
         resultSet = self.filesDao.get(status=FileStatus.READY_TO_PROCESS.value, format=0)
@@ -24,8 +21,6 @@ class FileFormatDetector:
 
             file.format = fileFormat.value
             self.filesDao.save(file)
-
-            file = self.filesDao.getOne(status=FileStatus.READY_TO_PROCESS.value, format=0)
 
     @staticmethod
     def identifyFileFormat(path: str, filename: str) -> FileFormat:
@@ -44,12 +39,21 @@ class FileFormatDetector:
                 loadRawData(fileFormat=fileFormat, inPath=path, fileName=filename)
                 break  # loading was successful, this is the right format
 
-            except ValueError as e:
+            except (ValueError, IndexError) as e:
                 pass
 
         print(f'[INFO] Detected {fileFormat}')
 
         return fileFormat
+
+    @staticmethod
+    def identify(file):
+        if file.format not in [FileFormat.UNKNOWN, FileFormat.UNDEFINED]:
+            return  # file format already identified; repeated identifications is just waste of time
+
+        path = f'{FileFormatDetector.FILE_STORAGE_ROOT}/{file.id}'
+        file.format = FileFormatDetector.identifyFileFormat(path, file.name)
+        FileFormatDetector.filesDao.save(file)
 
 
 if __name__ == '__main__':
