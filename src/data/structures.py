@@ -10,7 +10,7 @@ class FileFormat(Enum):
     UNKNOWN = 255
 
     def __str__(self):
-        return f'#FileFormat: {self.value}'
+        return f'#FileFormat: {self.name} ({self.value})'
 
 
 class FlightMode(Enum):
