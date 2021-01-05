@@ -1,5 +1,6 @@
 from enum import Enum
-from collections import namedtuple
+
+from db.dao.alchemy import Alchemy
 
 from configuration import dbConnectionInfo
 from db.DbSource import DbSource
@@ -30,7 +31,10 @@ class File:
         return f"#File: id: {self.id}\n name: {self.name}\n raw: {self.raw}\n format: {self.format}\n status: {self.status}\n hash: {self.hash}"
 
 
-class FileDao:
+class FilesDao(Alchemy):
+    def __init__(self):
+        super(FilesDao, self).__init__()
+        self.table = self.base.classes.files
 
     @staticmethod
     def getFileForProcessing():
@@ -40,7 +44,10 @@ class FileDao:
         f = None
 
         with DbSource(dbConnectionInfo).getConnection() as c:
-            strSql = f"SELECT id, name, raw, format, status, hash FROM files WHERE raw = true AND status={FileStatus.READY_TO_PROCESS.value} LIMIT 1;"
+            strSql = f"SELECT id, name, raw, format, status, hash FROM files " \
+                     f"WHERE raw = true AND status={FileStatus.READY_TO_PROCESS.value} " \
+                     f"and format!={FileFormat.UNDEFINED.value} and format!={FileFormat.UNKNOWN.value} " \
+                     f"LIMIT 1;"
             c.execute(strSql)
 
             rows = c.fetchall()
@@ -125,3 +132,9 @@ class FileDao:
                 c.execute(sql)
 
         return file
+
+
+if __name__ == '__main__':
+    filesDao = FilesDao()
+    file = filesDao.getOne(status=FileStatus.READY_TO_PROCESS.value, format=0)
+    print('file:', vars(file))
