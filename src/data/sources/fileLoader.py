@@ -2,6 +2,8 @@
 Loads data from specified file and creates df.index as datetime.
 """
 
+import re
+import tempfile
 import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
@@ -10,12 +12,39 @@ from configuration import CSV_DELIMITER
 from data.structures import FileFormat
 
 
+def _reformatPt6(path: str, filename: str):
+    """
+    Creates a temporary file to which it reformats (pre-formats) the PT6 CSV datafile.
+    (the raw/original .csv file cannot be read by the pandas.read_csv() function)
+    :param path:
+    :param filename:
+    :return: path, filename of the reformatted temporary file
+    """
+    lines = []
+    with open(f'{path}/{filename}', 'r') as f:
+        lines = f.readlines()
+
+    tmpPath = tempfile.gettempdir()
+    with open(f'{tmpPath}/{filename}', 'w') as f:
+        for line in lines:
+            if not line.startswith('#'):
+                line = re.sub(r'\s', '', line)  # remove all spaces
+                line = re.sub(r',', ';', line)  # use ; as field separator
+                line = re.sub(r';', ' ', line, count=1)  # join date+time into one col
+                line += '\n'
+
+            f.write(line)
+
+    return tmpPath, filename
+
+
 def loadRawData(fileFormat: FileFormat, inPath: str, fileName: str) -> pd.DataFrame:
     filePath = f"{inPath}/{fileName}"
 
     if fileFormat == FileFormat.PT6:
+        tmpPath, fileName = _reformatPt6(inPath, fileName)
         SKIP_ROWS = [0, 1]
-        df = pd.read_csv(f"{inPath}/{fileName}", delimiter=CSV_DELIMITER, encoding='cp1250', skiprows=SKIP_ROWS)  # utf_8 | cp1250
+        df = pd.read_csv(f"{tmpPath}/{fileName}", delimiter=CSV_DELIMITER, encoding='cp1250', skiprows=SKIP_ROWS)  # utf_8 | cp1250
 
     elif fileFormat == FileFormat.H80AI:
         SKIP_ROWS = [0, 1, 2, 3]
