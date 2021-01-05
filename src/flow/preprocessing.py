@@ -4,6 +4,7 @@ Step #1:
     * pre-processes this file and creates related files and entries in DB & influx
 """
 
+import os
 import shutil
 import pandas as pd
 from pathlib import Path
@@ -47,19 +48,25 @@ print("[INFO] FILE_STORAGE_ROOT:", FILE_STORAGE_ROOT)
 
 
 def checkForWork():
-    file: File = FilesDao.getFileForProcessing()
+    filesDao = FilesDao()
+
+    file: File = filesDao.getFileForProcessing()
     if not file:
         print("[INFO] No work")
         return None
 
-    print(f"[INFO] Processing file id '{file.id}'")
-
-    # setFileStatus(file=file, status=FileStatus.UNDER_ANALYSIS)  # TODO uncomment (!)
+    print(f"[INFO] Initiating work on file id '{file.id}'")
 
     return file
 
 
-def prepare(file: File):
+def migrate(file: File):
+    """
+    Migratess specified file from upload into storage directory.
+    It may happen the file has been moved in previous processing attempt, hence the check if the file exists in the storage_root.
+    :param file:
+    :return: True if the file is physically available in the storage_root
+    """
     srcFilePath = f"{FILE_INGESTION_ROOT}/{file.id}"
 
     dstDir = f"{FILE_STORAGE_ROOT}/{file.id}"
@@ -76,9 +83,9 @@ def prepare(file: File):
 
     except FileNotFoundError as e:
         print(f"[ERROR] when copying file:\n ", str(e))
-        return False
 
-    return True
+    # check existence in the destination dir:
+    return os.path.exists(dstFilePath)
 
 
 def preprocess(file: File) -> List[EngineWork]:
