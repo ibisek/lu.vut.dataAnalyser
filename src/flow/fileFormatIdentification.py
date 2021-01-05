@@ -1,6 +1,6 @@
-import os
-from threading import Thread
-from time import sleep
+"""
+File type identification.
+"""
 
 from data.sources.fileLoader import loadRawData
 from data.structures import FileFormat
