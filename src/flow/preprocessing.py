@@ -29,7 +29,7 @@ from data.structures import EngineWork
 from plotting import plotChannelsOfInterestMultiY
 
 from dao.configurationDao import getConfiguration
-from dao.fileDao import File, FileStatus, FileDao
+from db.dao.filesDao import File, FileStatus, FilesDao
 
 from dao.regressionResultDao import saveRegressionResult, getRegressionResults
 from dao.flightRecordingDao import FlightRecordingDao, RecordingType
@@ -47,7 +47,7 @@ print("[INFO] FILE_STORAGE_ROOT:", FILE_STORAGE_ROOT)
 
 
 def checkForWork():
-    file: File = FileDao.getFileForProcessing()
+    file: File = FilesDao.getFileForProcessing()
     if not file:
         print("[INFO] No work")
         return None
@@ -130,7 +130,7 @@ def preprocess(file: File) -> List[EngineWork]:
         SteadyStatesDetector(windowDt=STEADY_STATE_WINDOW_LEN, dVal=STEADY_STATE_DVAL).detectSteadyStates(filteredDataFrame, fileName, outPath=inPath, engineIndex=engineIndex)
         steadyStates = loadSteadyStates(originalFileName=fileName, ssDir=inPath, engineIndex=engineIndex)
         if len(steadyStates) == 0:
-            FileDao.setFileStatus(file=file, status=FileStatus.NO_STEADY_STATES)
+            FilesDao.setFileStatus(file=file, status=FileStatus.NO_STEADY_STATES)
             return True
 
         # save data from steady states and with NG>=NG_THRESHOLD to file:
@@ -187,7 +187,7 @@ def _filterOutUnsteadyRecords(file: File, df: pd.DataFrame):
 
 def calcNominalValues(engineId: int):
     NUM = 50
-    files: File = FileDao.listFilesForNominalCalculation(engineId=engineId, limit=NUM)
+    files: File = FilesDao.listFilesForNominalCalculation(engineId=engineId, limit=NUM)
     # TODO uncomment (!)
     if len(files) != NUM:
         print(f"[WARN] No enough files for nominal data calculation: {len(files)}; required: {NUM}")
@@ -296,7 +296,7 @@ def recalcAllRegressionResultsForEngine(engineId: int):
     :return:
     """
 
-    files = FileDao.listFiles(engineId=engineId)
+    files = FilesDao.listFiles(engineId=engineId)
     for file in files:
         # TODO uncomment(!)
         if file.status != FileStatus.ANALYSIS_COMPLETE:
@@ -314,12 +314,12 @@ if __name__ == '__main__':
 
         try:
             if file and prepare(file):
-                FileDao.setFileStatus(file=file, status=FileStatus.UNDER_ANALYSIS)
+                FilesDao.setFileStatus(file=file, status=FileStatus.UNDER_ANALYSIS)
                 preprocess(file)
 
         except Exception as ex:
             print(f"[ERROR] in processing file {file}:", str(ex))
-            FileDao.setFileStatus(file=file, status=FileStatus.FAILED)
+            FilesDao.setFileStatus(file=file, status=FileStatus.FAILED)
 
     # ENGINE_ID = 1
     # calcNominalValues(ENGINE_ID)

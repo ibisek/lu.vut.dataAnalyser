@@ -8,8 +8,8 @@ import shutil
 import hashlib
 
 from dao.configurationDao import getConfiguration
-from dao import fileDao
-from dao.fileDao import File, FileStatus
+from db.dao import filesDao
+from db.dao.filesDao import File, FileStatus
 
 c = getConfiguration()
 FILE_INGESTION_ROOT = c['FILE_INGESTION_ROOT']
@@ -42,7 +42,7 @@ if __name__ == '__main__':
 
             file: File = File(id=None, name=fileName, flightId=flightId, engineId=engineId, source=source, generated=generated, status=status, hash=fileHash)
 
-            file = fileDao.save(file)
+            file = filesDao.save(file)
 
             # mv file from IN_DIR to FILE_INGESTION_ROOT:
             dstFilePath = f"{FILE_INGESTION_ROOT}/{file.id}"
@@ -50,6 +50,6 @@ if __name__ == '__main__':
             shutil.move(src=srcFilePath, dst=dstFilePath)
 
             file.status = FileStatus.READY_TO_PROCESS
-            fileDao.save(file)
+            filesDao.save(file)
 
     print('KOHEU.')

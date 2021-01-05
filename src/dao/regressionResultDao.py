@@ -8,7 +8,7 @@ import pandas as pd
 from db.DbSource import DbSource
 
 from configuration import dbConnectionInfo
-from dao.fileDao import File
+from db.dao.filesDao import File
 from data.analysis.regression import RegressionResult
 
 
