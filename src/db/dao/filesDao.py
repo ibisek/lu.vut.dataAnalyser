@@ -1,4 +1,6 @@
 from enum import Enum
+from copy import deepcopy
+from sqlalchemy import and_
 
 from db.dao.alchemy import Alchemy
 
@@ -36,105 +38,108 @@ class FilesDao(Alchemy):
         super(FilesDao, self).__init__()
         self.table = self.base.classes.files
 
-    @staticmethod
-    def getFileForProcessing():
+    def getFileForProcessing(self):
         """
         :return: instance of ONE file which is ready for processing (typically a freshly uploaded file)
         """
-        f = None
+        # from sqlalchemy import sql
+        # cond = and_(self.base.classes.files.status == FileStatus.READY_TO_PROCESS.value,
+        #             self.base.classes.files.format != FileFormat.UNDEFINED,
+        #             self.base.classes.files.format != FileFormat.UNKNOWN)
+        # cond = (self.base.classes.files.status == FileStatus.READY_TO_PROCESS.value) \
+        #        & (self.base.classes.files.format != FileFormat.UNDEFINED) \
+        #        & (self.base.classes.files.format != FileFormat.UNKNOWN)
+        # file = super.getOne(cond)
 
-        with DbSource(dbConnectionInfo).getConnection() as c:
-            strSql = f"SELECT id, name, raw, format, status, hash FROM files " \
-                     f"WHERE raw = true AND status={FileStatus.READY_TO_PROCESS.value} " \
-                     f"and format!={FileFormat.UNDEFINED.value} and format!={FileFormat.UNKNOWN.value} " \
-                     f"LIMIT 1;"
-            c.execute(strSql)
+        q = self.session.query(self.table).filter(and_(self.base.classes.files.status == FileStatus.READY_TO_PROCESS.value,
+                                                       self.base.classes.files.format != FileFormat.UNDEFINED.value,
+                                                       self.base.classes.files.format != FileFormat.UNKNOWN.value)).limit(1)
+        file = q.first()
+        file.status = FileStatus(file.status)   # from int value to object type
+        file.format = FileFormat(file.format)   # from int value to object type
 
-            rows = c.fetchall()
-            for row in rows:
-                (id, name, raw, format, status, hash) = row
-                f = File(id=id, name=name, raw=raw, format=FileFormat(format), status=FileStatus(status), hash=hash)
+        return file
 
-        return f
-
-    @staticmethod
-    def setFileStatus(file: File, status: FileStatus):
-        with DbSource(dbConnectionInfo).getConnection() as c:
-            strSql = f"UPDATE files SET status = {status.value} WHERE id = {file.id};"
-            res = c.execute(strSql)
-            if res:
-                return True
-
-        return False
+    def save(self, file):
+        if file:
+            file = deepcopy(file)   # clone to retain object values in the original instance
+            file.status = file.status.value     # from object type to int
+            file.format = file.format.value     # from object type to int
+            super(FilesDao, self).save(file)
+        else:
+            super(FilesDao, self).save()
 
     @staticmethod
     def listFiles(engineId: int = None):
-
-        eidCond = f"WHERE engine_id = {engineId}"
-
-        files = list()
-
-        with DbSource(dbConnectionInfo).getConnection() as c:
-            strSql = f"SELECT id, name, raw, format, status, hash FROM files " \
-                     f"{eidCond} " \
-                     f"ORDER BY id;"
-            c.execute(strSql)
-
-            rows = c.fetchall()
-            for row in rows:
-                (id, name, raw, format, status, hash) = row
-                f = File(id=id, name=name, raw=raw, format=FileFormat(format), status=FileStatus(status), hash=hash)
-                files.append(f)
-
-        return files
+        raise NotImplementedError()
+    #
+    #     eidCond = f"WHERE engine_id = {engineId}"
+    #
+    #     files = list()
+    #
+    #     with DbSource(dbConnectionInfo).getConnection() as c:
+    #         strSql = f"SELECT id, name, raw, format, status, hash FROM files " \
+    #                  f"{eidCond} " \
+    #                  f"ORDER BY id;"
+    #         c.execute(strSql)
+    #
+    #         rows = c.fetchall()
+    #         for row in rows:
+    #             (id, name, raw, format, status, hash) = row
+    #             f = File(id=id, name=name, raw=raw, format=FileFormat(format), status=FileStatus(status), hash=hash)
+    #             files.append(f)
+    #
+    #     return files
 
     @staticmethod
     def listFilesForNominalCalculation(engineId, limit=20):
-        """
-        :param engineId:
-        :param limit:
-        :return: list of first <limit> files for nominal values calculation
-        """
-        files = list()
-
-        with DbSource(dbConnectionInfo).getConnection() as c:
-            strSql = f"SELECT id, name, raw, format, status, hash FROM files " \
-                     f"WHERE engine_id = {engineId} AND status < 128 " \
-                     f"ORDER BY id LIMIT {limit};"
-            c.execute(strSql)
-
-            rows = c.fetchall()
-            for row in rows:
-                (id, name, flightId, engineId, source, generated, status, hash) = row
-                f = File(id=id, name=name, raw=raw, format=FileFormat(format), status=FileStatus(status), hash=hash)
-                files.append(f)
-
-        return files
+        raise NotImplementedError()
+    #     """
+    #     :param engineId:
+    #     :param limit:
+    #     :return: list of first <limit> files for nominal values calculation
+    #     """
+    #     files = list()
+    #
+    #     with DbSource(dbConnectionInfo).getConnection() as c:
+    #         strSql = f"SELECT id, name, raw, format, status, hash FROM files " \
+    #                  f"WHERE engine_id = {engineId} AND status < 128 " \
+    #                  f"ORDER BY id LIMIT {limit};"
+    #         c.execute(strSql)
+    #
+    #         rows = c.fetchall()
+    #         for row in rows:
+    #             (id, name, flightId, engineId, source, generated, status, hash) = row
+    #             f = File(id=id, name=name, raw=raw, format=FileFormat(format), status=FileStatus(status), hash=hash)
+    #             files.append(f)
+    #
+    #     return files
 
     @staticmethod
     def saveFile(file: File):
-        flightId = 'null' if not file.flightId else file.flightId
-
-        if not file.id:  # new record
-            sql = f"INSERT INTO files (name, raw, format, status, hash) " \
-                  f"VALUES ('{file.name}', {file.raw}, {file.format.value}, {file.status.value}, '{file.hash}');"
-
-            with DbSource(dbConnectionInfo).getConnection() as c:
-                c.execute(sql)
-                file.id = c.lastrowid
-
-        else:   # update existing
-            sql = f"UPDATE files SET name='{file.name}', raw={file.raw}, format={file.format.value}, " \
-                  f"status={file.status.value}, hash='{file.hash}' " \
-                  f"WHERE id={file.id}"
-
-            with DbSource(dbConnectionInfo).getConnection() as c:
-                c.execute(sql)
-
-        return file
+        raise NotImplementedError()
+    #     flightId = 'null' if not file.flightId else file.flightId
+    #
+    #     if not file.id:  # new record
+    #         sql = f"INSERT INTO files (name, raw, format, status, hash) " \
+    #               f"VALUES ('{file.name}', {file.raw}, {file.format.value}, {file.status.value}, '{file.hash}');"
+    #
+    #         with DbSource(dbConnectionInfo).getConnection() as c:
+    #             c.execute(sql)
+    #             file.id = c.lastrowid
+    #
+    #     else:   # update existing
+    #         sql = f"UPDATE files SET name='{file.name}', raw={file.raw}, format={file.format.value}, " \
+    #               f"status={file.status.value}, hash='{file.hash}' " \
+    #               f"WHERE id={file.id}"
+    #
+    #         with DbSource(dbConnectionInfo).getConnection() as c:
+    #             c.execute(sql)
+    #
+    #     return file
 
 
 if __name__ == '__main__':
     filesDao = FilesDao()
-    file = filesDao.getOne(status=FileStatus.READY_TO_PROCESS.value, format=0)
+    file = filesDao.getOne(status=FileStatus.READY_TO_PROCESS.value, format=1)
     print('file:', vars(file))
