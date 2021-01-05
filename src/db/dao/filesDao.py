@@ -112,7 +112,7 @@ class FilesDao(Alchemy):
         return files
 
     @staticmethod
-    def save(file: File):
+    def saveFile(file: File):
         flightId = 'null' if not file.flightId else file.flightId
 
         if not file.id:  # new record
