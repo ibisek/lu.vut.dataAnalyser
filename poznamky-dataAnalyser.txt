@@ -13,6 +13,12 @@ When plotting does not show charts, or just sometimes:
     https://www.pyimagesearch.com/2015/08/24/resolved-matplotlib-figures-not-showing-up-or-displaying/
 
 --
+ SQL Alchemy association tables:
+    https://docs.sqlalchemy.org/en/13/orm/basic_relationships.html
+
+    https://docs.sqlalchemy.org/en/13/orm/tutorial.html
+    https://docs.sqlalchemy.org/en/13/orm/extensions/declarative/relationships.html
+--
 
 https://ourcodingclub.github.io/2019/01/07/pandas-time-series.html
 https://www.datacamp.com/community/tutorials/time-series-analysis-tutorial
