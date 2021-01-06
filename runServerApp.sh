@@ -4,11 +4,11 @@ clear
 
 source ./venv/bin/activate
 
-export PYTHONPATH=$PYTHONPATH:./src/:.
+export PYTHONPATH=.:./src:$PYTHONPATH
 
 while true
 do
-  python3 serverApp.py
+  python3 ./src/serverApp.py
   sleep 10
 done
 
