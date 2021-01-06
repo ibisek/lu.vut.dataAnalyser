@@ -8,8 +8,13 @@ import shutil
 import hashlib
 
 from dao.configurationDao import getConfiguration
-from db.dao import filesDao
-from db.dao.filesDao import File, FileStatus
+from db.dao.filesDao import FilesDao, FileStatus
+from db.dao.airplanesDao import AirplanesDao
+from db.dao.enginesDao import EnginesDao
+from db.dao.flightsDao import FlightsDao
+from db.dao.filesFlightsDao import FilesFlightsDao
+from db.dao.enginesFlightsDao import EnginesFlightsDao
+from data.structures import FileFormat
 
 c = getConfiguration()
 FILE_INGESTION_ROOT = c['FILE_INGESTION_ROOT']
@@ -17,8 +22,26 @@ FILE_STORAGE_ROOT = c['FILE_STORAGE_ROOT']
 
 if __name__ == '__main__':
 
+    AIRPLANE_ID = 1
     IN_PATH = '/tmp/00/'
     ENGINE_ID = 1
+
+    # --
+
+    airplanesDao = AirplanesDao()
+    airplane = airplanesDao.getOne(id=AIRPLANE_ID)  # Pilatus PC-12
+    assert airplane
+
+    enginesDao = EnginesDao()
+    engine = enginesDao.getOne(id=1)
+    assert engine
+
+    # --
+
+    filesDao = FilesDao()
+    flightsDao = FlightsDao()
+    filesFlightsDao = FilesFlightsDao()
+    enginesFlightsDao = EnginesFlightsDao()
 
     print(f"[INFO] Reading files from {IN_PATH}..")
 
@@ -34,15 +57,32 @@ if __name__ == '__main__':
 
             print("[INFO] file hash:", fileHash)
 
-            flightId = None
-            engineId = ENGINE_ID
-            source = True
-            generated = False
-            status = FileStatus.UNDEF
+            file = filesDao.createNew()
+            file.name = fileName
+            file.raw = True
+            file.status = FileStatus.UNDEF
+            file.format = FileFormat.UNDEFINED
+            file.hash = fileHash
+            filesDao.save(file)
 
-            file: File = File(id=None, name=fileName, flightId=flightId, engineId=engineId, source=source, generated=generated, status=status, hash=fileHash)
+            # create new flight:
+            flight = flightsDao.createNew()
+            flight.airplane_id = airplane.id
+            flightsDao.save(flight)
 
-            file = filesDao.saveFile(file)
+            # create new flight-file record:
+            ff = filesFlightsDao.createNew()
+            ff.file_id = file.id
+            ff.flight_id = flight.id
+            filesFlightsDao.save(ff)
+
+            # create new flight-engine record:
+            engines = enginesDao.get(airplane_id=airplane.id)
+            for engine in engines:
+                ef = enginesFlightsDao.createNew()
+                ef.engine_id = engine.id
+                ef.flight_id = flight.id
+                enginesFlightsDao.save(ef)
 
             # mv file from IN_DIR to FILE_INGESTION_ROOT:
             dstFilePath = f"{FILE_INGESTION_ROOT}/{file.id}"
@@ -50,6 +90,6 @@ if __name__ == '__main__':
             shutil.move(src=srcFilePath, dst=dstFilePath)
 
             file.status = FileStatus.READY_TO_PROCESS
-            filesDao.saveFile(file)
+            filesDao.save(file)
 
     print('KOHEU.')
