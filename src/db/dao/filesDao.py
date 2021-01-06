@@ -55,8 +55,12 @@ class FilesDao(Alchemy):
                                                        self.base.classes.files.format != FileFormat.UNDEFINED.value,
                                                        self.base.classes.files.format != FileFormat.UNKNOWN.value)).limit(1)
         file = q.first()
-        file.status = FileStatus(file.status)   # from int value to object type
-        file.format = FileFormat(file.format)   # from int value to object type
+
+        if file:
+            if file.status is not None:
+                file.status = FileStatus(file.status)   # from int value to object type
+            if file.format is not None:
+                file.format = FileFormat(file.format)   # from int value to object type
 
         return file
 
@@ -142,4 +146,5 @@ class FilesDao(Alchemy):
 if __name__ == '__main__':
     filesDao = FilesDao()
     file = filesDao.getOne(status=FileStatus.READY_TO_PROCESS.value, format=1)
-    print('file:', vars(file))
+    if file:
+        print('file:', vars(file))
