@@ -1,3 +1,4 @@
+import traceback
 from time import sleep
 from typing import List
 
@@ -34,12 +35,12 @@ if __name__ == '__main__':
 
             engineWorks: List[EngineWork] = preprocess(file)
             for ew in engineWorks:
-                processing.process(engineWorks=ew)
+                processing.process(engineWork=ew)
 
             file.status = FileStatus.ANALYSIS_COMPLETE
 
         except Exception as ex:
-            print(f"[ERROR] in processing file {file}:", str(ex))
+            print(f"[ERROR] in processing file {file}:", str(ex), '\n', traceback.print_tb(ex.__traceback__))
             file.status = FileStatus.FAILED
 
         finally:
