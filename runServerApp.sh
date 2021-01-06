@@ -4,9 +4,7 @@ clear
 
 source ./venv/bin/activate
 
-export PYTHONPATH=$PYTHONPATH:.
-
-cd src
+export PYTHONPATH=$PYTHONPATH:./src/:.
 
 while true
 do
