@@ -39,6 +39,7 @@ if __name__ == '__main__':
                 processing.process(engineWork=ew)
 
             file.status = FileStatus.ANALYSIS_COMPLETE
+            print(f'[INFO] Work for file id {file.id} finished.')
 
         except Exception as ex:
             print(f"[ERROR] in processing file {file}:", str(ex))
