@@ -238,7 +238,7 @@ class Processing:
         :param df
         :return:
         """
-        print(f'[INFO] Processing flight data for\n\tengineId={ew.engineId}'
+        print(f'[INFO] Processing flight data for\n\tengineId={engineWork.engineId}'
               f'\n\tflight id={engineWork.flightId}; idx={engineWork.flightIdx} '
               f'\n\tcycle id={engineWork.cycleId}; idx={engineWork.cycleIdx}')
 
