@@ -66,14 +66,15 @@ class FilesDao(Alchemy):
 
     def save(self, file):
         if file:
-            f = deepcopy(file)   # clone to retain object values in the original instance
-            f.status = file.status.value     # from object type to int
-            f.format = file.format.value     # from object type to int
+            tmpStatus = file.status
+            tmpFormat = file.format
 
-            super(FilesDao, self).save(f)
+            file.status = file.status.value     # from object type to int
+            file.format = file.format.value     # from object type to int
+            super(FilesDao, self).save(file)
 
-            if not file.id:
-                file.id = f.id  # get generated id in case of insertion
+            file.status = tmpStatus
+            file.format = tmpFormat
 
         else:
             super(FilesDao, self).save()
