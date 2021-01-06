@@ -3,6 +3,7 @@ Component coefficients and limits.
 @see specs. Table 1. page 14+15
 """
 
+from copy import deepcopy
 from collections import namedtuple
 
 ComponentLimit = namedtuple('ComponentLimit', ['Av', 'Ap', 'L', 'N'])
@@ -64,3 +65,5 @@ class ComponentLimits:
     # propeller shaft:
     H85['M601-6081.2'] = 12000
     H85['M601-6081.5'] = 12000
+
+    PT6 = deepcopy(H80)     # TODO: TEMP ale asi nafurt ;)
