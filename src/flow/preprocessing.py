@@ -30,7 +30,7 @@ from data.structures import EngineWork
 from plotting import plotChannelsOfInterestMultiY
 
 from dao.configurationDao import getConfiguration
-from db.dao.filesDao import File, FileStatus, FilesDao
+from db.dao.filesDao import File, FileStatus, FilesDao, FileFormat
 
 from dao.regressionResultDao import saveRegressionResult, getRegressionResults
 from dao.flightRecordingDao import FlightRecordingDao, RecordingType
@@ -91,6 +91,9 @@ def migrate(file: File):
 def preprocess(file: File) -> List[EngineWork]:
     inPath = f"{FILE_STORAGE_ROOT}/{file.id}"
     fileName = file.name
+
+    if type(file.format) is int:
+        file.format = FileFormat(file.format)
 
     rawDataFrame = loadRawData(fileFormat=file.format, inPath=inPath, fileName=fileName)
     rawDataFrames = channelSelection(fileFormat=file.format, dataFrame=rawDataFrame, originalFileName=fileName, outPath=inPath)
