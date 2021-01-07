@@ -57,10 +57,10 @@ if __name__ == '__main__':
 
             print("[INFO] file hash:", fileHash)
 
-            file = filesDao.getOne(name=fileName)
-            if file:
-                print(f"[WARN] File '{fileName}' already in DB .. skipping.")
-                continue
+            # file = filesDao.getOne(name=fileName)
+            # if file:
+            #     print(f"[WARN] File '{fileName}' already in DB .. skipping.")
+            #     continue
 
             file = filesDao.createNew()
             file.name = fileName
