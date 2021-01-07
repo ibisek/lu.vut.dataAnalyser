@@ -55,7 +55,7 @@ class FilesDao(Alchemy):
         # file = super.getOne(cond)
 
         q = self.session.query(self.table).filter(and_(self.base.classes.files.status == FileStatus.READY_TO_PROCESS.value,
-                                                       self.base.classes.files.format != FileFormat.UNDEFINED.value,
+                                                       # self.base.classes.files.format != FileFormat.UNDEFINED.value,
                                                        self.base.classes.files.format != FileFormat.UNKNOWN.value)).limit(1)
         file = q.first()
 
