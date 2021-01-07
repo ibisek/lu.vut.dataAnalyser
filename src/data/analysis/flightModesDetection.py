@@ -189,6 +189,9 @@ def detectRepeatedTakeOffs(df: DataFrame, climbIntervals: List[Interval]) -> Lis
     :param takeOffs:
     :return: Interval
     """
+    if len(climbIntervals) == 0:
+        return []
+
     firstTakeOffTs = climbIntervals[0].start
     lastLandingTs = climbIntervals[len(climbIntervals) - 1].end
     df = df[firstTakeOffTs: lastLandingTs]
