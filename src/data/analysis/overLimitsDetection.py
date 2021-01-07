@@ -297,7 +297,7 @@ def _checkOILP(df: DataFrame, flightMode: FlightMode, cycle):
 def _checkOILT(df: DataFrame, flightMode: FlightMode, cycle):
     if flightMode is FlightMode.ENG_STARTUP:
         if cycle.OilTBe < EngineLimits.H80['OilTeLim']:
-            Notifications.valBelowLim(cycle, f'Oil temperature before engine startup: {cycle.OilTBe} deg.C')
+            Notifications.valBelowLim(cycle, f'Oil temperature before engine startup: {cycle.OilTBe:.0f} deg.C')
 
     elif flightMode is FlightMode.CRUISE:
         minLimit = EngineLimits.H80[flightMode]['OilTLimMin']
@@ -307,10 +307,10 @@ def _checkOILT(df: DataFrame, flightMode: FlightMode, cycle):
         maxValue = np.max(df['OILT'])
 
         if minValue < minLimit:
-            Notifications.valBelowLim(cycle, f'Oil temperature below limit ({minLimit} deg.C) during {flightMode.value}: {minValue} deg.C')
+            Notifications.valBelowLim(cycle, f'Oil temperature below limit ({minLimit} deg.C) during {flightMode.value}: {minValue:.2f} deg.C')
 
         if maxValue > maxLimit:
-            Notifications.valAboveLim(cycle, f'Oil temperature above limit ({maxLimit} deg.C) during {flightMode.value}: {maxValue} deg.C')
+            Notifications.valAboveLim(cycle, f'Oil temperature above limit ({maxLimit} deg.C) during {flightMode.value}: {maxValue:.2f} deg.C')
 
 
 def _checkFUELP(df: DataFrame, flightMode: FlightMode, cycle):
@@ -339,7 +339,7 @@ def checkEngineIdleLimits(df: DataFrame, cycle):
     ittLim = 1 if maxITT > EngineLimits.H80['ITTLimIdle'] else 0
     if ittLim:
         cycle.ITTlimL = _max(cycle.ITTlimL, ittLim)
-        Notifications.valAboveLim(cycle, f'ITT during engine idle: {maxITT} deg.C')
+        Notifications.valAboveLim(cycle, f'ITT during engine idle: {maxITT:.0f} deg.C')
 
 
 def checkEngineStartupLimits(df: DataFrame, cycle):
@@ -352,10 +352,10 @@ def checkEngineStartupLimits(df: DataFrame, cycle):
 
     if cycle.ITTSUg > EngineLimits.H80['ITTLimSUg']:
         cycle.ITTlimL &= 1
-        Notifications.valAboveLim(cycle, f'Altitude during engine startup: {cycle.ITTlimL} deg.C')
+        Notifications.valAboveLim(cycle, f'Altitude during engine startup: {cycle.ITTlimL:.0f} deg.C')
 
     if cycle.ALTSUg > EngineLimits.H80['ALTLimSUg']:
-        Notifications.valAboveLim(cycle, f'Altitude during engine startup: {cycle.ALTSUg} m')
+        Notifications.valAboveLim(cycle, f'Altitude during engine startup: {cycle.ALTSUg:.0f} m')
 
     if cycle.OilP > EngineLimits.H80['OilPLim']:
         Notifications.valAboveLim(cycle, f'Oil pressure during engine startup: {cycle.OilP/1e06:.2f} MPa')
