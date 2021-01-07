@@ -300,6 +300,13 @@ def channelSelection(fileFormat: FileFormat, dataFrame, originalFileName, outPat
     else:
         raise NotImplementedError(f'[FATAL] UNKNOWN file format {fileFormat} - unable to choose processing method!\n originalFileName: {originalFileName}')
 
+    # throw away empty dataframes:
+    nonZeroLengthDataFrames = []
+    for df in dataFrames:
+        if len(df) > 0:
+            nonZeroLengthDataFrames.append(df)
+    dataFrames = nonZeroLengthDataFrames
+
     for engineIndex, dataFrame in enumerate(dataFrames, start=1):
         # drop rows where p0 == 0 (causes inf/zero division in dataStandardisation):
         # dataFrame = dataFrame.replace(0, np.nan)
