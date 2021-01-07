@@ -139,7 +139,10 @@ def detectClimbs(df: DataFrame) -> List[Interval]:
 
     iasKey = 'IAS' if 'IAS' in df.keys() else 'TAS'
 
-    tsClimbIndexStart = df.loc[df[iasKey] > TO_START_IAS_THRESHOLD].index[0]
+    tmpDf = df.loc[df[iasKey] > TO_START_IAS_THRESHOLD]
+    if len(tmpDf) == 0:
+        return []
+    tsClimbIndexStart = tmpDf.index[0]
 
     climbs: List[Interval] = list()
     doLoop = True
