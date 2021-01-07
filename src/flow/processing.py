@@ -510,7 +510,6 @@ class Processing:
                 limitVal = limitVal.N
             if c.eq_cycles >= limitVal * LIMITING_THR or c.eq_cycles_sim >= limitVal * LIMITING_THR:
                 Notifications.valAboveLim(c, f"Component's equivalent cycles above {LIMITING_THR*100:.0f}% of its limit ({limitVal}): {c.eq_cycles:.1f}.")
-            print(555)
 
     def process(self, engineWork: EngineWork):
         """
