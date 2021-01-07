@@ -36,7 +36,10 @@ def detectFlights(df: DataFrame) -> List[Interval]:
 
     if len(flights) > 0:
         for flight in flights:
-            flight.start = df[:flight.start].loc[df['NG'] < NG_THR].tail(1).index[0]
+            tmpDf = df[:flight.start].loc[df['NG'] < NG_THR]
+            if len(tmpDf) == 0:
+                continue
+            flight.start = tmpDf.tail(1).index[0]
             flight.end += timedelta(seconds=10)
 
     return flights
