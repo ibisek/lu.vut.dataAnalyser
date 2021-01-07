@@ -12,14 +12,18 @@ from configuration import SQLALCHEMY_DB_URI
 class Alchemy(object):
 
     table = None    # placeholder for extending classes table object
+    base = None
+    session = None
 
     def __init__(self):
-        self.base = automap_base()
-        engine = create_engine(SQLALCHEMY_DB_URI)
-        self.base.prepare(engine, reflect=True)
+        if not self.base:
+            self.base = automap_base()
+            engine = create_engine(SQLALCHEMY_DB_URI)
+            self.base.prepare(engine, reflect=True)
 
-        self.session = Session(engine)
-        self.session.autoflush = True
+        if not self.session:
+            self.session = Session(engine)
+            self.session.autoflush = True
 
     def __del__(self):
         # self.session.commit() # causes KeyError exception on a probably already-deleted object
