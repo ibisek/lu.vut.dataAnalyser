@@ -406,7 +406,11 @@ def detectEngineShutdowns(df: DataFrame) -> List[Interval]:
     df = df.copy(deep=True)
     shutdowns = []
 
-    engUpIndex = df.loc[df['NG'] >= EngineLimits.H80['NGLimIdle']].index[0]  # first index where the engine was above idle
+    tmpDf = df.loc[df['NG'] >= EngineLimits.H80['NGLimIdle']]
+    if len(tmpDf):
+        return []
+
+    engUpIndex = tmpDf.index[0]  # first index where the engine was above idle
     df = df[engUpIndex:]
     # df['NG'].plot()
     while True:
