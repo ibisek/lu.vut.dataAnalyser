@@ -101,7 +101,7 @@ def preprocess(file: File) -> List[EngineWork]:
     # fetch flightId for current file:
     flightId = FlightsDao.getFlightIdForFile(file.id)
     # fetch engine IDs for this raw flight instance:
-    engineIds = EnginesDao().getEngineIdsForRawFlight(file.id)
+    engineIds = EnginesDao().getEngineIdsForRawFlight(flightId)
     assert len(rawDataFrames) == len(engineIds)
 
     engineWorks: List[EngineWork] = []
