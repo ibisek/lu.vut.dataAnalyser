@@ -326,7 +326,7 @@ def channelSelection(fileFormat: FileFormat, dataFrame, originalFileName, outPat
         print(f"[INFO] Writing selected channels to '{fn}'")
         dataFrame.to_csv(fp, sep=';', encoding='utf_8')
 
-        dataFrames[engineIndex-1] = dataFrame   # we are working with a copy in the loop (!)
+        dataFrames[engineIndex-1] = dataFrame   # reinsert this df back to the list (we are working with a copy in the loop) (!)
 
     return dataFrames
 
