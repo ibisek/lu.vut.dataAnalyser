@@ -99,7 +99,7 @@ def preprocess(file: File) -> List[EngineWork]:
     rawDataFrames = channelSelection(fileFormat=file.format, dataFrame=rawDataFrame, originalFileName=fileName, outPath=inPath)
 
     if len(rawDataFrames) == 0:
-        return True
+        return []
 
     # fetch flightId for current file:
     flightId = FlightsDao.getFlightIdForFile(file.id)
