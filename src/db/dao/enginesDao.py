@@ -17,10 +17,10 @@ class EnginesDao(Alchemy):
         ids = []
 
         with DbSource(dbConnectionInfo).getConnection() as c:
-            strSql = f"select e.id from engines as e " \
-                     f"join engines_flights as ef on e.id=ef.engine_id " \
+            strSql = f"select engine_id from engines_flights as ef " \
                      f"join flights as f on ef.flight_id = f.id " \
                      f"where f.id={flightId} and f.idx=0;"
+
             c.execute(strSql)
 
             rows = c.fetchall()
