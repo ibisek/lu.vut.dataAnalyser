@@ -34,21 +34,21 @@ class Alchemy(object):
 
     def save(self, obj=None):
         if obj:
-            # itsSession = None
-            # try:
-            #     itsSession = obj.object_session()
-            # except Exception:
-            #     pass
-            #
-            # if itsSession:
-            #     itsSession.commit()
-            # else:
-            #     self.session.add(obj)
-            #     self.session.commit()
+            objSession = None
+            try:
+                objSession = obj.object_session()
+            except Exception:
+                pass
 
-            local_object = self.session.merge(obj)
-            self.session.add(local_object)
-            self.session.commit()
+            if objSession:
+                objSession.commit()
+            else:
+                self.session.add(obj)
+                self.session.commit()
+
+            # local_object = self.session.merge(obj)
+            # self.session.add(local_object)
+            # self.session.commit()
 
     def get(self, **kwargs):
         """
