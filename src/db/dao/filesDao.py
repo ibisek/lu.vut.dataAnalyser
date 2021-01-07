@@ -18,6 +18,9 @@ class FileStatus(Enum):
     NO_STEADY_STATES = 200    # no steady states detected
     FAILED = 255
 
+    def translate(self, escape_table) -> int:
+        return self.value
+
 
 class File:
 
@@ -66,15 +69,15 @@ class FilesDao(Alchemy):
 
     def save(self, file):
         if file:
-            tmpStatus = file.status
-            tmpFormat = file.format
-
-            file.status = file.status.value     # from object type to int
-            file.format = file.format.value     # from object type to int
+            # tmpStatus = file.status
+            # tmpFormat = file.format
+            #
+            # file.status = file.status.value     # from object type to int
+            # file.format = file.format.value     # from object type to int
             super(FilesDao, self).save(file)
 
-            file.status = tmpStatus
-            file.format = tmpFormat
+            # file.status = tmpStatus
+            # file.format = tmpFormat
 
         else:
             super(FilesDao, self).save()

@@ -9,6 +9,9 @@ class FileFormat(Enum):
     H80GE = 3
     UNKNOWN = 255
 
+    def translate(self, escape_table) -> int:
+        return self.value
+
     def __str__(self):
         return f'#FileFormat: {self.name} ({self.value})'
 
