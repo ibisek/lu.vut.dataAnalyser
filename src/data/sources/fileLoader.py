@@ -41,6 +41,8 @@ def _reformatPt6(path: str, filename: str):
 def loadRawData(fileFormat: FileFormat, inPath: str, fileName: str) -> pd.DataFrame:
     filePath = f"{inPath}/{fileName}"
 
+    df = pd.DataFrame()
+
     if fileFormat == FileFormat.PT6:
         tmpPath, fileName = _reformatPt6(inPath, fileName)
         SKIP_ROWS = [0, 1]
@@ -66,6 +68,9 @@ def loadRawData(fileFormat: FileFormat, inPath: str, fileName: str) -> pd.DataFr
 
         # delete dummy column (the line ends with ',' and thus pandas creates empty column)
         del df['dummy']
+
+    else:
+        raise NotImplementedError(f"Unknown file format '{fileFormat}'")
 
     df = df.drop(df.tail(1).index)  # drop last row - often mangled
     df = df.replace('', np.nan)     # replace empty strings by NaN - such will be dropped later on
