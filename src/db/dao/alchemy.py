@@ -48,4 +48,4 @@ class Alchemy(object):
         :return: single instance of query result
         """
         q = self.session.query(self.table).filter_by(**kwargs).limit(1)
-        return next(iter(q), None)
+        return q.first()
