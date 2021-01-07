@@ -51,6 +51,9 @@ if __name__ == '__main__':
         if os.path.isfile(srcFilePath) and fileName.lower().endswith('.csv'):
             print(f"[INFO] Processing {fileName}..")
 
+            if '___' in fileName:   # files with multiple underscores in name are empty
+                continue
+
             with open(srcFilePath, "rb") as f:
                 bytes = f.read()
                 fileHash = hashlib.sha256(bytes).hexdigest()
