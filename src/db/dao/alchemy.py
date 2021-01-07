@@ -40,15 +40,19 @@ class Alchemy(object):
             except Exception:
                 pass
 
-            if objSession:
-                objSession.commit()
-            else:
-                self.session.add(obj)
-                self.session.commit()
+            try:
+                if objSession:
+                    objSession.commit()
+                else:
+                    self.session.add(obj)
+                    self.session.commit()
 
-            # local_object = self.session.merge(obj)
-            # self.session.add(local_object)
-            # self.session.commit()
+            except Exception as e:
+                # sqlalchemy.exc.InvalidRequestError: Object '<files at 0x7fd674f19550>' is already attached to session '1' (this is '7')
+                # This makes a local copy while generated PK id WILL NOT be present in the original object!! :(
+                local_object = self.session.merge(obj)
+                self.session.add(local_object)
+                self.session.commit()
 
     def get(self, **kwargs):
         """
