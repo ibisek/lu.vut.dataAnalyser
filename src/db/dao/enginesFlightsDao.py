@@ -23,8 +23,11 @@ class EnginesFlightsDao(Alchemy):
         return EngineFlight()
 
     def save(self, ef: EngineFlight):
-        if not ef.engine_id or not ef.flight_id or self.getOne(engineId=ef.engine_id, flightId=ef.flight_id):
-            return
+        if not ef.engine_id or not ef.flight_id:
+            raise ValueError("Any of the IDs cannot be null!")
+
+        if self.getOne(engineId=ef.engine_id, flightId=ef.flight_id):
+            return  # already there
 
         sql = f"INSERT INTO engines_flights (engine_id, flight_id) VALUES ({ef.engine_id}, {ef.flight_id})"
 

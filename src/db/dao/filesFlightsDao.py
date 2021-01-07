@@ -34,8 +34,10 @@ class FilesFlightsDao(Alchemy):
         return FileFlight()
 
     def save(self, ff: FileFlight):
-        if not ff.file_id or not ff.flight_id or self.getOne(fileId=ff.file_id, flightId=ff.flight_id):
-            return
+        if not ff.file_id or not ff.flight_id:
+            raise ValueError("Any of the IDs cannot be null!")
+        if self.getOne(fileId=ff.file_id, flightId=ff.flight_id):
+            return  # already there
 
         sql = f"INSERT INTO files_flights (file_id, flight_id) VALUES ({ff.file_id}, {ff.flight_id})"
 
