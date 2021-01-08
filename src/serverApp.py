@@ -42,8 +42,8 @@ if __name__ == '__main__':
             print(f'[INFO] Work for file id {file.id} finished.')
 
         except Exception as ex:
-            print(f"[ERROR] in processing file {file}:", str(ex))
-            traceback.print_exc(file=sys.stderr)
+            print(f"[ERROR] in processing file id {file.id}:", str(ex))
+            traceback.print_exc(file=sys.stdout)
             file.status = FileStatus.FAILED
 
         finally:
