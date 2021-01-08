@@ -316,6 +316,10 @@ def channelSelection(fileFormat: FileFormat, dataFrame, originalFileName, outPat
         # fill missing values:
         # dataFrame.interpolate()
 
+        if dataFrame.empty:
+            print(f"[INFO] Dropped an empty dataFrame for file {originalFileName}")
+            continue
+
         # add unix timestamp column:
         dataFrame['ts'] = dataFrame.index[0].value / 1e9
 
