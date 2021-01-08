@@ -321,6 +321,7 @@ def channelSelection(fileFormat: FileFormat, dataFrame, originalFileName, outPat
             continue
 
         # add unix timestamp column:
+        dataFrame = dataFrame.copy()  # to mute the "A value is trying to be set on a copy of a slice from a DataFrame." warnings.
         dataFrame['ts'] = dataFrame.index[0].value / 1e9
 
         dataFrame = _populateMissingChannels(dataFrame)
