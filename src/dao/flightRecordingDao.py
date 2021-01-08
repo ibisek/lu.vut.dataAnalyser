@@ -48,12 +48,9 @@ class FlightRecordingDao(object):
         self.influx.stop()
 
     @staticmethod
-    def loadDf(engineId: int, flightId: int, flightIdx: int, cycleId: int, cycleIdx: int, recType: RecordingType) -> DataFrame:
+    def loadDf(engineId: int, flightId: int, flightIdx: int, cycleId: int, cycleIdx: int, recType: RecordingType=RecordingType.FILTERED) -> DataFrame:
 
-        if flightIdx == 0 or cycleIdx == 0:
-            q = f"SELECT * FROM flights WHERE type='{recType.value}' AND engine_id='{engineId}' AND flight_id='{flightId}' AND cycle_id='{cycleId}'"
-        else:
-            q = f"SELECT * FROM flights WHERE type='{recType.value}' AND engine_id='{engineId}' " \
+        q = f"SELECT * FROM flights WHERE type='{recType.value}' AND engine_id='{engineId}' " \
                 f"AND flight_id='{flightId}' AND flight_idx='{flightIdx}' " \
                 f"AND cycle_id='{cycleId}' AND cycle_idx='{cycleIdx}'"
 
