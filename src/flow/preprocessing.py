@@ -6,6 +6,7 @@ Step #1:
 
 import os
 import shutil
+from time import sleep
 import pandas as pd
 from pathlib import Path
 from typing import List
@@ -133,6 +134,8 @@ def preprocess(file: File) -> List[EngineWork]:
         frDao.storeDf(engineId=engineId, flightId=flightId, flightIdx=flightIdx, cycleId=cycle.id, cycleIdx=cycleIdx, df=rawDataFrame, recType=RecordingType.RAW)
         frDao.storeDf(engineId=engineId, flightId=flightId, flightIdx=flightIdx, cycleId=cycle.id, cycleIdx=cycleIdx, df=filteredDataFrame, recType=RecordingType.FILTERED)
         frDao.storeDf(engineId=engineId, flightId=flightId, flightIdx=flightIdx, cycleId=cycle.id, cycleIdx=cycleIdx, df=standardisedDataFrame, recType=RecordingType.STANDARDIZED)
+        while not frDao.queueEmpty():
+            sleep(1)    # wait until the data is stored in influx; is has been causing problems when requesting early retrieval
 
         engineWorks.append(EngineWork(engineId=engineId, flightId=flightId, flightIdx=flightIdx, cycleId=cycle.id, cycleIdx=cycleIdx))
 
