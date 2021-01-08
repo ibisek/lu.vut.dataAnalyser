@@ -1,5 +1,5 @@
 from db.dao.alchemy import Alchemy
-
+from utils.singleton import Singleton
 from configuration import dbConnectionInfo
 from db.DbSource import DbSource
 
@@ -13,7 +13,7 @@ class EngineFlight:
         self.flight_id = flightId
 
 
-class EnginesFlightsDao(Alchemy):
+class EnginesFlightsDao(Alchemy, Singleton):
 
     def __init__(self):
         super(EnginesFlightsDao, self).__init__()

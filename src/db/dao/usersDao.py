@@ -1,7 +1,8 @@
 from db.dao.alchemy import Alchemy
+from utils.singleton import Singleton
 
 
-class UsersDao(Alchemy):
+class UsersDao(Alchemy, Singleton):
 
     def __init__(self):
         super(UsersDao, self).__init__()

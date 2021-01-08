@@ -1,14 +1,15 @@
-
 import numpy
 
 from db.dao.alchemy import Alchemy
+from utils.singleton import Singleton
 
 
-class CyclesDao(Alchemy):
+class CyclesDao(Alchemy, Singleton):
 
     def __init__(self):
         super().__init__()
         self.table = self.base.classes.cycles
+        print("## CYCLESDAO CONTRUCTOR ##")
 
     @staticmethod
     def prepareForSave(cycle):
@@ -23,3 +24,9 @@ class CyclesDao(Alchemy):
 
             if type(val) == numpy.float64:
                 setattr(cycle, attr, float(val))
+
+
+if __name__ == '__main__':
+    dao = CyclesDao()
+    cycle = dao.getOne(id=949)
+    print(vars(cycle))

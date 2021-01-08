@@ -1,10 +1,8 @@
 from db.dao.alchemy import Alchemy
-
-from configuration import dbConnectionInfo
-from db.DbSource import DbSource
+from utils.singleton import Singleton
 
 
-class EquipmentDao(Alchemy):
+class EquipmentDao(Alchemy, Singleton):
 
     def __init__(self):
         super().__init__()

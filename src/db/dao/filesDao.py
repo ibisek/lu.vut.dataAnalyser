@@ -2,7 +2,7 @@ from enum import Enum
 from sqlalchemy import and_
 
 from db.dao.alchemy import Alchemy
-
+from utils.singleton import Singleton
 from configuration import dbConnectionInfo
 from db.DbSource import DbSource
 from data.structures import FileFormat
@@ -35,7 +35,7 @@ class File:
         return f"#File: id: {self.id}\n name: {self.name}\n raw: {self.raw}\n format: {self.format}\n status: {self.status}\n hash: {self.hash}"
 
 
-class FilesDao(Alchemy):
+class FilesDao(Alchemy, Singleton):
     def __init__(self):
         super(FilesDao, self).__init__()
         self.table = self.base.classes.files

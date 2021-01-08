@@ -1,8 +1,9 @@
 import json
 from db.dao.alchemy import Alchemy
+from utils.singleton import Singleton
 
 
-class LogbookDao(Alchemy):
+class LogbookDao(Alchemy, Singleton):
 
     def __init__(self):
         super(LogbookDao, self).__init__()

@@ -1,7 +1,8 @@
 from db.dao.alchemy import Alchemy
+from utils.singleton import Singleton
 
 
-class AirplanesDao(Alchemy):
+class AirplanesDao(Alchemy, Singleton):
 
     def __init__(self):
         super(AirplanesDao, self).__init__()

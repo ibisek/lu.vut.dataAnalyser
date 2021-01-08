@@ -1,5 +1,5 @@
 from db.dao.alchemy import Alchemy
-
+from utils.singleton import Singleton
 from sqlalchemy import Table, Column, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
@@ -18,7 +18,7 @@ class FileFlight:
         self.flight_id = flightId
 
 
-class FilesFlightsDao(Alchemy):
+class FilesFlightsDao(Alchemy, Singleton):
 
     def __init__(self):
         super(FilesFlightsDao, self).__init__()

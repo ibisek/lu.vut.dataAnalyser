@@ -1,12 +1,12 @@
 
 from typing import List
 from db.dao.alchemy import Alchemy
-
+from utils.singleton import Singleton
 from db.DbSource import DbSource
 from configuration import dbConnectionInfo
 
 
-class ComponentsDao(Alchemy):
+class ComponentsDao(Alchemy, Singleton):
 
     def __init__(self):
         super().__init__()

@@ -1,7 +1,8 @@
 from db.dao.alchemy import Alchemy
+from utils.singleton import Singleton
 
 
-class NotificationsDao(Alchemy):
+class NotificationsDao(Alchemy, Singleton):
 
     def __init__(self):
         super(NotificationsDao, self).__init__()
