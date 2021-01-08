@@ -25,6 +25,9 @@ class FlightRecordingDao(object):
         self.influx = InfluxDbThread(dbName=INFLUX_DB_NAME, host=INFLUX_DB_HOST)
         self.influx.start()
 
+    def queueEmpty(self) -> bool:
+        return self.influx.toDoStatements.empty()
+
     def storeDf(self, engineId: int, flightId: int, flightIdx: int, cycleId: int, cycleIdx: int, df: DataFrame, recType: RecordingType):
         keys = df.keys().tolist()
         if 'ts' in keys:
