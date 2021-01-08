@@ -1,6 +1,6 @@
 import os
 
-DEV_MODE = False
+DEV_MODE = True
 
 IN_PATH = '/home/ibisek/wqz/prog/python/lu.vut.dataAnalyser/data/in/'
 OUT_PATH = '/home/ibisek/wqz/prog/python/lu.vut.dataAnalyser/data/out/'
@@ -73,9 +73,10 @@ KEYS_FOR_AVG_IN_SSs = ['T0', 'NP', 'OILT', 'OILP', 'TAS', 'SP', 'ALT']
 
 DB_HOST = '10.8.0.30'   # radec
 DB_PORT = 3306
-DB_NAME = 'radec_dev' if DEV_MODE else 'radec'
+DB_NAME = 'radec'
+# DB_NAME = 'radec_dev' if DEV_MODE else 'radec'
 DB_USER = 'ibisek'
-DB_PASSWORD = '**'
+DB_PASSWORD = 'heslo'
 dbConnectionInfo = (DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD)
 
 if DB_PASSWORD != '**':

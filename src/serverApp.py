@@ -36,6 +36,7 @@ if __name__ == '__main__':
 
             engineWorks: List[EngineWork] = preprocess(file)
             for ew in engineWorks:
+                sleep(4)    # let the DB cache settle down
                 processing.process(engineWork=ew)
 
             file.status = FileStatus.ANALYSIS_COMPLETE

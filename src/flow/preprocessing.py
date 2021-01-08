@@ -126,16 +126,20 @@ def preprocess(file: File) -> List[EngineWork]:
         cycle.engine_id = engineId
         cycle.flight_id = flightId
         cycleDao.save(cycle)
+        print(f"[INFO] Created new cycle if {cycle.id} for flight id {flightId} on engine id {engineId}")
 
-        # store flight recordings into influx:
+        print(f"[INFO] Storing flight recordings into influx..", end='')
         flightIdx = 0
         cycleIdx = 0
         frDao = FlightRecordingDao()
         frDao.storeDf(engineId=engineId, flightId=flightId, flightIdx=flightIdx, cycleId=cycle.id, cycleIdx=cycleIdx, df=rawDataFrame, recType=RecordingType.RAW)
         frDao.storeDf(engineId=engineId, flightId=flightId, flightIdx=flightIdx, cycleId=cycle.id, cycleIdx=cycleIdx, df=filteredDataFrame, recType=RecordingType.FILTERED)
         frDao.storeDf(engineId=engineId, flightId=flightId, flightIdx=flightIdx, cycleId=cycle.id, cycleIdx=cycleIdx, df=standardisedDataFrame, recType=RecordingType.STANDARDIZED)
+        print(f"flushing..", end='')
         while not frDao.queueEmpty():
+            print('#', end='')
             sleep(1)    # wait until the data is stored in influx; is has been causing problems when requesting early retrieval
+        print(f" done.")
 
         engineWorks.append(EngineWork(engineId=engineId, flightId=flightId, flightIdx=flightIdx, cycleId=cycle.id, cycleIdx=cycleIdx))
 
@@ -323,11 +327,11 @@ def recalcAllRegressionResultsForEngine(engineId: int):
 
 if __name__ == '__main__':
     while True:
-        file: File = checkForWork()
+        # file: File = checkForWork()
 
-        # from db.dao.filesDao import FilesDao
-        # filesDao = FilesDao()
-        # file = filesDao.getOne(id=2046)
+        from db.dao.filesDao import FilesDao
+        filesDao = FilesDao()
+        file = filesDao.getOne(id=2015)
 
         if not file:
             break
@@ -342,6 +346,8 @@ if __name__ == '__main__':
         engineWorks: List[EngineWork] = preprocess(file)
         for ew in engineWorks:
             print(f"## ew:", ew)
+
+        break
 
     # ENGINE_ID = 1
     # calcNominalValues(ENGINE_ID)
