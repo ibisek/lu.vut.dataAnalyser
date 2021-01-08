@@ -8,7 +8,7 @@ export PYTHONPATH=.:./src:$PYTHONPATH
 
 while true
 do
-  python3 ./src/serverApp.py
+  python3 -u ./src/serverApp.py | tee progress.log 2>&1
   sleep 10
 done
 
