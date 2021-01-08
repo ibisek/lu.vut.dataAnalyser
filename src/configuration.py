@@ -1,8 +1,14 @@
-
 import os
+
+DEV_MODE = False
 
 IN_PATH = '/home/ibisek/wqz/prog/python/lu.vut.dataAnalyser/data/in/'
 OUT_PATH = '/home/ibisek/wqz/prog/python/lu.vut.dataAnalyser/data/out/'
+
+if DEV_MODE:
+    IMG_PATH = '/home/ibisek/wqz/prog/python/lu.vut.dataAnalyser/images/'
+else:
+    IMG_PATH = 'images/'
 
 NG_THRESHOLD = 80           # [%] N Generator (RPM)
 SP_THRESHOLD = 150*1000     # [W] Shaft Power
@@ -13,7 +19,7 @@ STEADY_STATE_DVAL = 0.01      # [%/100]
 CSV_DELIMITER = ';'
 # CSV_DELIMITER = ','
 
-FUEL_DENSITY = 0.797    # hodnota pouzivana v excelovskych datech
+FUEL_DENSITY = 0.797  # hodnota pouzivana v excelovskych datech
 
 CONST_R = 287.03    # universal gas constant [J/kg/K]
 
@@ -67,7 +73,7 @@ KEYS_FOR_AVG_IN_SSs = ['T0', 'NP', 'OILT', 'OILP', 'TAS', 'SP', 'ALT']
 
 DB_HOST = '10.8.0.30'   # radec
 DB_PORT = 3306
-DB_NAME = 'radec'
+DB_NAME = 'radec_dev' if DEV_MODE else 'radec'
 DB_USER = 'ibisek'
 DB_PASSWORD = '**'
 dbConnectionInfo = (DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD)
