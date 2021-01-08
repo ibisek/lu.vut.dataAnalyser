@@ -37,7 +37,7 @@ def detectFlights(df: DataFrame) -> List[Interval]:
     if len(flights) > 0:
         for flight in flights:
             tmpDf = df[:flight.start].loc[df['NG'] < NG_THR]
-            if len(tmpDf) == 0:
+            if tmpDf.empty:
                 continue
             flight.start = tmpDf.tail(1).index[0]
             flight.end += timedelta(seconds=10)
@@ -143,7 +143,7 @@ def detectClimbs(df: DataFrame) -> List[Interval]:
     iasKey = 'IAS' if 'IAS' in df.keys() else 'TAS'
 
     tmpDf = df.loc[df[iasKey] > TO_START_IAS_THRESHOLD]
-    if len(tmpDf) == 0:
+    if tmpDf.empty:
         return []
     tsClimbIndexStart = tmpDf.index[0]
 
@@ -306,7 +306,7 @@ def detectEngineStartups(df: DataFrame) -> List[Interval]:
 
     while True:
         tmpDf = df.loc[df['NG'] > NG_LOW_THR]
-        if len(tmpDf) == 0:
+        if tmpDf.empty:
             break
 
         startIndex = tmpDf.index[0]  # first index above low thr
@@ -410,7 +410,7 @@ def detectEngineShutdowns(df: DataFrame) -> List[Interval]:
     shutdowns = []
 
     tmpDf = df.loc[df['NG'] >= EngineLimits.H80['NGLimIdle']]
-    if len(tmpDf):
+    if tmpDf.empty:
         return []
 
     engUpIndex = tmpDf.index[0]  # first index where the engine was above idle
