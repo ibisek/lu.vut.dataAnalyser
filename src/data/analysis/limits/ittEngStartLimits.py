@@ -3,11 +3,12 @@ OTT Limits for engine operation.
 Refer to Appendix 9 of the specification document.
 """
 
+from configuration import IMG_PATH
 from data.analysis.limits.limitsBase import LimitsBase, Zone
 
 
 class IttEngStartLimits(LimitsBase):
-    FILE_PATH = 'images/ittEngStartLimits.png'
+    FILE_PATH = f'{IMG_PATH}/ittEngStartLimits.png'
     X_RANGE = (0, 30)     # [s]
     Y_RANGE = (729, 780)  # [deg.C]
 

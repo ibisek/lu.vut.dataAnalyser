@@ -3,11 +3,12 @@ Gas generator operating limits.
 Refer to Appendix 2 of the specification document.
 """
 
+from configuration import IMG_PATH
 from data.analysis.limits.limitsBase import LimitsBase, Zone
 
 
 class NgLimits(LimitsBase):
-    FILE_PATH = 'images/ngLimits.png'
+    FILE_PATH = f'{IMG_PATH}/ngLimits.png'
     X_RANGE = (-60, 50)     # [deg.C]
     Y_RANGE = (90, 101.5)  # [%]
 

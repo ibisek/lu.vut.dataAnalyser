@@ -3,11 +3,12 @@ Over-torque limits.
 Refer to Appendix 6 of the specification document.
 """
 
+from configuration import IMG_PATH
 from data.analysis.limits.limitsBase import LimitsBase, Zone
 
 
 class TqLimits(LimitsBase):
-    FILE_PATH = 'images/tqLimits.png'
+    FILE_PATH = f'{IMG_PATH}/tqLimits.png'
     X_RANGE = (0, 300)  # [s]
     Y_RANGE = (100, 108)  # [%]
 
