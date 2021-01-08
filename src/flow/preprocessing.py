@@ -321,17 +321,24 @@ def recalcAllRegressionResultsForEngine(engineId: int):
 if __name__ == '__main__':
     while True:
         file: File = checkForWork()
+
+        # from db.dao.filesDao import FilesDao
+        # filesDao = FilesDao()
+        # file = filesDao.getOne(id=2046)
+
         if not file:
             break
 
-        try:
-            if file and prepare(file):
-                FilesDao.setFileStatus(file=file, status=FileStatus.UNDER_ANALYSIS)
-                preprocess(file)
+        res = migrate(file)
+        if not res:
+            break
 
-        except Exception as ex:
-            print(f"[ERROR] in processing file {file}:", str(ex))
-            FilesDao.setFileStatus(file=file, status=FileStatus.FAILED)
+        from flow.fileFormatIdentification import FileFormatDetector
+        FileFormatDetector.identify(file)
+
+        engineWorks: List[EngineWork] = preprocess(file)
+        for ew in engineWorks:
+            print(f"## ew:", ew)
 
     # ENGINE_ID = 1
     # calcNominalValues(ENGINE_ID)
