@@ -39,8 +39,8 @@ class Alchemy(object):
             except Exception as e:
                 pass
 
-        self.session.flush()
         self.session.commit()
+        self.session.flush()
 
         # if obj:
         #     objSession = None
