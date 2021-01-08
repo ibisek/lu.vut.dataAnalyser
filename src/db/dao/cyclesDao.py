@@ -9,7 +9,6 @@ class CyclesDao(Alchemy, Singleton):
     def __init__(self):
         super().__init__()
         self.table = self.base.classes.cycles
-        print("## CYCLESDAO CONTRUCTOR ##")
 
     @staticmethod
     def prepareForSave(cycle):
