@@ -128,14 +128,14 @@ def preprocess(file: File) -> List[EngineWork]:
         cycleDao.save(cycle)
         print(f"[INFO] Created new cycle if {cycle.id} for flight id {flightId} on engine id {engineId}")
 
-        print(f"[INFO] Storing flight recordings into influx..", end='')
         flightIdx = 0
         cycleIdx = 0
         frDao = FlightRecordingDao()
+        print(f"[INFO] Storing flight recordings into influx..")
         frDao.storeDf(engineId=engineId, flightId=flightId, flightIdx=flightIdx, cycleId=cycle.id, cycleIdx=cycleIdx, df=rawDataFrame, recType=RecordingType.RAW)
         frDao.storeDf(engineId=engineId, flightId=flightId, flightIdx=flightIdx, cycleId=cycle.id, cycleIdx=cycleIdx, df=filteredDataFrame, recType=RecordingType.FILTERED)
         frDao.storeDf(engineId=engineId, flightId=flightId, flightIdx=flightIdx, cycleId=cycle.id, cycleIdx=cycleIdx, df=standardisedDataFrame, recType=RecordingType.STANDARDIZED)
-        print(f"flushing..", end='')
+        print(f" flushing..", end='')
         while not frDao.queueEmpty():
             print('#', end='')
             sleep(1)    # wait until the data is stored in influx; is has been causing problems when requesting early retrieval
