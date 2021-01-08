@@ -60,4 +60,6 @@ class EngineWork:
         self.cycleIdx = cycleIdx
 
     def __str__(self):
-        return str(vars(self))
+        return f"#EngineWork: engineId={self.engineId}; " \
+            f"flightId={self.flightId}; flightIdx={self.flightIdx}; " \
+            f"cycleId={self.cycleId}; cycleIdx={self.cycleIdx}; "
