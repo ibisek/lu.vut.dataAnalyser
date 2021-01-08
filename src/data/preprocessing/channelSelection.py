@@ -340,6 +340,8 @@ def _populateMissingChannels(dataFrame: DataFrame) -> DataFrame:
     :param dataFrame:
     :return: dataFrame with populated missing channels with zeros
     """
+    dataFrame = dataFrame.copy()    # to mute the "A value is trying to be set on a copy of a slice from a DataFrame." warnings.
+
     if 'GS' not in dataFrame:  # ground speed
         dataFrame['GS'] = 0
     if 'T0' not in dataFrame:  # OAT outside air temperature
