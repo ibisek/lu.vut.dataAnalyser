@@ -245,7 +245,7 @@ class Processing:
         cycle = self.cyclesDao.getOne(id=engineWork.cycleId, idx=engineWork.cycleIdx)
         flight = self.flightsDao.getOne(id=engineWork.flightId, idx=engineWork.flightIdx)
         if not cycle or not flight:
-            print(f"[ERROR] Missing cycle {cycle} or flight {flight}!", str(engineWork))
+            print(f"[ERROR] Missing cycle or flight:\n\tcycle: {cycle}\n\tflight: {flight}!", str(engineWork))
         assert cycle and flight     # both must already exist
 
         self._detectPhases(df)
@@ -547,7 +547,7 @@ if __name__ == '__main__':
     # ew = EngineWork(engineId=3, flightId=2, flightIdx=0, cycleId=22, cycleIdx=0)     # H80 AI.2
     # ew = Engine(engineId=3, flightId=2, flightIdx=0, cycleId=X, cycleIdx=0)          # H80 GE
 
-    ew = EngineWork(engineId=1, flightId=1400, flightIdx=0, cycleId=367, cycleIdx=0)     # DEBUG PT6
+    ew = EngineWork(engineId=1, flightId=1486, flightIdx=0, cycleId=716, cycleIdx=0)     # DEBUG PT6
 
     p = Processing()
     p.process(ew)
