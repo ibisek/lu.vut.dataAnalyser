@@ -144,25 +144,25 @@ class FilesDao(Alchemy, Singleton):
 
         return False
 
-    @staticmethod
-    def save(file: File):
-        if not file.id:  # new record
-            sql = f"INSERT INTO files (name, raw, format, status, hash) " \
-                f"VALUES ('{file.name}', {file.raw}, {file.format.value}, {file.status.value}, '{file.hash}');"
-
-            with DbSource(dbConnectionInfo).getConnection() as c:
-                c.execute(sql)
-                file.id = c.lastrowid
-
-        else:  # update existing
-            sql = f"UPDATE files SET name='{file.name}', raw={file.raw}, format={file.format.value}, " \
-                f"status={file.status.value}, hash='{file.hash}' " \
-                f"WHERE id={file.id}"
-
-            with DbSource(dbConnectionInfo).getConnection() as c:
-                c.execute(sql)
-
-        return file
+    # @staticmethod
+    # def save(file: File):
+    #     if not file.id:  # new record
+    #         sql = f"INSERT INTO files (name, raw, format, status, hash) " \
+    #             f"VALUES ('{file.name}', {file.raw}, {file.format.value}, {file.status.value}, '{file.hash}');"
+    #
+    #         with DbSource(dbConnectionInfo).getConnection() as c:
+    #             c.execute(sql)
+    #             file.id = c.lastrowid
+    #
+    #     else:  # update existing
+    #         sql = f"UPDATE files SET name='{file.name}', raw={file.raw}, format={file.format.value}, " \
+    #             f"status={file.status.value}, hash='{file.hash}' " \
+    #             f"WHERE id={file.id}"
+    #
+    #         with DbSource(dbConnectionInfo).getConnection() as c:
+    #             c.execute(sql)
+    #
+    #     return file
 
 
 if __name__ == '__main__':
