@@ -517,7 +517,7 @@ class Processing:
         """
         Processes raw flights - with cycle- and flight-idx == 0.
         :param engineWork:
-        :return:
+        :return: True if things went well
         """
 
         print(f'[INFO] Processing initial flight data for\n\tengineId={engineWork.engineId}'
@@ -525,6 +525,10 @@ class Processing:
               f'\n\tcycle id={engineWork.cycleId}; idx={engineWork.cycleIdx}')
         df = self.frDao.loadDf(engineId=engineWork.engineId, flightId=engineWork.flightId, flightIdx=engineWork.flightIdx,
                                cycleId=engineWork.cycleId, cycleIdx=engineWork.cycleIdx, recType=RecordingType.FILTERED)
+
+        if df.empty:
+            print(f"[ERROR] No flight recording stored for", engineWork)
+            return False
 
         self._detectPhases(df)  # on the entire dataset
 
@@ -540,6 +544,8 @@ class Processing:
         # calculate equivalent flight-cycles for engine components affected by the 'great' (not partials) engineWork:
         self._calcEquivalentFlightCycles(engineWork)
 
+        return True
+
 
 if __name__ == '__main__':
     # ew = EngineWork(engineId=1, flightId=1, flightIdx=0, cycleId=20, cycleIdx=0)     # PT6
@@ -547,7 +553,7 @@ if __name__ == '__main__':
     # ew = EngineWork(engineId=3, flightId=2, flightIdx=0, cycleId=22, cycleIdx=0)     # H80 AI.2
     # ew = Engine(engineId=3, flightId=2, flightIdx=0, cycleId=X, cycleIdx=0)          # H80 GE
 
-    ew = EngineWork(engineId=1, flightId=1486, flightIdx=0, cycleId=716, cycleIdx=0)     # DEBUG PT6
+    ew = EngineWork(engineId=1, flightId=1397, flightIdx=0, cycleId=902, cycleIdx=0)     # DEBUG PT6
 
     p = Processing()
     p.process(ew)
