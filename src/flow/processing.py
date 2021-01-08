@@ -400,7 +400,7 @@ class Processing:
         # flags:
         engStartup = True if len(self.engineStartupIntervals) > 0 else False
         takeoff = True if len(self.climbIntervals) > 0 else False
-        engStartupFollowedByTO = True if engStartup and takeoff and self.engineStartupIntervals[0].before(self.takeoffIntervals[0]) else False
+        engStartupFollowedByTO = True if engStartup and takeoff and len(self.takeoffIntervals) > 0 and self.engineStartupIntervals[0].before(self.takeoffIntervals[0]) else False
 
         propFeather = True if len(self.propInFeatherPosIntervals) > 0 else False
         propFeatherBeforeTO = False
@@ -543,9 +543,11 @@ class Processing:
 
 if __name__ == '__main__':
     # ew = EngineWork(engineId=1, flightId=1, flightIdx=0, cycleId=20, cycleIdx=0)     # PT6
-    ew = EngineWork(engineId=2, flightId=2, flightIdx=0, cycleId=21, cycleIdx=0)  # H80 AI.1
+    # ew = EngineWork(engineId=2, flightId=2, flightIdx=0, cycleId=21, cycleIdx=0)  # H80 AI.1
     # ew = EngineWork(engineId=3, flightId=2, flightIdx=0, cycleId=22, cycleIdx=0)     # H80 AI.2
     # ew = Engine(engineId=3, flightId=2, flightIdx=0, cycleId=X, cycleIdx=0)          # H80 GE
+
+    ew = EngineWork(engineId=1, flightId=1400, flightIdx=0, cycleId=367, cycleIdx=0)     # DEBUG PT6
 
     p = Processing()
     p.process(ew)
