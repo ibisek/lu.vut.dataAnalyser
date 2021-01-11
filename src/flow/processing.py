@@ -476,7 +476,7 @@ class Processing:
                 component.eq_cycles += eqCycleFull
                 print(f"[INFO] Equivalent cycles for component id {component.id}: full {eqCycleFull:.2f}; simplified: {eqCycleSim:.2f}")
 
-        self.componentsDao.save()
+            self.componentsDao.save(component)
 
     def _checkLimits(self, engineWork: EngineWork):
         """
