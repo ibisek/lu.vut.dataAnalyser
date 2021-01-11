@@ -18,16 +18,17 @@ class Alchemy(object):
     def __init__(self):
         if not self.base:
             self.base = automap_base()
-            engine = create_engine(SQLALCHEMY_DB_URI)
-            self.base.prepare(engine, reflect=True)
+            self.engine = create_engine(SQLALCHEMY_DB_URI)
+            self.base.prepare(self.engine, reflect=True)
 
         if not self.session:
-            self.session = Session(engine)
+            self.session = Session(self.engine)
             self.session.autoflush = True
 
     def __del__(self):
         # self.session.commit() # causes KeyError exception on a probably already-deleted object
         self.session.close()
+        self.engine.dispose()
 
     def createNew(self):
         return self.table()
