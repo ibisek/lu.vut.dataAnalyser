@@ -49,7 +49,7 @@ def _displaySteadyStateDetection(dataFrame:DataFrame, originalFileName:str):
         ax = dataFrame[key].plot(figsize=(20, 15), marker='.', markersize=10, ls='')
         dataFrame['STEADY'].plot(figsize=(20, 15), ls='-', ax=ax)
 
-        plt.legend(fontsize=20)
+        ax.legend(fontsize=20)
         plt.xlabel('date-time', fontsize=20)
         plt.ylabel('values')
         ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))

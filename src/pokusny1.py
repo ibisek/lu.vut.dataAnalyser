@@ -65,7 +65,7 @@ if __name__ == '__main__':
     # first-order differencing (subtracts the trend (rolling mean) from the original signal):
     # filteredDf.diff().plot(subplots=True, figsize=(20, 10), fontsize=20)
 
-    plt.legend(fontsize=20)
+    ax.legend(fontsize=20)
     plt.xlabel('date-time', fontsize=20)
     # plt.ylabel('values')
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))

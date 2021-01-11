@@ -39,7 +39,7 @@ def plotChannelsOfInterest(dataFrame, originalFileName, suffix=''):
     # ax = dataFrame.plot(x=dataFrame.index, y=keys[0], figsize=(20, 15))
     ax = dataFrame[keys].plot(figsize=(20, 15))
 
-    plt.legend(fontsize=20)
+    ax.legend(fontsize=20)
     plt.xlabel('date-time', fontsize=20)
     # plt.ylabel('values')
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
@@ -72,11 +72,11 @@ def plotChannelsOfInterestMultiY(dataFrame, originalFileName, suffix='', reduced
         arr[i] = 1 if rowWithinSteadyState(intervals, dataFrame.iloc[i]) else 0
     dataFrame = dataFrame.assign(SS=arr)
 
-    plt.figure(figsize=[18, 10])
+    ax = plt.figure(figsize=[18, 10])
 
     host = host_subplot(111,  axes_class=AA.Axes)
     plt.subplots_adjust(left=0.05, right=0.74)     # 0.04-0.84 for 5 keys; 0.05-0.80 for 6 keys; 0.05-0.76 for 7 keys
-    plt.legend(fontsize=20)
+    ax.legend(fontsize=20)
 
     host.set_xlabel("dateTime")
 

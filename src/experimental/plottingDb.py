@@ -33,7 +33,7 @@ if __name__ == '__main__':
 
         plt.subplots_adjust(left=0.05, right=0.98, top=0.94, bottom=0.13)
 
-        plt.legend(fontsize=14, loc='lower right')
+        ax.legend(fontsize=14, loc='lower right')
         # ax.get_legend().remove()
 
         plt.title(title, fontsize=20)
