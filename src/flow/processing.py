@@ -474,7 +474,7 @@ class Processing:
                 eqCycleFull = (Ns + lim.Av * (Nv - Ns - Np) + lim.Ap * Np) * lim.L
                 component.eq_cycles_sim += eqCycleSim
                 component.eq_cycles += eqCycleFull
-                print(f"[INFO] Eq cycles for component id {component.id}: full {eqCycleFull}; simplified: {eqCycleSim}")
+                print(f"[INFO] Equivalent cycles for component id {component.id}: full {eqCycleFull:.2f}; simplified: {eqCycleSim:.2f}")
 
         self.componentsDao.save()
 
