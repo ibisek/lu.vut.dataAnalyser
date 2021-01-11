@@ -273,7 +273,7 @@ def detectTaxi(df: DataFrame) -> List[Interval]:
     for index, item in changesInGS.iteritems():
         if item == 1:  # TAXI start
             taxiStart = index
-        if item == -1:  # TAXI end
+        if item == -1 and taxiStart:  # TAXI end
             taxiEnd = index
             sec = (taxiEnd - taxiStart).seconds
             if sec >= TAXI_MIN_DURATION:
@@ -432,7 +432,8 @@ def detectEngineShutdowns(df: DataFrame) -> List[Interval]:
         x = df[:endIndex]
 
         # TODO.. perhaps one nice sunny day
-        raise NotImplementedError('[FATAL] NO DATA WAS AVAILABLE FOR ENGINE SHUTDOWN DETECTION IMPLEMENTATION!')
+        print('[WARN] NO DATA WAS AVAILABLE FOR ENGINE SHUTDOWN DETECTION IMPLEMENTATION!')
+        break
 
     return shutdowns
 
