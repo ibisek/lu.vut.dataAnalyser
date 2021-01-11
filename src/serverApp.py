@@ -14,13 +14,8 @@ if __name__ == '__main__':
     processing = Processing()
     filesDao = FilesDao()
 
-    while True:
-        file: File = checkForWork()
-
-        if not file:
-            sleep(30)
-            continue
-
+    file: File = checkForWork()
+    while file:
         res = migrate(file)
         if not res:
             file.status = FileStatus.FAILED
@@ -36,7 +31,6 @@ if __name__ == '__main__':
 
             engineWorks: List[EngineWork] = preprocess(file)
             for ew in engineWorks:
-                sleep(4)    # let the DB cache settle down a bit
                 processing.process(engineWork=ew)
 
             file.status = FileStatus.ANALYSIS_COMPLETE
@@ -50,4 +44,12 @@ if __name__ == '__main__':
         finally:
             filesDao.save(file)     # TODO uncomment (!)
 
+        # get next work assignment:
+        file: File = checkForWork()
+
+    # TODO flush & stop all running threads..
+    # DbThread
+    # InfluxDbThread
+
     print('KOHEU.')
+    sys.exit(0)
