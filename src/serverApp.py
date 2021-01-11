@@ -1,14 +1,14 @@
 import sys
 import traceback
-from time import sleep
 from typing import List
+import os
+import signal
 
 from data.structures import EngineWork
 from db.dao.filesDao import FilesDao, File, FileStatus
 from flow.preprocessing import checkForWork, migrate, preprocess
 from flow.processing import Processing
 from flow.fileFormatIdentification import FileFormatDetector
-
 
 if __name__ == '__main__':
     processing = Processing()
@@ -42,14 +42,17 @@ if __name__ == '__main__':
             file.status = FileStatus.FAILED
 
         finally:
-            filesDao.save(file)     # TODO uncomment (!)
+            filesDao.save(file)  # TODO uncomment (!)
 
         # get next work assignment:
         file: File = checkForWork()
 
-    # TODO flush & stop all running threads..
-    # DbThread
-    # InfluxDbThread
-
     print('KOHEU.')
-    sys.exit(0)
+
+    pid = os.getpid()
+    if pid:
+        os.kill(os.getpid(), signal.SIGTERM)
+    else:
+        print(f"[FATAL] No PID for running process: {pid}")
+
+    sys.exit()    # does not normally work as there is an sqlAchemy thread hanging.. Hence the genocide above.
