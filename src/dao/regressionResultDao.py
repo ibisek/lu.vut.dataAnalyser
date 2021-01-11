@@ -12,7 +12,7 @@ from db.dao.filesDao import File
 from data.analysis.regression import RegressionResult
 
 
-def saveRegressionResult(res: RegressionResult, file: File = None, engineId: int = None):
+def saveRegressionResult(res: RegressionResult, file: File, engineId: int):
     """
     Specify either file or just engineId.
     :param res:
@@ -24,14 +24,9 @@ def saveRegressionResult(res: RegressionResult, file: File = None, engineId: int
     delSql = None
     insertSql = None
 
-    if file:
-        delSql = f"DELETE FROM regression_results WHERE engine_id={file.engineId} AND file_id={file.id} AND function = '{res.fn}';"
-        insertSql = f"INSERT INTO regression_results (ts, engine_id, file_id, function, x_value, y_value, delta, a, b, c, x_min, x_max) " \
-                    f"VALUES ({res.ts}, {file.engineId}, {file.id}, '{res.fn}', {res.xValue}, {res.yValue}, {res.delta}, {res.a}, {res.b}, {res.c}, {res.xMin}, {res.xMax});"
-    else:
-        delSql = f"DELETE FROM regression_results WHERE engine_id={engineId} AND function='{res.fn}' AND file_id IS NULL;"
-        insertSql = f"INSERT INTO regression_results (engine_id, function, x_value, y_value, delta, a, b, c, x_min, x_max) " \
-                    f"VALUES ({engineId}, '{res.fn}', {res.xValue}, {res.yValue}, {res.delta}, {res.a}, {res.b}, {res.c}, {res.xMin}, {res.xMax});"
+    delSql = f"DELETE FROM regression_results WHERE engine_id={engineId} AND file_id={file.id} AND function = '{res.fn}';"
+    insertSql = f"INSERT INTO regression_results (ts, engine_id, file_id, function, x_value, y_value, delta, a, b, c, x_min, x_max) " \
+                f"VALUES ({res.ts}, {engineId}, {file.id}, '{res.fn}', {res.xValue}, {res.yValue}, {res.delta}, {res.a}, {res.b}, {res.c}, {res.xMin}, {res.xMax});"
 
     # print(f"[DEBUG] DEL: {delSql}")
     # print(f"[DEBUG] INS: {insertSql}")
