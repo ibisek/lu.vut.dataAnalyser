@@ -31,6 +31,9 @@ class DbThread(threading.Thread):
         
         self.doRun = True
 
+    def __del__(self):
+        self.doRun = False
+
     def stop(self):
         self.doRun = False
         
