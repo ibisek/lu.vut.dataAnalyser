@@ -466,6 +466,7 @@ class Processing:
 
         components = self.componentsDao.list(engineId=engineWork.engineId)
         for component in components:
+            print("xxx", vars(component))
             equipment = self.equipmentDao.getOne(id=component.equipment_id)
             lim: ComponentLimit = cLimits[equipment.part_no]
 
@@ -476,7 +477,7 @@ class Processing:
                 component.eq_cycles += eqCycleFull
                 print(f"[INFO] Equivalent cycles for component id {component.id}: full {eqCycleFull:.2f}; simplified: {eqCycleSim:.2f}")
 
-            self.componentsDao.save(component)
+        self.componentsDao.save()   # save per component would lose the content for other components in the db session
 
     def _checkLimits(self, engineWork: EngineWork):
         """
