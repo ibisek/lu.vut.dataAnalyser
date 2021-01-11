@@ -22,7 +22,7 @@ class Alchemy(object):
             self.base.prepare(self.engine, reflect=True)
 
         if not self.session:
-            self.session = Session(self.engine, autocommit=True)
+            self.session = Session(self.engine, autoflush=True)
             self.session.autoflush = True
 
     def __del__(self):
