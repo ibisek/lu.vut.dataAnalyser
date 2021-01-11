@@ -466,7 +466,6 @@ class Processing:
 
         components = self.componentsDao.list(engineId=engineWork.engineId)
         for component in components:
-            print("xxx", vars(component))
             equipment = self.equipmentDao.getOne(id=component.equipment_id)
             lim: ComponentLimit = cLimits[equipment.part_no]
 
