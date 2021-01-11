@@ -43,6 +43,9 @@ class Alchemy(object):
         self.session.commit()
 
         # if obj:
+        #     self.session.refresh(obj)
+
+        # if obj:
         #     objSession = None
         #     try:
         #         objSession = obj.object_session()
