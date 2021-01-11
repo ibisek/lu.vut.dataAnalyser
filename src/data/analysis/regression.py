@@ -375,7 +375,7 @@ def doRegressionOnSteadySectionsAvgXY(dataFrame: DataFrame, originalFileName: st
 
             ts = int(dataFrame.index[0].to_pydatetime().timestamp())     # [s] unix ts of start of this file
             (a, b, c) = coeffs if len(coeffs) == 3 else (0, 0, 0)
-            res: RegressionResult = RegressionResult(id=None, engineId=None, fileId=None, xValue=None, delta=None,
+            res: RegressionResult = RegressionResult(id=None, engineId=None, fileId=None, xValue=0, delta=0,
                                                      fn=f"{yKey}-fn-{xKey}", ts=ts, yValue=yVal, a=a, b=b, c=c, xMin=min, xMax=max)
             results.append(res)
 
