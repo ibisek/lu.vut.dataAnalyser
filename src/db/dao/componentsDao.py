@@ -28,9 +28,9 @@ class ComponentsDao(Alchemy, Singleton):
     def list(self, engineId: int) -> List:
         """
         :param engineId:
-        :return: list of components assigned to specified engine
+        :return: iterator to components assigned to specified engine
         """
-        return [c for c in self.get(engine_id=engineId)]
+        return self.get(engine_id=engineId)
 
     # @staticmethod
     # def getEqCyclesLimit(component):
@@ -54,6 +54,7 @@ class ComponentsDao(Alchemy, Singleton):
 
 if __name__ == '__main__':
     dao = ComponentsDao()
+
     c = dao.getOne(id=2)  # -> eq.id=8
 
     # n, unit = dao.getEqCyclesLimit(c)
