@@ -147,10 +147,10 @@ def preprocess(file: File) -> List[EngineWork]:
         # continue
 
         SteadyStatesDetector(windowDt=STEADY_STATE_WINDOW_LEN, dVal=STEADY_STATE_DVAL).detectSteadyStates(filteredDataFrame, fileName, outPath=inPath, engineIndex=engineIndex)
-        steadyStates = loadSteadyStates(originalFileName=fileName, ssDir=inPath, engineIndex=engineIndex)
-        if len(steadyStates) == 0:
-            FilesDao.setFileStatus(file=file, status=FileStatus.NO_STEADY_STATES)
-            continue
+        # steadyStates = loadSteadyStates(originalFileName=fileName, ssDir=inPath, engineIndex=engineIndex)
+        # if len(steadyStates) == 0:
+        #     FilesDao.setFileStatus(file=file, status=FileStatus.NO_STEADY_STATES)
+        #     continue
 
         # save data from steady states and with NG>=NG_THRESHOLD to file:
         ssDf = _filterOutUnsteadyRecords(file, standardisedDataFrame)
