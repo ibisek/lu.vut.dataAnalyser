@@ -76,7 +76,7 @@ class InfluxDbThread(threading.Thread):
         if self.client:
             self.client.close()
 
-        print("InfluxDbThread terminated")
+        print("[INFO] InfluxDbThread terminated")
 
 
 if __name__ == '__main__':
