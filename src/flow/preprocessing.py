@@ -21,7 +21,7 @@ from data.preprocessing.dataStandartisation import standardiseData
 from data.preprocessing.omitRows import omitRowsBelowThresholds
 
 from data.analysis.steadyStatesDetector import SteadyStatesDetector
-from data.analysis.regression import RegressionResult, doRegressionForKeys
+from data.analysis.regression import RegressionResult, doRegressionForKeys, doRegressionOnSteadySectionsAvgXY
 from data.analysis.limitingStateDetector import detectLimitingStates
 from data.analysis.ibiModel import IbiModel
 
@@ -131,11 +131,11 @@ def preprocess(file: File) -> List[EngineWork]:
         flightIdx = 0
         cycleIdx = 0
         frDao = FlightRecordingDao()
-        print(f"[INFO] Storing flight recordings into influx..")
+        print(f"[INFO] Storing flight recordings into influx..", end='')
         frDao.storeDf(engineId=engineId, flightId=flightId, flightIdx=flightIdx, cycleId=cycle.id, cycleIdx=cycleIdx, df=rawDataFrame, recType=RecordingType.RAW)
         frDao.storeDf(engineId=engineId, flightId=flightId, flightIdx=flightIdx, cycleId=cycle.id, cycleIdx=cycleIdx, df=filteredDataFrame, recType=RecordingType.FILTERED)
         frDao.storeDf(engineId=engineId, flightId=flightId, flightIdx=flightIdx, cycleId=cycle.id, cycleIdx=cycleIdx, df=standardisedDataFrame, recType=RecordingType.STANDARDIZED)
-        print(f" flushing..", end='')
+        print(f" flushing.. ", end='')
         while not frDao.queueEmpty():
             print('#', end='')
             sleep(1)    # wait until the data is stored in influx; is has been causing problems when requesting early retrieval
@@ -163,15 +163,13 @@ def preprocess(file: File) -> List[EngineWork]:
         plotChannelsOfInterestMultiY(dataFrame=standardisedDataFrame, originalFileName=fileName, suffix='flightOverview-reduced',
                                      reducedChannels=True, outPath=inPath, engineIndex=engineIndex)
 
-        # results: RegressionResult = doRegressionOnSteadySectionsAvgXY(dataFrame=standardisedDataFrame, originalFileName=fileName, outPath=inPath)
+        results: RegressionResult = doRegressionOnSteadySectionsAvgXY(dataFrame=standardisedDataFrame, originalFileName=fileName, outPath=inPath)
         # print("results:", results)
-        #
-        # for res in results:
-        #     # TODO XXX save info db
-        #     pass
+        for res in results:
+            print('[INFO] Regression result:', str(res))
+            saveRegressionResult(res=res, file=file, engineId=engineId)
 
-        # TODO
-        # calcRegressionDeltaForFile(file)
+        calcRegressionDeltaForFile(file=file, engineId=engineId)
 
     return engineWorks
 
@@ -256,14 +254,15 @@ def calcNominalValues(engineId: int):
     recalcAllRegressionResultsForEngine(engineId)
 
 
-def calcRegressionDeltaForFile(file: File):
+def calcRegressionDeltaForFile(file: File, engineId: int):
     """
     Calculates delta from nominal values for each available function.
     :param file:
+    :param engineId:
     :return: True if delta was calculated
     """
 
-    nominalRRs: dict = getRegressionResults(engineId=file.engineId, fileId=None)
+    nominalRRs: dict = getRegressionResults(engineId=engineId, fileId=None)
     if len(nominalRRs.keys()) == 0:
         return  # no nominal values calculated (yet?)
 
@@ -283,7 +282,7 @@ def calcRegressionDeltaForFile(file: File):
 
         # calc regression for specific file and keys:
         ssDf = ssDf.copy()
-        model, _ = doRegressionForKeys(dataFrame=ssDf, originalFileName=f"eid-{file.engineId}.none",
+        model, _ = doRegressionForKeys(dataFrame=ssDf, originalFileName=f"eid-{engineId}.none",
                                        yKey=yKey, xKeys=[xKey], fileNameSuffix='', outPath=dir,
                                        saveDataToFile=False, plot=False)
 
@@ -299,7 +298,7 @@ def calcRegressionDeltaForFile(file: File):
         print(f"[INFO] nominal = {nrr.yValue:.2f}; yVal = {yValueNominal:.2f}; yDelta = {yDelta:.5f}")
 
         # 'id', 'ts', 'engineId', 'fileId', 'fn', 'val', 'a', 'b', 'c', 'xMin', 'xMax'
-        fileRR = RegressionResult(id=None, ts=int(reducedDf['ts'].iloc[0]), engineId=file.engineId, fileId=file.id, fn=function,
+        fileRR = RegressionResult(id=None, ts=int(reducedDf['ts'].iloc[0]), engineId=engineId, fileId=file.id, fn=function,
                                   xValue=xValue, yValue=yValueCurrentFile, delta=yDelta,
                                   a=model.a, b=model.b, c=model.c, xMin=xMin, xMax=xMax)
 
