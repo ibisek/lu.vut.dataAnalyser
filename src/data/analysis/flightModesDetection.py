@@ -53,11 +53,14 @@ def _findLandingAfter(df: DataFrame, afterIndexTs: Timestamp):
     :param afterIndexTs:
     :return: index ts
     """
-    x = df.copy(deep=True)[afterIndexTs:]
+    tempDf = df.copy(deep=True)[afterIndexTs:]
     iasKey = 'IAS' if 'IAS' in df.keys() else 'TAS'
-    landingTs = x.loc[x[iasKey] <= 0.1].index[0]  # == 0 does not work
 
-    return landingTs
+    tempDf2 = tempDf.loc[tempDf[iasKey] <= 0.1]
+    if not tempDf2.empty:
+        return tempDf2.index[0]  # == 0 does not work
+
+    return None
 
 
 def _findClimbEndAfter(df: DataFrame, afterIndexTs: Timestamp):
