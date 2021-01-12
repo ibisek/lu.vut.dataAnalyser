@@ -378,9 +378,10 @@ class Processing:
                                        cycleId=engineWork.cycleId, cycleIdx=engineWork.cycleIdx,
                                        df=subDf, recType=RecordingType.FILTERED)
 
-            assert subFlight and subCycle
+            subFlightIdx = subFlight.idx if newSubFlight else 0
+            subCycleIdx = subCycle.idx if newSubCycle else 0
 
-            newEw = EngineWork(engineId=engineWork.engineId, flightId=subFlight.id, flightIdx=subFlight.idx, cycleId=subCycle.id, cycleIdx=subCycle.idx)
+            newEw = EngineWork(engineId=engineWork.engineId, flightId=subFlight.id, flightIdx=subFlightIdx, cycleId=subCycle.id, cycleIdx=subCycleIdx)
             works.append(newEw)
 
         return works
