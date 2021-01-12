@@ -156,7 +156,7 @@ def detectClimbs(df: DataFrame) -> List[Interval]:
         x = x[tsClimbIndexStart:]  # df starting from the moment of takeoff
 
         tsClimbIndexEnd = _findClimbEndAfter(x, tsClimbIndexStart)
-        if not tsClimbIndexStart:
+        if not tsClimbIndexStart or not tsClimbIndexEnd:
             doLoop = False
 
         else:
@@ -174,12 +174,15 @@ def detectClimbs(df: DataFrame) -> List[Interval]:
             # plt.show()
 
             tsLanding = _findLandingAfter(x, tsClimbIndexEnd)  # start searching from this ts again
-            x = x[tsLanding:]  # chop the previous data away
-            xx = x.loc[x[iasKey] > TO_START_IAS_THRESHOLD]
-            if len(xx.index) == 0:
+            if not tsLanding:
                 doLoop = False
             else:
-                tsClimbIndexStart = xx.index[0]
+                tmpDf1 = x[tsLanding:]  # chop the previous data away
+                tmpDf2 = tmpDf1.loc[x[iasKey] > TO_START_IAS_THRESHOLD]
+                if len(tmpDf2.index) == 0:
+                    doLoop = False
+                else:
+                    tsClimbIndexStart = tmpDf2.index[0]
 
     return climbs
 
