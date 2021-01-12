@@ -40,7 +40,7 @@ class FlightRecordingDao(object):
             rowSeries = row[1]
             kv = ",".join([f"{k}={rowSeries[k]}" for k in keys])
 
-            s = f"flights,type={recType.value},flight_id={flightId},flight_idx={flightIdx},engine_id={engineId},cycle_id={cycleId},cycle_idx={cycleIdx} {kv} {ts}000000"
+            s = f"flights,type={recType.value},flightId={flightId},flightIdx={flightIdx},engineId={engineId},cycleId={cycleId},cycleIdx={cycleIdx} {kv} {ts}000000"
 
             self.influx.addStatement(s)
 
@@ -50,9 +50,9 @@ class FlightRecordingDao(object):
     @staticmethod
     def loadDf(engineId: int, flightId: int, flightIdx: int, cycleId: int, cycleIdx: int, recType: RecordingType=RecordingType.FILTERED) -> DataFrame:
 
-        q = f"SELECT * FROM flights WHERE type='{recType.value}' AND engine_id='{engineId}' " \
-                f"AND flight_id='{flightId}' AND flight_idx='{flightIdx}' " \
-                f"AND cycle_id='{cycleId}' AND cycle_idx='{cycleIdx}'"
+        q = f"SELECT * FROM flights WHERE type='{recType.value}' AND engineId= '{engineId}' " \
+                f"AND flightId = '{flightId}' AND flightIdx = '{flightIdx}' " \
+                f"AND cycleId = '{cycleId}' AND cycleIdx = '{cycleIdx}'"
 
         c = DataFrameClient(host=INFLUX_DB_HOST, port=8086, database=INFLUX_DB_NAME)
         res = c.query(query=q)
