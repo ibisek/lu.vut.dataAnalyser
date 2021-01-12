@@ -26,7 +26,7 @@ def detectFlights(df: DataFrame) -> List[Interval]:
     :param df:
     :return:
     """
-    FLIGHT_MIN_DURATION = 60    # [s]
+    FLIGHT_MIN_DURATION = 120   # [s]
     IAS_THR = 60                # [km/h]
     NG_THR = 60                 # [%]
 
