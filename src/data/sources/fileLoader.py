@@ -21,11 +21,11 @@ def _reformatPt6(path: str, filename: str):
     :return: path, filename of the reformatted temporary file
     """
     lines = []
-    with open(f'{path}/{filename}', 'r') as f:
+    with open(f'{path}/{filename}', 'r', encoding='cp1250') as f:
         lines = f.readlines()
 
     tmpPath = tempfile.gettempdir()
-    with open(f'{tmpPath}/{filename}', 'w') as f:
+    with open(f'{tmpPath}/{filename}', 'w', encoding='utf8') as f:
         for line in lines:
             if not line.startswith('#'):
                 line = re.sub(r'\s', '', line)  # remove all spaces
