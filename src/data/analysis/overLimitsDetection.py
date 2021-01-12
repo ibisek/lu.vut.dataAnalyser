@@ -11,7 +11,7 @@ from data.structures import FlightMode, Interval
 from dao.engineLimits import EngineLimits
 from db.dao.enginesDao import EnginesDao
 from db.dao.logbookDao import Logbook
-from flow.utils import _min, _max
+from flow.npUtils import _min, _max
 from flow.notifications import Notifications
 from data.analysis.utils import findIntervals
 from data.analysis.limits.limitsBase import Zone
