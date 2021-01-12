@@ -64,11 +64,11 @@ class FlightRecordingDao(object):
         df = res['flights']
 
         # drop columns that are tags; we want to proceed with fields only:
-        df = df.drop(columns=['cycle_id', 'engine_id', 'flight_id', 'type'])
-        if 'flight_idx' in df.keys():
-            df.drop(columns=['flight_idx'])
-        if 'cycle_idx' in df.keys():
-            df.drop(columns=['cycle_idx'])
+        df = df.drop(columns=['cycleId', 'engineId', 'flightId', 'type'])
+        if 'flightIdx' in df.keys():
+            df.drop(columns=['flightIdx'])
+        if 'cycleIdx' in df.keys():
+            df.drop(columns=['cycleIdx'])
 
         # re-create the 'ts' channel/column:
         df['ts'] = df.index
@@ -80,9 +80,9 @@ class FlightRecordingDao(object):
 if __name__ == '__main__':
     engineId = 1
     flightId = 1
-    cycle_id = 1
+    cycleId = 1
 
-    df = FlightRecordingDao.loadDf(engineId=engineId, flightId=flightId, cycleId=cycle_id, recType=RecordingType.FILTERED)
+    df = FlightRecordingDao.loadDf(engineId=engineId, flightId=flightId, cycleId=cycleId, recType=RecordingType.FILTERED)
 
     print('HEAD:\n', df.head())
 
