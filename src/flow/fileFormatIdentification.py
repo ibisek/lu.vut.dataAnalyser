@@ -37,14 +37,14 @@ class FileFormatDetector:
 
             try:
                 loadRawData(fileFormat=fileFormat, inPath=path, fileName=filename)
-                break  # loading was successful, this is the right format
+                return fileFormat  # loading was successful, this is the right format
 
             except (ValueError, IndexError) as e:
                 pass
 
         print(f'[INFO] Detected {fileFormat}')
 
-        return fileFormat
+        return FileFormat.UNKNOWN
 
     @staticmethod
     def identify(file):
