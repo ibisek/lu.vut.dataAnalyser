@@ -21,7 +21,7 @@ from db.dao.cyclesDao import CyclesDao
 from db.dao.enginesDao import EnginesDao
 from db.dao.equipmentDao import EquipmentDao
 from db.dao.componentsDao import ComponentsDao
-from flow.utils import _min, _max
+from flow.npUtils import _min, _max
 from flow.notifications import Notifications
 
 
@@ -528,7 +528,7 @@ class Processing:
                                cycleId=engineWork.cycleId, cycleIdx=engineWork.cycleIdx, recType=RecordingType.FILTERED)
 
         if df.empty:
-            print(f"[ERROR] No flight recording stored for", engineWork)
+            print(f"[WARN] No flight recording stored for", engineWork)
             return False
 
         self._detectPhases(df)  # on the entire dataset
@@ -554,7 +554,7 @@ if __name__ == '__main__':
     # ew = EngineWork(engineId=3, flightId=2, flightIdx=0, cycleId=22, cycleIdx=0)     # H80 AI.2
     # ew = Engine(engineId=3, flightId=2, flightIdx=0, cycleId=X, cycleIdx=0)          # H80 GE
 
-    ew = EngineWork(engineId=1, flightId=1397, flightIdx=0, cycleId=902, cycleIdx=0)     # DEBUG PT6
+    ew = EngineWork(engineId=1, flightId=1564, flightIdx=0, cycleId=300, cycleIdx=0)     # DEBUG PT6
 
     p = Processing()
     p.process(ew)
