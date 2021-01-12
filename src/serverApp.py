@@ -1,8 +1,8 @@
+import os
 import sys
 import traceback
-from typing import List
-import os
 import signal
+from typing import List
 
 from data.structures import EngineWork
 from db.dao.filesDao import FilesDao, File, FileStatus
