@@ -158,6 +158,8 @@ def _processPT6(df: DataFrame) -> pd.DataFrame:
 
     # extra channels:
     ndf = ndf.assign(TAS=df['TAS'])  # [kt]
+    ndf = ndf.assign(LAT=df['Latitude'])  # latitude [deg]
+    ndf = ndf.assign(LON=df['Longitude'])  # longitude [deg]
 
     ndf = ndf.astype(float)
 
