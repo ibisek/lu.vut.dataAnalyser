@@ -76,7 +76,7 @@ def _findClimbEndAfter(df: DataFrame, afterIndexTs: Timestamp):
         if ng > ngMax:
             ngMax = ng
 
-        if ng < ngMax * 0.98:
+        if ng < ngMax * 0.98 and row['dALT'] <= 1:  # [m/s]
             tsTakeOffIndexEnd = index
             return tsTakeOffIndexEnd
 
@@ -139,13 +139,22 @@ def detectClimbs(df: DataFrame) -> List[Interval]:
     """
 
     x = df.copy(deep=True)
-
-    TO_START_IAS_DELTA = 4  # [km/h]
-    TO_START_IAS_THRESHOLD = 20  # [km/h]
-
     iasKey = 'IAS' if 'IAS' in df.keys() else 'TAS'
 
-    tmpDf = df.loc[df[iasKey] > TO_START_IAS_THRESHOLD]
+    # TO_START_IAS_DELTA = 4  # [km/h]
+    # TO_START_IAS_THRESHOLD = 20  # [km/h]
+    # tmpDf = x.loc[df[iasKey] > TO_START_IAS_THRESHOLD]
+    # if tmpDf.empty:
+    #     return []
+    # tsClimbIndexStart = tmpDf.index[0]
+
+    TO_START_IAS_THRESHOLD = 50     # [km/h]
+    TO_START_NG_THRESHOLD = 80      # [%]
+    # TO_START_dALT_THRESHOLD = 1     # [m/s]
+    x['dALT'] = x['ALT'].diff().rolling(6, center=True).mean()
+    # x['dIAS'] = x[iasKey].diff().rolling(6, center=True).mean()
+    # tmpDf = x.loc[x['dALT'] >= TO_START_dALT_THRESHOLD].loc[x['NG'] >= TO_START_NG_THRESHOLD].loc[x[iasKey] >= TO_START_IAS_THRESHOLD]
+    tmpDf = x.loc[x['NG'] >= TO_START_NG_THRESHOLD].loc[x[iasKey] >= TO_START_IAS_THRESHOLD]
     if tmpDf.empty:
         return []
     tsClimbIndexStart = tmpDf.index[0]
@@ -184,6 +193,7 @@ def detectClimbs(df: DataFrame) -> List[Interval]:
                 else:
                     tsClimbIndexStart = tmpDf2.index[0]
 
+    # x[['ALT', 'dALT', 'NG', iasKey]].plot()
     return climbs
 
 
