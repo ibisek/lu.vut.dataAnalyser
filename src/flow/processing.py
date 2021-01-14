@@ -313,13 +313,16 @@ class Processing:
         flight.NoTOAll = 1
         flight.NoTORep = 0  # TODO once we can detect such state
 
-        if 'lat' in df.keys() and 'lon' in df.keys():
-            flight.takeoff_lat = df['lat'].head(1)[0]
-            flight.takeoff_lon = df['lon'].head(1)[0]
-            # flight.takeoff_icao = 'xxx'    # TODO location lookup
-            flight.landing_lat = df['lat'].tail(1)[0]
-            flight.landing_lon = df['lon'].tail(1)[0]
-            # flight.landing_icao = 'xxx'    # TODO location lookup
+        airborneDf = df.loc[df['TAS'] > 100]    # [km/h]
+        if not airborneDf.empty:
+            if 'LAT' in airborneDf.keys():
+                flight.takeoff_lat = airborneDf['LAT'].head(1)[0]
+                flight.takeoff_lon = airborneDf['LON'].head(1)[0]
+                # flight.takeoff_icao = 'xxx'    # TODO location lookup
+            if 'LON' in airborneDf.keys():
+                flight.landing_lat = airborneDf['LAT'].tail(1)[0]
+                flight.landing_lon = airborneDf['LON'].tail(1)[0]
+                # flight.landing_icao = 'xxx'    # TODO location lookup
 
     def _splitIntoSubflights(self, df: DataFrame, engineWork: EngineWork):
         """
@@ -565,7 +568,7 @@ if __name__ == '__main__':
     # ew = EngineWork(engineId=3, flightId=2, flightIdx=0, cycleId=22, cycleIdx=0)     # H80 AI.2
     # ew = Engine(engineId=3, flightId=2, flightIdx=0, cycleId=X, cycleIdx=0)          # H80 GE
 
-    ew = EngineWork(engineId=1, flightId=1400, flightIdx=0, cycleId=616, cycleIdx=0)     # DEBUG PT6
+    ew = EngineWork(engineId=1, flightId=1400, flightIdx=0, cycleId=933, cycleIdx=0)     # DEBUG PT6
 
     p = Processing()
     p.process(ew)
