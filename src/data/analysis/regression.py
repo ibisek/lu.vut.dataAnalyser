@@ -353,7 +353,7 @@ def doRegressionOnSteadySectionsAvgXY(dataFrame: DataFrame, originalFileName: st
             max = df[xKey].max()
             mean = df[xKey].mean()
 
-            xVal = mean     # TODO temporary experiment
+            xVal = mean     # TODO temporary experiment as the nominal xVal doesn't frequently fit into the x-data range
 
             print(f"[INFO] REGRESSION in; {originalFileName}; of; {yKey} = fn ({xKey}); val; {xVal}; into range; {min:.02f}; {max:.02f}")
 
@@ -363,7 +363,7 @@ def doRegressionOnSteadySectionsAvgXY(dataFrame: DataFrame, originalFileName: st
 
             # [v for k, v in NOMINAL_DATA.items() if k in xKeys]
             yVal = model.predict([[xVal]])[0]
-            # delta = yVal - NOMINAL_DATA[yKey]
+            delta = yVal - NOMINAL_DATA[yKey]
             # deltaPct = (yVal-NOMINAL_DATA[yKey])/NOMINAL_DATA[yKey] * 100
 
             unitRunId = originalFileName[:originalFileName.index('.')]
@@ -375,7 +375,7 @@ def doRegressionOnSteadySectionsAvgXY(dataFrame: DataFrame, originalFileName: st
 
             ts = int(dataFrame.index[0].to_pydatetime().timestamp())     # [s] unix ts of start of this file
             (a, b, c) = coeffs if len(coeffs) == 3 else (0, 0, 0)
-            res: RegressionResult = RegressionResult(id=None, engineId=None, fileId=None, xValue=0, delta=0,
+            res: RegressionResult = RegressionResult(id=None, engineId=None, fileId=None, xValue=xVal, delta=delta,
                                                      fn=f"{yKey}-fn-{xKey}", ts=ts, yValue=yVal, a=a, b=b, c=c, xMin=min, xMax=max)
             results.append(res)
 
