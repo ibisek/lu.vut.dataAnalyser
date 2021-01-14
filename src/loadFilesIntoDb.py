@@ -25,7 +25,10 @@ if __name__ == '__main__':
     IN_PATH = '/tmp/00/'
 
     # AIRPLANE_ID = 1         # Pilatus PC-12 / PC6
+    FILE_EXT = '.csv'
+
     AIRPLANE_ID = 3         # L410 / 2 x H80
+    FILE_EXT = '.txt'
 
     # --
 
@@ -50,7 +53,7 @@ if __name__ == '__main__':
     for fileName in sorted(os.listdir(IN_PATH)):
         srcFilePath = f"{IN_PATH}/{fileName}"
 
-        if os.path.isfile(srcFilePath) and fileName.lower().endswith('.csv'):
+        if os.path.isfile(srcFilePath) and fileName.lower().endswith(FILE_EXT):
             print(f"[INFO] Processing {fileName}..")
 
             if '___' in fileName:   # files with multiple underscores in name are empty
