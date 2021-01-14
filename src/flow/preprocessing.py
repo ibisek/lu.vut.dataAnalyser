@@ -119,12 +119,12 @@ def preprocess(file: File) -> List[EngineWork]:
         standardisedDataFrame = standardiseData(filteredDataFrame, fileName, outPath=inPath)
         standardisedDataFrame = omitRowsBelowThresholds(standardisedDataFrame, fileName)
 
-        # create new cycle for per engine record (or replace existing by empty one)
+        # create new cycle for per engine record (or replace the existing one)
         cycleDao = CyclesDao()
-        cycle = cycleDao.createNew()
         oldCycle = cycleDao.getOne(idx=0, flight_id=flightId, engine_id=engineId)
         if oldCycle:
-            cycle.id = oldCycle.id
+            cycleDao.delete(oldCycle)
+        cycle = cycleDao.createNew()
         cycle.file_id = file.id
         cycle.engine_id = engineId
         cycle.flight_id = flightId
