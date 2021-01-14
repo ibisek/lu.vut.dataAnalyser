@@ -157,9 +157,10 @@ class Processing:
         startTs = df.head(1)['ts'][0]
         endTs = df.tail(1)['ts'][0]
 
-        cycle.BeTimeIdle = startTs
-        # cycle.TimeIdle = 666              # TODO wtf?!
-        # cycle.TimeIdleHyPumpIdle = 666    # TODO wtf?!
+        if cycle.BeTimeIdle == 0:
+            cycle.BeTimeIdle = startTs
+        # cycle.TimeIdle = 666              # TODO accumulated time without hydr. pump
+        # cycle.TimeIdleHyPumpIdle = 666    # TODO accumulated time with hydr. pump
         cycle.NGIdle = _max(cycle.NGIdle, max(df['NG']))
         cycle.ITTIdle = _max(cycle.ITTIdle, max(df['ITT']))
         cycle.AltIdle = _max(cycle.AltIdle, max(df['ALT']))
@@ -184,7 +185,7 @@ class Processing:
         self.engineStartupIntervals = detectEngineStartups(df)
         for i, engineStartup in enumerate(self.engineStartupIntervals):
             print(f'[INFO] engine startup #{i} {engineStartup.start} -> {engineStartup.end}')
-        # TODO in case of multiple -> crate subcycles; detection by NG only
+        # TODO in case of multiple -> create sub-cycles; detection purely by NG
 
         self.flightIntervals = detectFlights(df)
         for i, flightInterval in enumerate(self.flightIntervals):
@@ -296,8 +297,17 @@ class Processing:
 
         flight.takeoff_ts = takeoffTs
         flight.landing_ts = landingTs
-        flight.operation_time = (flight.landing_ts - flight.takeoff_ts)     # time in the air
-        flight.flight_time = taxiingSeconds + flight.operation_time         # time in the air and moving on the ground - toto vymyslela nejaka urednicka <|>
+
+        flight.operation_time = (flight.landing_ts - flight.takeoff_ts)  # time in the air
+
+        # flight time ~ from first taxiing till the last one:   (this is bullshit but they call it flight time - what can I do?)
+        if self.taxiIntervals and len(self.taxiIntervals) > 0:
+            flight.flight_time_start = self.taxiIntervals[0].end.timestamp()                         # beginning of first taxiing
+            flight.flight_time_end = self.taxiIntervals[len(self.taxiIntervals)-1].end.timestamp()   # end of last taxiing
+            flight.flight_time = flight.flight_time_end - flight.flight_time_start  # time in the air and moving on the ground - toto vymyslela nejaka urednicka <|>
+        else:
+            flight.flight_time = taxiingSeconds + flight.operation_time     # time in the air and moving on the ground - toto vymyslela nejaka urednicka <|>
+
         flight.LNDCount = 1
         flight.NoSUL = flight.NoSUR = len(self.engineStartupIntervals)
         flight.NoTOAll = 1
@@ -555,7 +565,7 @@ if __name__ == '__main__':
     # ew = EngineWork(engineId=3, flightId=2, flightIdx=0, cycleId=22, cycleIdx=0)     # H80 AI.2
     # ew = Engine(engineId=3, flightId=2, flightIdx=0, cycleId=X, cycleIdx=0)          # H80 GE
 
-    ew = EngineWork(engineId=1, flightId=1564, flightIdx=0, cycleId=300, cycleIdx=0)     # DEBUG PT6
+    ew = EngineWork(engineId=1, flightId=1400, flightIdx=0, cycleId=616, cycleIdx=0)     # DEBUG PT6
 
     p = Processing()
     p.process(ew)
