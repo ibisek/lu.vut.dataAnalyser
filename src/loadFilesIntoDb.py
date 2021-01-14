@@ -22,19 +22,21 @@ FILE_STORAGE_ROOT = c['FILE_STORAGE_ROOT']
 
 if __name__ == '__main__':
 
-    AIRPLANE_ID = 1
     IN_PATH = '/tmp/00/'
-    ENGINE_ID = 1
+
+    # AIRPLANE_ID = 1         # Pilatus PC-12 / PC6
+    AIRPLANE_ID = 3         # L410 / 2 x H80
 
     # --
 
     airplanesDao = AirplanesDao()
-    airplane = airplanesDao.getOne(id=AIRPLANE_ID)  # Pilatus PC-12
+    airplane = airplanesDao.getOne(id=AIRPLANE_ID)
     assert airplane
 
     enginesDao = EnginesDao()
-    engine = enginesDao.getOne(id=1)
-    assert engine
+    engines = enginesDao.get(airplane_id=airplane.id)
+    engines = [e for e in engines]
+    assert len(engines) > 0
 
     # --
 
@@ -85,7 +87,6 @@ if __name__ == '__main__':
             filesFlightsDao.save(ff)
 
             # create new flight-engine record:
-            engines = enginesDao.get(airplane_id=airplane.id)
             for engine in engines:
                 ef = enginesFlightsDao.createNew()
                 ef.engine_id = engine.id
