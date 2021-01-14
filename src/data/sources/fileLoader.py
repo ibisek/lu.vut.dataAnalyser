@@ -80,13 +80,13 @@ def loadRawData(fileFormat: FileFormat, inPath: str, fileName: str) -> pd.DataFr
         with open(filePath, 'r', encoding="latin-1") as f:
             line = f.readline()     # read the first line in format 2628-F01.01-FDR.dat,8/14/2020 10:32:18 AM,
 
-        d = line.split(',')[1]      # '8/14/2020 10:32:18 AM'
-        startDt = datetime.strptime(d, '%m/%d/%Y %H:%M:%S %p')  # start DT of the file
-        df.index = df.index.map(lambda x: startDt + timedelta(0, x))
-
-        df['ts'] = df.index.map(lambda x: x.timestamp())
-
-        del df['t']     # not needed anymore
+        datePattern = re.compile(r"(\d{1,2}\/\d{1,2}\/\d{4}\s\d{1,2}:\d{1,2}:\d{1,2}\s[A,M,P]{2})")
+        matches = datePattern.findall(line)     # '8/14/2020 10:32:18 AM'
+        if matches and len(matches) > 0:
+            startDt = datetime.strptime(matches[0], '%m/%d/%Y %H:%M:%S %p')  # start DT of the file
+            df.index = df.index.map(lambda x: startDt + timedelta(0, x))
+            df['ts'] = df.index.map(lambda x: x.timestamp())
+            del df['t']     # not needed anymore
 
     elif fileFormat == FileFormat.H80GE:
         # start datetime index based on the date & time from filename:
