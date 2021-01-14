@@ -122,7 +122,7 @@ def preprocess(file: File) -> List[EngineWork]:
         # create new cycle for per engine record (or replace existing by empty one)
         cycleDao = CyclesDao()
         cycle = cycleDao.createNew()
-        oldCycle = cycleDao.getOne(flight_id=flightId, flight_idx=0, engine_id=engineId)
+        oldCycle = cycleDao.getOne(idx=0, flight_id=flightId, engine_id=engineId)
         if oldCycle:
             cycle.id = oldCycle.id
         cycle.file_id = file.id
