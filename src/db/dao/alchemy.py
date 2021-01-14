@@ -81,3 +81,6 @@ class Alchemy(object):
         """
         q = self.session.query(self.table).filter_by(**kwargs).limit(1)
         return q.first()
+
+    def delete(self, obj):
+        self.session.delete(obj)
