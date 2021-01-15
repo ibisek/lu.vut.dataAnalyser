@@ -108,7 +108,12 @@ def preprocess(file: File) -> List[EngineWork]:
     engineIds = EnginesDao().getEngineIdsForRawFlight(flightId)
     assert len(rawDataFrames) == len(engineIds)
 
+    flightsDao = FlightsDao()
+    cyclesDao = CyclesDao()
+    flightRecordingDao = FlightRecordingDao()
     engineWorks: List[EngineWork] = []
+    flightIdx = 0
+    cycleIdx = 0
 
     for engineIndex, rawDataFrame in enumerate(rawDataFrames, start=1):
         engineId = engineIds[engineIndex-1]
@@ -120,34 +125,40 @@ def preprocess(file: File) -> List[EngineWork]:
         standardisedDataFrame = omitRowsBelowThresholds(standardisedDataFrame, fileName)
 
         # create new cycle for per engine record (or replace the existing one)
-        cycleDao = CyclesDao()
-        oldCycle = cycleDao.getOne(idx=0, flight_id=flightId, engine_id=engineId)
+        oldCycle = cyclesDao.getOne(idx=0, flight_id=flightId, engine_id=engineId)
         if oldCycle:
-            cycleDao.delete(oldCycle)
-        cycle = cycleDao.createNew()
+            flightRecordingDao.delete(engineId=engineId, flightId=flightId, flightIdx=flightIdx, cycleId=oldCycle.id, cycleIdx=cycleIdx)
+            oldSubCycles = cyclesDao.get(root_id=oldCycle.id)
+            for oldSubCycle in oldSubCycles:    # delete also all subCycles and subFlights
+                oldFlight = flightsDao.getOne(id=oldSubCycle.flight_id)
+                if oldFlight:
+                    flightRecordingDao.delete(engineId=engineId, flightId=oldFlight.id, flightIdx=oldFlight.idx, cycleId=oldSubCycle.id, cycleIdx=oldSubCycle.idx)
+                    if oldFlight.idx > 0:
+                        flightsDao.delete(oldFlight)
+                cyclesDao.delete(oldSubCycle)
+            cyclesDao.delete(oldCycle)
+
+        cycle = cyclesDao.createNew()
         cycle.file_id = file.id
         cycle.engine_id = engineId
         cycle.flight_id = flightId
-        cycleDao.save(cycle)
+        cyclesDao.save(cycle)
         print(f"[INFO] Created new cycle if {cycle.id} for flight id {flightId} on engine id {engineId}")
 
-        flightIdx = 0
-        cycleIdx = 0
-        frDao = FlightRecordingDao()
         print(f"[INFO] Storing flight recordings into influx..", end='')
-        frDao.storeDf(engineId=engineId, flightId=flightId, flightIdx=flightIdx, cycleId=cycle.id, cycleIdx=cycleIdx, df=rawDataFrame, recType=RecordingType.RAW)
-        frDao.storeDf(engineId=engineId, flightId=flightId, flightIdx=flightIdx, cycleId=cycle.id, cycleIdx=cycleIdx, df=filteredDataFrame, recType=RecordingType.FILTERED)
-        frDao.storeDf(engineId=engineId, flightId=flightId, flightIdx=flightIdx, cycleId=cycle.id, cycleIdx=cycleIdx, df=standardisedDataFrame, recType=RecordingType.STANDARDIZED)
+        flightRecordingDao.storeDf(engineId=engineId, flightId=flightId, flightIdx=flightIdx, cycleId=cycle.id, cycleIdx=cycleIdx, df=rawDataFrame, recType=RecordingType.RAW)
+        flightRecordingDao.storeDf(engineId=engineId, flightId=flightId, flightIdx=flightIdx, cycleId=cycle.id, cycleIdx=cycleIdx, df=filteredDataFrame, recType=RecordingType.FILTERED)
+        flightRecordingDao.storeDf(engineId=engineId, flightId=flightId, flightIdx=flightIdx, cycleId=cycle.id, cycleIdx=cycleIdx, df=standardisedDataFrame, recType=RecordingType.STANDARDIZED)
+
         print(f" flushing.. ", end='')
-        while not frDao.queueEmpty():
+        while not flightRecordingDao.queueEmpty():
             print('#', end='')
             sleep(1)    # wait until the data is stored in influx; is has been causing problems when requesting early retrieval
         print(f" done.")
 
         engineWorks.append(EngineWork(engineId=engineId, flightId=flightId, flightIdx=flightIdx, cycleId=cycle.id, cycleIdx=cycleIdx))
 
-        # TODO the remaining analyses (LU.VUT) are not run at this stage of development
-        # continue
+        # -- the original (LU.VUT) trend-monitoring code follows --
 
         SteadyStatesDetector(windowDt=STEADY_STATE_WINDOW_LEN, dVal=STEADY_STATE_DVAL).detectSteadyStates(filteredDataFrame, fileName, outPath=inPath, engineIndex=engineIndex)
         # steadyStates = loadSteadyStates(originalFileName=fileName, ssDir=inPath, engineIndex=engineIndex)
@@ -333,7 +344,7 @@ if __name__ == '__main__':
 
         from db.dao.filesDao import FilesDao
         filesDao = FilesDao()
-        file = filesDao.getOne(id=2182)
+        file = filesDao.getOne(id=2313)
 
         if not file:
             break
