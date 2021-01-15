@@ -339,7 +339,7 @@ class Processing:
         for i in range(numIntervals):
             flightInterval = self.flightIntervals[i]
             # get the right df-slice for the interval:
-            if i == 0:                              # for first flight take de data..
+            if i == 0:                              # for first flight take df data..
                 subDf = df[:flightInterval.end]     # from the very beginning of the record till the end of the actual flight as detected
             elif i == numIntervals-1:               # for last flight..
                 subDf = df[self.flightIntervals[i-1].end:]   # take everything from the previous interval end till end of the df
@@ -391,10 +391,7 @@ class Processing:
                                        cycleId=engineWork.cycleId, cycleIdx=engineWork.cycleIdx,
                                        df=subDf, recType=RecordingType.FILTERED)
 
-            subFlightIdx = subFlight.idx if newSubFlight else 0
-            subCycleIdx = subCycle.idx if newSubCycle else 0
-
-            newEw = EngineWork(engineId=engineWork.engineId, flightId=subFlight.id, flightIdx=subFlightIdx, cycleId=subCycle.id, cycleIdx=subCycleIdx)
+            newEw = EngineWork(engineId=engineWork.engineId, flightId=subFlight.id, flightIdx=subFlight.idx, cycleId=subCycle.id, cycleIdx=subCycle.idx)
             works.append(newEw)
 
         return works
