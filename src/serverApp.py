@@ -27,7 +27,7 @@ if __name__ == '__main__':
 
             try:
                 file.status = FileStatus.UNDER_ANALYSIS
-                filesDao.save(file)  # TODO uncomment (!)
+                filesDao.save(file)
 
                 engineWorks: List[EngineWork] = preprocess(file)
                 for ew in engineWorks:
@@ -42,7 +42,7 @@ if __name__ == '__main__':
                 file.status = FileStatus.FAILED
 
             finally:
-                filesDao.save(file)  # TODO uncomment (!)
+                filesDao.save(file)
 
         # get next work assignment:
         file: File = checkForWork()
