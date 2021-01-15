@@ -24,11 +24,11 @@ if __name__ == '__main__':
 
     IN_PATH = '/tmp/00/'
 
-    # AIRPLANE_ID = 1         # Pilatus PC-12 / PC6
+    AIRPLANE_ID = 1         # Pilatus PC-12 / PC6
     FILE_EXT = '.csv'
 
-    AIRPLANE_ID = 3         # L410 / 2 x H80
-    FILE_EXT = '.txt'
+    # AIRPLANE_ID = 3         # L410 / 2 x H80
+    # FILE_EXT = '.txt'
 
     # --
 
