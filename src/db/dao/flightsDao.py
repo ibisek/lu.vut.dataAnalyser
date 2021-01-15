@@ -1,3 +1,4 @@
+import numpy
 from db.dao.alchemy import Alchemy
 from utils.singleton import Singleton
 from configuration import dbConnectionInfo
@@ -26,3 +27,13 @@ class FlightsDao(Alchemy, Singleton):
                 flightId = row[0]
 
         return flightId
+
+    def save(self, flight):
+        if not flight:
+            super(FlightsDao, self).save()
+        else:
+            for k, v in flight.__dict__.items():
+                if type(v) is numpy.float64:
+                    setattr(flight, k, round(float(v), 6))  # all floats in flights database are (x,6)
+
+            super(FlightsDao, self).save(flight)
