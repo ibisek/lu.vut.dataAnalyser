@@ -65,7 +65,7 @@ class FlightRecordingDao(object):
         client = DataFrameClient(host=INFLUX_DB_HOST, port=8086, database=INFLUX_DB_NAME)
         res = client.query(query, bind_params=params)
         if len(res) == 0:
-            print(f'[WARN] loadDf(): no data in result set for {recType.value} engine: {engineId}; flight: {flightId}; cycle: {cycleId}')
+            print(f"[WARN] loadDf(): no data in result set for type '{recType.value}' engineId: {engineId}; flightId: {flightId}; flightIdx: {flightIdx}; cycle: {cycleId}; cycleIdx: {cycleIdx}")
             return DataFrame()
 
         df = res['flights']
