@@ -50,12 +50,22 @@ class FlightRecordingDao(object):
     @staticmethod
     def loadDf(engineId: int, flightId: int, flightIdx: int, cycleId: int, cycleIdx: int, recType: RecordingType=RecordingType.FILTERED) -> DataFrame:
 
-        q = f"SELECT * FROM flights WHERE type='{recType.value}' AND engineId= '{engineId}' " \
-                f"AND flightId = '{flightId}' AND flightIdx = '{flightIdx}' " \
-                f"AND cycleId = '{cycleId}' AND cycleIdx = '{cycleIdx}'"
+        q = f"SELECT * FROM flights WHERE type = $type AND engineId = $engineId " \
+            f"AND flightId = $flightId AND flightIdx = $flightIdx " \
+            f"AND cycleId = $cycleId AND cycleIdx = $cycleIdx"
 
-        c = DataFrameClient(host=INFLUX_DB_HOST, port=8086, database=INFLUX_DB_NAME)
-        res = c.query(query=q)
+        query = 'select * from flights where cycleId=$cycleId AND type=$type LIMIT 1;'
+        params = {'type': str(recType.value),
+                  'engineId': str(engineId),
+                  'flightId': str(flightId),
+                  'flightIdx': str(flightIdx),
+                  'cycleId': str(cycleId),
+                  'cycleIdx': str(cycleIdx)
+                  }
+
+        client = DataFrameClient(host=INFLUX_DB_HOST, port=8086, database=INFLUX_DB_NAME)
+
+        res = client.query(query, bind_params=params)
 
         if len(res) == 0:
             print(f'[WARN] loadDf(): no data in result set for {recType.value} engine: {engineId}; flight: {flightId}; cycle: {cycleId}')
