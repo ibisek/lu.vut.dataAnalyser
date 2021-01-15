@@ -84,4 +84,4 @@ class Alchemy(object):
 
     def delete(self, obj):
         self.session.delete(obj)
-        self.session.flush()
+        self.session.commit()
