@@ -50,11 +50,10 @@ class FlightRecordingDao(object):
     @staticmethod
     def loadDf(engineId: int, flightId: int, flightIdx: int, cycleId: int, cycleIdx: int, recType: RecordingType=RecordingType.FILTERED) -> DataFrame:
 
-        q = f"SELECT * FROM flights WHERE type = $type AND engineId = $engineId " \
+        query = f"SELECT * FROM flights WHERE type = $type AND engineId = $engineId " \
             f"AND flightId = $flightId AND flightIdx = $flightIdx " \
-            f"AND cycleId = $cycleId AND cycleIdx = $cycleIdx"
+            f"AND cycleId = $cycleId AND cycleIdx = $cycleIdx;"
 
-        query = 'select * from flights where cycleId=$cycleId AND type=$type LIMIT 1;'
         params = {'type': str(recType.value),
                   'engineId': str(engineId),
                   'flightId': str(flightId),
@@ -64,9 +63,7 @@ class FlightRecordingDao(object):
                   }
 
         client = DataFrameClient(host=INFLUX_DB_HOST, port=8086, database=INFLUX_DB_NAME)
-
         res = client.query(query, bind_params=params)
-
         if len(res) == 0:
             print(f'[WARN] loadDf(): no data in result set for {recType.value} engine: {engineId}; flight: {flightId}; cycle: {cycleId}')
             return DataFrame()
@@ -76,15 +73,30 @@ class FlightRecordingDao(object):
         # drop columns that are tags; we want to proceed with fields only:
         df = df.drop(columns=['cycleId', 'engineId', 'flightId', 'type'])
         if 'flightIdx' in df.keys():
-            df.drop(columns=['flightIdx'])
+            df = df.drop(columns=['flightIdx'])
         if 'cycleIdx' in df.keys():
-            df.drop(columns=['cycleIdx'])
+            df = df.drop(columns=['cycleIdx'])
 
         # re-create the 'ts' channel/column:
         df['ts'] = df.index
         df['ts'] = df['ts'].apply(lambda x: x.timestamp())
 
         return df
+
+    @staticmethod
+    def delete(engineId, flightId, flightIdx, cycleId, cycleIdx):
+        query = "DELETE FROM flights WHERE engineId = $engineId " \
+            f"AND flightId = $flightId AND flightIdx = $flightIdx " \
+            f"AND cycleId = $cycleId AND cycleIdx = $cycleIdx;"
+        params = {'engineId': str(engineId),
+                  'flightId': str(flightId),
+                  'flightIdx': str(flightIdx),
+                  'cycleId': str(cycleId),
+                  'cycleIdx': str(cycleIdx)
+                  }
+
+        client = DataFrameClient(host=INFLUX_DB_HOST, port=8086, database=INFLUX_DB_NAME)
+        client.query(query, bind_params=params)
 
 
 if __name__ == '__main__':
