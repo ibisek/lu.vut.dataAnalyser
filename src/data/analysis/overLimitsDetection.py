@@ -124,6 +124,7 @@ def __checkITT_cruise(df: DataFrame, flightMode: FlightMode, cycle):
     if max(df['ITT']) > EngineLimits.H80[flightMode]['ITTLimTot']:
         zone = Zone.D
     else:
+        zone = Zone.A
         intervals = findIntervals(df['ITT'], bottomChartITT, 1)
         for interval in intervals:
             ittl = IttEngOpsLimits()
@@ -237,6 +238,7 @@ def _checkTQ(df: DataFrame, flightMode: FlightMode, cycle):
     if max(df['TQpct']) > 108:
         zone = Zone.C
     else:
+        zone = Zone.A
         intervals = findIntervals(df['TQpct'], 100, 1)
         for interval in intervals:
             tql = TqLimits()
