@@ -117,6 +117,8 @@ def detectTakeOffs(df: DataFrame, ngStart=100.1, ngEnd=100.1) -> List[Interval]:
             else:
                 duration = (tsTakeOffIndexEnd - tsTakeOffIndexStart).seconds
                 if duration < TO_MIN_DURATION:
+                    df = df[tsTakeOffIndexEnd:]     # chop off the df from this point
+                    tsTakeOffIndexStart = df.loc[df['NG'] > ngStart].index[0]   # find new start
                     continue
 
                 interval = Interval(start=tsTakeOffIndexStart, end=tsTakeOffIndexEnd)
