@@ -451,7 +451,7 @@ def detectEngineShutdowns(df: DataFrame) -> List[Interval]:
         x = df[:endIndex]
 
         # TODO.. perhaps one nice sunny day
-        print('[WARN] NO DATA WAS AVAILABLE FOR ENGINE SHUTDOWN DETECTION IMPLEMENTATION!')
+        print('[WARN] NO DATA WAS EVER AVAILABLE FOR ENGINE SHUTDOWN DETECTION IMPLEMENTATION!')
         break
 
     return shutdowns
