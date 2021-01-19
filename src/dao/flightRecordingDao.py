@@ -84,10 +84,13 @@ class FlightRecordingDao(object):
         return df
 
     @staticmethod
-    def delete(engineId, flightId, flightIdx, cycleId, cycleIdx):
+    def delete(engineId, flightId, flightIdx, cycleId, cycleIdx=None):
         query = "DELETE FROM flights WHERE engineId = $engineId " \
             f"AND flightId = $flightId AND flightIdx = $flightIdx " \
-            f"AND cycleId = $cycleId AND cycleIdx = $cycleIdx;"
+            f"AND cycleId = $cycleId"
+        if cycleIdx:
+            query += ' AND cycleIdx = $cycleIdx'
+        query += ';'
         params = {'engineId': str(engineId),
                   'flightId': str(flightId),
                   'flightIdx': str(flightIdx),
