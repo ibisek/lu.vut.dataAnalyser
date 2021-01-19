@@ -76,7 +76,7 @@ def _findClimbEndAfter(df: DataFrame, afterIndexTs: Timestamp):
         if ng > ngMax:
             ngMax = ng
 
-        if ng < ngMax * 0.98 and row['dALT'] <= 1:  # [m/s]
+        if ng < ngMax * 0.96 and row['dALT'] <= 1:  # [m/s]
             tsTakeOffIndexEnd = index
             return tsTakeOffIndexEnd
 
@@ -143,7 +143,7 @@ def detectClimbs(df: DataFrame) -> List[Interval]:
     x = df.copy(deep=True)
     iasKey = 'IAS' if 'IAS' in df.keys() else 'TAS'
 
-    # TO_START_IAS_DELTA = 4  # [km/h]
+    TO_START_IAS_DELTA = 4  # [km/h]
     # TO_START_IAS_THRESHOLD = 20  # [km/h]
     # tmpDf = x.loc[df[iasKey] > TO_START_IAS_THRESHOLD]
     # if tmpDf.empty:
@@ -175,7 +175,7 @@ def detectClimbs(df: DataFrame) -> List[Interval]:
             climbs.append(interval)
 
             # plot the takeoff section:
-            # x = x[:tsClimbIndexStart]
+            # x = x[:tsClimbIndexEnd]
             # x['dIAS'] = df[iasKey].diff() * 10
             # x['TO_dIAS'] = x['dIAS'].apply(lambda x: 1 if x > TO_START_IAS_DELTA else 0)
             # x['ALTx'] = x['ALT'] / 10
