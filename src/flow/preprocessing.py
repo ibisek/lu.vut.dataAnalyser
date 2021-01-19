@@ -38,6 +38,7 @@ from dao.flightRecordingDao import FlightRecordingDao, RecordingType
 
 from db.dao.enginesDao import EnginesDao
 from db.dao.cyclesDao import CyclesDao
+from db.dao.cyclesFlightsDao import CyclesFlightsDao, CycleFlight
 from db.dao.flightsDao import FlightsDao
 
 
@@ -110,6 +111,7 @@ def preprocess(file: File) -> List[EngineWork]:
 
     flightsDao = FlightsDao()
     cyclesDao = CyclesDao()
+    cyclesFlightsDao = CyclesFlightsDao()
     flightRecordingDao = FlightRecordingDao()
     engineWorks: List[EngineWork] = []
     flightIdx = 0
@@ -124,26 +126,29 @@ def preprocess(file: File) -> List[EngineWork]:
         standardisedDataFrame = standardiseData(filteredDataFrame, fileName, outPath=inPath)
         standardisedDataFrame = omitRowsBelowThresholds(standardisedDataFrame, fileName)
 
-        # create new cycle for per engine record (or replace the existing one)
-        oldCycle = cyclesDao.getOne(idx=0, flight_id=flightId, engine_id=engineId)
-        if oldCycle:
+        # create new cycle for per engine record (or replace the existing one(s)):
+        oldCycles = cyclesDao.listCyclesFor(engineId=engineId, flightId=flightId, cycleIdx=0)
+        for oldCycle in oldCycles:
             flightRecordingDao.delete(engineId=engineId, flightId=flightId, flightIdx=flightIdx, cycleId=oldCycle.id, cycleIdx=cycleIdx)
             oldSubCycles = cyclesDao.get(root_id=oldCycle.id)
             for oldSubCycle in oldSubCycles:    # delete also all subCycles and subFlights
-                oldFlight = flightsDao.getOne(id=oldSubCycle.flight_id)
-                if oldFlight:
-                    flightRecordingDao.delete(engineId=engineId, flightId=oldFlight.id, flightIdx=oldFlight.idx, cycleId=oldSubCycle.id, cycleIdx=oldSubCycle.idx)
-                    if oldFlight.idx > 0:
-                        flightsDao.delete(oldFlight)
                 cyclesDao.delete(oldSubCycle)
+
+            subFlights = flightsDao.get(root_id=flightId)
+            for subFlight in subFlights:
+                flightRecordingDao.delete(engineId=engineId, flightId=subFlight.id, flightIdx=subFlight.idx, cycleId=oldCycle.id)
+
+            flightsDao.delete(subFlight)
             cyclesDao.delete(oldCycle)
 
         cycle = cyclesDao.createNew()
         cycle.file_id = file.id
         cycle.engine_id = engineId
-        cycle.flight_id = flightId
+        # = flightId
         cyclesDao.save(cycle)
         print(f"[INFO] Created new cycle if {cycle.id} for flight id {flightId} on engine id {engineId}")
+
+        cyclesFlightsDao.save(CycleFlight(cycleId=cycle.id, flightId=flightId))
 
         print(f"[INFO] Storing flight recordings into influx..", end='')
         flightRecordingDao.storeDf(engineId=engineId, flightId=flightId, flightIdx=flightIdx, cycleId=cycle.id, cycleIdx=cycleIdx, df=rawDataFrame, recType=RecordingType.RAW)

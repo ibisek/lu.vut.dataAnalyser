@@ -21,6 +21,7 @@ from db.dao.cyclesDao import CyclesDao
 from db.dao.enginesDao import EnginesDao
 from db.dao.equipmentDao import EquipmentDao
 from db.dao.componentsDao import ComponentsDao
+from db.dao.cyclesFlightsDao import CyclesFlightsDao, CycleFlight
 from flow.npUtils import _min, _max
 from flow.notifications import Notifications
 
@@ -35,6 +36,7 @@ class Processing:
         self.enginesDao = EnginesDao()
         self.componentsDao = ComponentsDao()
         self.equipmentDao = EquipmentDao()
+        self.cyclesFlightsDao = CyclesFlightsDao()
 
     def __del__(self):
         self.frDao.influx.stop()
@@ -334,6 +336,8 @@ class Processing:
         if len(self.flightIntervals) == 1:
             return [engineWork]
 
+        cycle = self.cyclesDao.getOne(id=engineWork.cycleId, idx=engineWork.cycleIdx)
+
         works = []
         numIntervals = len(self.flightIntervals)
         for i in range(numIntervals):
@@ -347,10 +351,8 @@ class Processing:
                 subDf = df[self.flightIntervals[i-1].end: flightInterval.end]   # from the previous interval end (incl.taxiing)
 
             # check for existence (idx) - it might have been created by the other engine's data record:
-            newSubFlight = False
             subFlight = self.flightsDao.getOne(root_id=engineWork.flightId, idx=i + 1)
             if not subFlight:
-                newSubFlight = True
                 print(f'[INFO] extracting sub-flight #{i + 1} {flightInterval.start} -> {flightInterval.end}')
                 rootFlight = self.flightsDao.getOne(id=engineWork.flightId, idx=0)
                 assert rootFlight
@@ -366,32 +368,17 @@ class Processing:
                 self.flightsDao.save(subFlight)
                 print(f'[INFO] created new sub-flight id={subFlight.id}')
 
-            newSubCycle = False
-            subCycle = self.cyclesDao.getOne(root_id=engineWork.cycleId, idx=i + 1)
-            # check if this sub-range is eligible for a sub-cycle:
-            if not subCycle and len(subDf.loc[subDf['NP'] > 240].loc[subDf['NP'] < 830].loc[subDf['NG'] > 57]):  # propeller in feathering position
-                newSubCycle = True
-                # create new sub-cycle related to the sub-flight:
-                subCycle = self.cyclesDao.createNew()
-                subCycle.root_id = engineWork.cycleId
-                subCycle.idx = subFlight.idx    # same as related flight idx
-                subCycle.engine_id = engineWork.engineId
-                subCycle.flight_id = subFlight.id
+                self.frDao.storeDf(engineId=engineWork.engineId, flightId=subFlight.id, flightIdx=subFlight.idx,
+                                   cycleId=engineWork.cycleId, cycleIdx=engineWork.cycleIdx,
+                                   df=subDf, recType=RecordingType.FILTERED)
 
-                self.cyclesDao.save(subCycle)
-                print(f'[INFO] created new sub-cycle id={subCycle.id}')
+                # create link from current cycle to the newly created subFlight:
+                if not self.cyclesFlightsDao.exists(cycleId=engineWork.cycleId, flightId=subFlight.id):
+                    self.cyclesFlightsDao.save(CycleFlight(cycleId=engineWork.cycleId, flightId=subFlight.id))
 
-            if newSubFlight or newSubCycle:    # create new series entry only for a new sub-flight
-                if subCycle:
-                    self.frDao.storeDf(engineId=engineWork.engineId, flightId=subFlight.id, flightIdx=subFlight.idx,
-                                       cycleId=subCycle.id, cycleIdx=subCycle.idx,
-                                       df=subDf, recType=RecordingType.FILTERED)
-                else:
-                    self.frDao.storeDf(engineId=engineWork.engineId, flightId=subFlight.id, flightIdx=subFlight.idx,
-                                       cycleId=engineWork.cycleId, cycleIdx=engineWork.cycleIdx,
-                                       df=subDf, recType=RecordingType.FILTERED)
-
-            newEw = EngineWork(engineId=engineWork.engineId, flightId=subFlight.id, flightIdx=subFlight.idx, cycleId=subCycle.id, cycleIdx=subCycle.idx)
+            newEw = EngineWork(engineId=engineWork.engineId,
+                               flightId=subFlight.id, flightIdx=subFlight.idx,
+                               cycleId=engineWork.cycleId, cycleIdx=engineWork.cycleIdx)
             works.append(newEw)
 
         return works
@@ -553,7 +540,7 @@ class Processing:
             self._processCycle(engineWork=work, df=workDf)     # these two need to be executed in this exact order!
             self._checkLimits(engineWork=work)
 
-        # calculate equivalent flight-cycles for engine components affected by the 'great' (not partials) engineWork:
+        # calculate equivalent flight-cycles for engine components affected by the 'root' (not partials) engineWork:
         self._calcEquivalentFlightCycles(engineWork)
 
         return True
@@ -565,7 +552,7 @@ if __name__ == '__main__':
     # ew = EngineWork(engineId=3, flightId=2, flightIdx=0, cycleId=22, cycleIdx=0)     # H80 AI.2
     # ew = Engine(engineId=3, flightId=2, flightIdx=0, cycleId=X, cycleIdx=0)          # H80 GE
 
-    ew = EngineWork(engineId=1, flightId=1400, flightIdx=0, cycleId=933, cycleIdx=0)     # DEBUG PT6
+    ew = EngineWork(engineId=2, flightId=1696, flightIdx=0, cycleId=2719, cycleIdx=0)     # DEBUG L410
 
     p = Processing()
     p.process(ew)
