@@ -138,6 +138,7 @@ def preprocess(file: File) -> List[EngineWork]:
             for subFlight in subFlights:
                 flightRecordingDao.delete(engineId=engineId, flightId=subFlight.id, flightIdx=subFlight.idx, cycleId=oldCycle.id)
 
+            flightRecordingDao.delete(engineId=engineId, flightId=flightId, flightIdx=0, cycleId=oldCycle.id)
             flightsDao.delete(subFlight)
             cyclesDao.delete(oldCycle)
 
