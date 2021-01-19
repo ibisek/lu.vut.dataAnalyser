@@ -32,7 +32,7 @@ class Notifications:
         elif dbEntity.__class__.__name__ == 'cycles':
             n.cycle_id = dbEntity.id
             n.engine_id = dbEntity.engine_id
-            n.flight_id = dbEntity.flight_id
+            # n.flight_id = dbEntity.flight_id
         elif dbEntity.__class__.__name__ == 'flights':
             n.flight_id = dbEntity.id
         else:
