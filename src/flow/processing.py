@@ -351,7 +351,7 @@ class Processing:
                 subDf = df[self.flightIntervals[i-1].end: flightInterval.end]   # from the previous interval end (incl.taxiing)
 
             # check for existence (idx) - it might have been created by the other engine's data record:
-            subFlight = self.flightsDao.getOne(root_id=engineWork.flightId, idx=i + 1)
+            subFlight = self.flightsDao.getOne(engine_id=engineWork.engineId, root_id=engineWork.flightId, idx=i + 1)
             if not subFlight:
                 print(f'[INFO] extracting sub-flight #{i + 1} {flightInterval.start} -> {flightInterval.end}')
                 rootFlight = self.flightsDao.getOne(id=engineWork.flightId, idx=0)
@@ -361,6 +361,7 @@ class Processing:
                 subFlight.root_id = engineWork.flightId
                 subFlight.idx = i + 1  # idx starts from 1
                 subFlight.airplane_id = rootFlight.airplane_id
+                subFlight.engine_id = engineWork.engineId
 
                 toTs = int(flightInterval.start.timestamp())
                 laTs = int(flightInterval.end.timestamp())
@@ -368,7 +369,7 @@ class Processing:
                 self.flightsDao.save(subFlight)
                 print(f'[INFO] created new sub-flight id={subFlight.id}')
 
-                self.frDao.storeDf(engineId=engineWork.engineId, flightId=subFlight.id, flightIdx=subFlight.idx,
+                self.frDao.storeDf(engineId=subFlight.engine_id, flightId=subFlight.id, flightIdx=subFlight.idx,
                                    cycleId=engineWork.cycleId, cycleIdx=engineWork.cycleIdx,
                                    df=subDf, recType=RecordingType.FILTERED)
 
