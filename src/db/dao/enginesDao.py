@@ -17,7 +17,7 @@ class EnginesDao(Alchemy, Singleton):
         ids = []
 
         with DbSource(dbConnectionInfo).getConnection() as c:
-            strSql = f"select engine_id from engines_flights as ef " \
+            strSql = f"select ef.engine_id from engines_flights as ef " \
                      f"join flights as f on ef.flight_id = f.id " \
                      f"where f.id={flightId} and f.idx=0;"
 
