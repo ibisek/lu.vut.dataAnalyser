@@ -110,7 +110,11 @@ def loadRawData(fileFormat: FileFormat, inPath: str, fileName: str) -> pd.DataFr
                 try:
                     df.index = pd.to_datetime(df.get(dateTimeColName), format="%Y-%m-%d %H:%M:%S")
                 except ValueError:
-                    df.index = pd.to_datetime(df.get(dateTimeColName), format="%d.%m.%Y %H:%M:%S")
+                    try:
+                        df.index = pd.to_datetime(df.get(dateTimeColName), format="%d.%m.%Y %H:%M:%S")
+                    except ValueError:
+                        raise ValueError(f"Encountered unknown time format in '{fileName}'! (it can be anywhere in the file, not just fist lines..)")
+
 
         df = df.drop(columns=[dateTimeColName])
 
