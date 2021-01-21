@@ -369,18 +369,21 @@ class Processing:
                 self.flightsDao.save(subFlight)
                 print(f'[INFO] created new sub-flight id={subFlight.id}')
 
-                self.frDao.storeDf(engineId=subFlight.engine_id, flightId=subFlight.id, flightIdx=subFlight.idx,
-                                   cycleId=engineWork.cycleId, cycleIdx=engineWork.cycleIdx,
-                                   df=subDf, recType=RecordingType.FILTERED)
-                self.frDao.flush()
-
                 # create link from current cycle to the newly created subFlight:
                 if not self.cyclesFlightsDao.exists(cycleId=engineWork.cycleId, flightId=subFlight.id):
                     self.cyclesFlightsDao.save(CycleFlight(cycleId=engineWork.cycleId, flightId=subFlight.id))
 
+            print(f"[INFO] storing sub-flight data into influx for: engineId:{subFlight.engine_id}; "
+                  f"sub-flightId:{subFlight.id}; sub-flightIdx:{subFlight.idx}; cycleId:{engineWork.cycleId}; cycleIdx:{engineWork.cycleId}")
+            self.frDao.storeDf(engineId=subFlight.engine_id, flightId=subFlight.id, flightIdx=subFlight.idx,
+                               cycleId=engineWork.cycleId, cycleIdx=engineWork.cycleIdx,
+                               df=subDf, recType=RecordingType.FILTERED)
+            self.frDao.flush()
+
             newEw = EngineWork(engineId=engineWork.engineId,
                                flightId=subFlight.id, flightIdx=subFlight.idx,
-                               cycleId=engineWork.cycleId, cycleIdx=engineWork.cycleIdx)
+                               cycleId=engineWork.cycleId, cycleIdx=engineWork.cycleIdx,
+                               df=subDf)    # subDf to avoid re-loading the DF from influx
             works.append(newEw)
 
         return works
@@ -535,8 +538,11 @@ class Processing:
 
         works: List[EngineWork] = self._splitIntoSubflights(df=df, engineWork=engineWork)
         for work in works:
-            workDf = self.frDao.loadDf(engineId=work.engineId, flightId=work.flightId, flightIdx=work.flightIdx,
-                                       cycleId=work.cycleId, cycleIdx=work.cycleIdx, recType=RecordingType.FILTERED)
+            if hasattr(work, 'df') and work.df:
+                workDf = work.df
+            else:
+                workDf = self.frDao.loadDf(engineId=work.engineId, flightId=work.flightId, flightIdx=work.flightIdx,
+                                           cycleId=work.cycleId, cycleIdx=work.cycleIdx, recType=RecordingType.FILTERED)
 
             self._processFlight(engineWork=work, df=workDf)    # these two need to be executed in this exact order!
             self._processCycle(engineWork=work, df=workDf)     # these two need to be executed in this exact order!
