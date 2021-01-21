@@ -538,7 +538,7 @@ class Processing:
 
         works: List[EngineWork] = self._splitIntoSubflights(df=df, engineWork=engineWork)
         for work in works:
-            if hasattr(work, 'df') and work.df:
+            if hasattr(work, 'df') and work.df is not None:
                 workDf = work.df
             else:
                 workDf = self.frDao.loadDf(engineId=work.engineId, flightId=work.flightId, flightIdx=work.flightIdx,
