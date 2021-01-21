@@ -372,6 +372,7 @@ class Processing:
                 self.frDao.storeDf(engineId=subFlight.engine_id, flightId=subFlight.id, flightIdx=subFlight.idx,
                                    cycleId=engineWork.cycleId, cycleIdx=engineWork.cycleIdx,
                                    df=subDf, recType=RecordingType.FILTERED)
+                self.frDao.flush()
 
                 # create link from current cycle to the newly created subFlight:
                 if not self.cyclesFlightsDao.exists(cycleId=engineWork.cycleId, flightId=subFlight.id):
@@ -553,7 +554,7 @@ if __name__ == '__main__':
     # ew = EngineWork(engineId=3, flightId=2, flightIdx=0, cycleId=22, cycleIdx=0)     # H80 AI.2
     # ew = Engine(engineId=3, flightId=2, flightIdx=0, cycleId=X, cycleIdx=0)          # H80 GE
 
-    ew = EngineWork(engineId=2, flightId=1696, flightIdx=0, cycleId=2719, cycleIdx=0)     # DEBUG L410
+    ew = EngineWork(engineId=2, flightId=1696, flightIdx=0, cycleId=3766, cycleIdx=0)     # DEBUG L410
 
     p = Processing()
     p.process(ew)
