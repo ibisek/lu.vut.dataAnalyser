@@ -137,9 +137,9 @@ def preprocess(file: File) -> List[EngineWork]:
             subFlights = flightsDao.get(root_id=flightId)
             for subFlight in subFlights:
                 flightRecordingDao.delete(engineId=engineId, flightId=subFlight.id, flightIdx=subFlight.idx, cycleId=oldCycle.id)
+                flightsDao.delete(subFlight)
 
             flightRecordingDao.delete(engineId=engineId, flightId=flightId, flightIdx=0, cycleId=oldCycle.id)
-            flightsDao.delete(subFlight)
             cyclesDao.delete(oldCycle)
 
         cycle = cyclesDao.createNew()
@@ -157,9 +157,7 @@ def preprocess(file: File) -> List[EngineWork]:
         flightRecordingDao.storeDf(engineId=engineId, flightId=flightId, flightIdx=flightIdx, cycleId=cycle.id, cycleIdx=cycleIdx, df=standardisedDataFrame, recType=RecordingType.STANDARDIZED)
 
         print(f" flushing.. ", end='')
-        while not flightRecordingDao.queueEmpty():
-            print('#', end='')
-            sleep(1)    # wait until the data is stored in influx; is has been causing problems when requesting early retrieval
+        flightRecordingDao.flush(printProgress=True)
         print(f" done.")
 
         engineWorks.append(EngineWork(engineId=engineId, flightId=flightId, flightIdx=flightIdx, cycleId=cycle.id, cycleIdx=cycleIdx))
