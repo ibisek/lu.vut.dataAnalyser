@@ -5,6 +5,7 @@ https://docs.influxdata.com/influxdb/v1.8/write_protocols/line_protocol_tutorial
 """
 
 from enum import Enum
+from time import sleep
 
 from influxdb import DataFrameClient
 from pandas.core.frame import DataFrame
@@ -43,6 +44,11 @@ class FlightRecordingDao(object):
             s = f"flights,type={recType.value},flightId={flightId},flightIdx={flightIdx},engineId={engineId},cycleId={cycleId},cycleIdx={cycleIdx} {kv} {ts}000000"
 
             self.influx.addStatement(s)
+
+    def flush(self, printProgress=False):
+        while not self.queueEmpty():
+            if printProgress: print('#', end='')
+            sleep(1)  # wait until the data is stored in influx; is has been causing problems when requesting early retrieval
 
     def __del__(self):
         self.influx.stop()
