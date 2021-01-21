@@ -1,5 +1,5 @@
 from enum import Enum
-from collections import namedtuple
+from pandas import DataFrame
 
 
 class FileFormat(Enum):
@@ -52,12 +52,13 @@ class Interval:
 # engine-flight-cycle work to be further done after initial preprocessing
 # EngineWork = namedtuple('EngineWork', ['engineId', 'flightId', 'flightIdx', 'cycleId', 'cycleIdx'])
 class EngineWork:
-    def __init__(self, engineId: int, flightId: int, flightIdx: int, cycleId: int, cycleIdx: int):
+    def __init__(self, engineId: int, flightId: int, flightIdx: int, cycleId: int, cycleIdx: int, df: DataFrame = None):
         self.engineId = engineId
         self.flightId = flightId
         self.flightIdx = flightIdx
         self.cycleId = cycleId
         self.cycleIdx = cycleIdx
+        self.df = df
 
     def __str__(self):
         return f"#EngineWork: engineId={self.engineId}; " \
