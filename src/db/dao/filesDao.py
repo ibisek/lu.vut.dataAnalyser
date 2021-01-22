@@ -82,6 +82,11 @@ class FilesDao(Alchemy, Singleton):
         else:
             super(FilesDao, self).save()
 
+    def list(self, limit, **kwargs):
+        query = self.session.query(self.table).filter(**kwargs).order_by(self.table.id.desc()).limit(limit)
+
+        return query.all()
+
     @staticmethod
     def listFiles(engineId: int = None):
         raise NotImplementedError()
