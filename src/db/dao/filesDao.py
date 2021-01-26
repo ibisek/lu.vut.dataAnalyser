@@ -1,5 +1,6 @@
 from enum import Enum
 from sqlalchemy import and_
+from collections import namedtuple
 
 from db.dao.alchemy import Alchemy
 from utils.singleton import Singleton
@@ -132,6 +133,36 @@ class FilesDao(Alchemy, Singleton):
             for row in rows:
                 (id, name, flightId, raw, format, status, hash) = row
                 f = File(id=id, name=name, raw=raw, format=FileFormat(format), status=FileStatus(status), hash=hash)
+                files.append(f)
+
+        return files
+
+    @staticmethod
+    def listRawFilesForAirplane(airplaneId: int) -> []:
+        """
+        Used on web when displaying files for selected airplane.
+        :param airplaneId:
+        :return:
+        """
+        FileForAirplane = namedtuple('FileForAirplane', ['id', 'name', 'status', 'format', 'formatName', 'fligthId', 'cycleId', 'engineId', 'engineNo'])
+        files = list()
+
+        with DbSource(dbConnectionInfo).getConnection() as c:
+            sql = f"SELECT f.id, f.name, f.status, f.format, fl.id, c.id, c.engine_id, e.engine_no FROM files AS f " \
+                  f"JOIN files_flights AS ff ON f.id=ff.file_id " \
+                  f"JOIN flights AS fl ON fl.id = ff.flight_id " \
+                  f"JOIN cycles AS c ON c.file_id = f.id " \
+                  f"JOIN engines AS e ON c.engine_id = e.id " \
+                  f"WHERE f.raw = true AND c.idx=0 AND fl.airplane_id = {airplaneId} " \
+                  f"ORDER BY f.id DESC, e.engine_no ASC;"
+
+            c.execute(sql)
+
+            rows = c.fetchall()
+            for row in rows:
+                (fileId, fileName, fileStatus, fileFormat, flightId, cycleId, engineId, engineNo) = row
+                f = FileForAirplane(id=fileId, name=fileName, status=fileStatus, format=fileFormat, formatName=FileFormat(fileFormat).name,
+                                    fligthId=flightId, cycleId=cycleId, engineId=engineId, engineNo=engineNo)
                 files.append(f)
 
         return files
