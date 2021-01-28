@@ -2,11 +2,11 @@ import os
 
 DEV_MODE = True
 
-IN_PATH = '/home/ibisek/wqz/prog/python/lu.vut.dataAnalyser/data/in/'
-OUT_PATH = '/home/ibisek/wqz/prog/python/lu.vut.dataAnalyser/data/out/'
+IN_PATH = '/home/ibisek/wqz/prog/python/radec-dataAnalyser/data/in/'
+OUT_PATH = '/home/ibisek/wqz/prog/python/radec-dataAnalyser/data/out/'
 
 if DEV_MODE:
-    IMG_PATH = '/home/ibisek/wqz/prog/python/lu.vut.dataAnalyser/images/'
+    IMG_PATH = '/home/ibisek/wqz/prog/python/radec-dataAnalyser/images/'
 else:
     IMG_PATH = 'images/'
 

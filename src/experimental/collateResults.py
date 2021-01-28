@@ -3,7 +3,7 @@ from utils.autodict import autodict
 
 if __name__ == '__main__':
 
-    PATH = '/home/ibisek/wqz/prog/python/lu.vut.dataAnalyser/data/out'
+    PATH = '/home/ibisek/wqz/prog/python/radec-dataAnalyser/data/out'
     # IN_FILES = ['2017.csv', '2018.csv', '2019.csv']
     IN_FILES = ['all-combined.csv']
     OUT_FILE = f"{PATH}/results-summarised.csv"
