@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
 if __name__ == '__main__':
-    inPath = '/home/ibisek/wqz/prog/python/lu.vut.dataAnalyser/data/'
+    inPath = '/home/ibisek/wqz/prog/python/radec-dataAnalyser/data/'
     outPath = '/tmp/00/'
 
     fileName = 'SN-131014-H80-200_030413.csv'

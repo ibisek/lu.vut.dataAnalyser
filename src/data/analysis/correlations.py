@@ -74,7 +74,7 @@ def analyseCorrelations(dataFrame, originalFileName, outPath=OUT_PATH):
 
 
 if __name__ == '__main__':
-    inPath = '/home/ibisek/wqz/prog/python/lu.vut.dataAnalyser/data/'
+    inPath = '/home/ibisek/wqz/prog/python/radec-dataAnalyser/data/'
 
     fileName = 'SN-131014-H80-200_030413.csv'
     if len(sys.argv) == 2:

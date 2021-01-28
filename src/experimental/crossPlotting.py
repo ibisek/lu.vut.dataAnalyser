@@ -66,7 +66,7 @@ if __name__ == '__main__':
             print(f"[INFO] engine '{engine}': {yKey} = fn({xKey})")
 
             try:
-                inPath = f"/home/ibisek/wqz/prog/python/lu.vut.dataAnalyser/data/out/{engine}"
+                inPath = f"/home/ibisek/wqz/prog/python/radec-dataAnalyser/data/out/{engine}"
                 fileName = f"{engine}_AT-{yKey}=fn({xKey})-poly.csv"
                 dfAT = pd.read_csv(f"{inPath}/{fileName}", delimiter=CSV_DELIMITER, encoding='cp1250')
                 fileName = f"{engine}_OH-{yKey}=fn({xKey})-poly.csv"
@@ -104,7 +104,7 @@ if __name__ == '__main__':
             plt.xlabel(f"{xKey} [{UNITS[xKey]}]")
             plt.ylabel(f"{yKey} [{UNITS[yKey]}]")
 
-            rootPath = '/home/ibisek/wqz/prog/python/lu.vut.dataAnalyser/data/out'
+            rootPath = '/home/ibisek/wqz/prog/python/radec-dataAnalyser/data/out'
             fn = f"{rootPath}/{engine}:{yKey}=fn({xKey}).png"
             plt.savefig(fn, dpi=300)
 

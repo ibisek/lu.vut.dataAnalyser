@@ -45,7 +45,7 @@ def genGpx(inPath, fileName):
 
 
 if __name__ == '__main__':
-    inPath = '/home/ibisek/wqz/prog/python/lu.vut.dataAnalyser/data/'
+    inPath = '/home/ibisek/wqz/prog/python/radec-dataAnalyser/data/'
     fileName = ''
 
     df = genGpx(inPath, fileName)
